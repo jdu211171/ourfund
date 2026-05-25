@@ -434,7 +434,7 @@ function App() {
 
   // --- Main Application Render ---
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col relative max-w-md mx-auto border-x border-slate-100 pb-24">
+    <div className="min-h-screen bg-slate-50 flex flex-col relative max-w-md mx-auto border-x border-slate-100 pb-[calc(88px+env(safe-area-inset-bottom,16px))]">
           
           {/* Header */}
           <header className="bg-white border-b border-slate-100 px-5 py-4 flex justify-between items-center sticky top-0 z-10">
@@ -482,8 +482,8 @@ function App() {
               <>
                 {/* 1. Sleek Typography Balance */}
                 <div className="space-y-1">
-                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                    Current balance
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                    CURRENT BALANCE
                   </span>
                   <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">
                     ${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -857,7 +857,7 @@ function App() {
           </main>
 
         {/* --- BOTTOM NAVIGATION BAR --- */}
-        <nav className="absolute bottom-0 inset-x-0 bg-white border-t border-slate-200/80 px-6 py-2 flex justify-between items-center z-15 backdrop-blur-md bg-white/95">
+        <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-slate-200/80 px-6 pt-3 pb-[calc(10px+env(safe-area-inset-bottom,16px))] flex justify-between items-center z-50 backdrop-blur-md bg-white/95 shadow-lg shadow-slate-100/50">
           {/* Home */}
           <button
             onClick={() => setActiveTab('home')}
