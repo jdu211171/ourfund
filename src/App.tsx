@@ -434,22 +434,7 @@ function App() {
 
   // --- Main Application Render ---
   return (
-    <div className="min-h-screen bg-slate-100 flex justify-center items-start md:py-8">
-      {/* Dynamic Mobile Frame for Desktop Testing */}
-      <div className="w-full md:max-w-[420px] md:min-h-[840px] bg-slate-50 md:rounded-[40px] md:shadow-2xl md:border-[8px] md:border-slate-800 overflow-hidden flex flex-col relative">
-        
-        {/* Top Status Bar Mock */}
-        <div className="hidden md:flex justify-between items-center px-6 pt-3 pb-2 bg-white text-xs font-semibold text-slate-800 select-none">
-          <span>9:41</span>
-          <div className="w-24 h-4 bg-slate-800 rounded-full"></div>
-          <div className="flex gap-1.5 items-center">
-            <span className="text-[10px]">5G</span>
-            <div className="w-5 h-2.5 border border-slate-800 rounded-sm p-0.5 flex items-center"><div className="w-full h-full bg-slate-800 rounded-2xs"></div></div>
-          </div>
-        </div>
-
-        {/* --- APP CONTAINER --- */}
-        <div className="flex-1 flex flex-col h-full overflow-y-auto pb-24">
+    <div className="min-h-screen bg-slate-50 flex flex-col relative max-w-md mx-auto border-x border-slate-100 pb-24">
           
           {/* Header */}
           <header className="bg-white border-b border-slate-100 px-5 py-4 flex justify-between items-center sticky top-0 z-10">
@@ -870,7 +855,6 @@ function App() {
             )}
 
           </main>
-        </div>
 
         {/* --- BOTTOM NAVIGATION BAR --- */}
         <nav className="absolute bottom-0 inset-x-0 bg-white border-t border-slate-200/80 px-6 py-2 flex justify-between items-center z-15 backdrop-blur-md bg-white/95">
@@ -1244,7 +1228,6 @@ function App() {
           </div>
         )}
 
-      </div>
     </div>
   )
 }
