@@ -1,0 +1,141 @@
+import {
+  ChevronRight,
+  Shield,
+  Bell,
+  Tag,
+  HelpCircle,
+  LogOut,
+  Settings,
+  Crown,
+  UserPlus,
+} from "lucide-react";
+import { PhoneFrame } from "./PhoneFrame";
+import { BottomNav } from "./BottomNav";
+import { useAppNavigation } from "@/lib/navigation";
+
+const items = [
+  { Icon: Tag, label: "Categories", hint: "Budget limits", screen: "categories" as const },
+  { Icon: Shield, label: "Permissions", hint: "Roles", screen: "permissions" as const },
+  { Icon: Bell, label: "Alert thresholds", hint: "80% / 100%", screen: "notif_prefs" as const },
+  { Icon: HelpCircle, label: "Allowance", hint: "Kids", screen: "allowance" as const },
+];
+
+export function ProfileScreen() {
+  const { navigate, household, members, setSelectedMemberId, selectedMemberId } =
+    useAppNavigation();
+
+  return (
+    <PhoneFrame>
+      <div className="flex-1 overflow-y-auto flex flex-col px-7 pt-10 pb-28 min-h-0">
+        <header className="flex items-center justify-between">
+          <h2 className="text-[18px] font-extrabold tracking-tight text-[oklch(0.2_0.08_265)]">
+            Family
+          </h2>
+          <button
+            onClick={() => navigate("settings")}
+            className="grid h-9 w-9 place-items-center rounded-full bg-[var(--muted)] hover:bg-slate-200 transition-colors active:scale-95 cursor-pointer"
+            aria-label="Settings"
+          >
+            <Settings className="h-4 w-4" strokeWidth={2.25} />
+          </button>
+        </header>
+
+        <div className="mt-5 rounded-3xl bg-white p-4 shadow-[var(--shadow-soft)]">
+          <p className="text-[11px] uppercase tracking-widest text-muted-foreground">Household</p>
+          <p className="mt-1 font-display text-[22px] leading-tight tracking-tight">
+            {household?.name ?? "Create or join a household"}
+          </p>
+          <p className="text-[11px] text-muted-foreground">
+            {household ? (
+              <>
+                {members.length} members · Invite code{" "}
+                <span className="font-bold text-foreground">{household.inviteCode}</span>
+              </>
+            ) : (
+              "Start a household to invite your family."
+            )}
+          </p>
+        </div>
+
+        <div className="mt-5 flex items-center justify-between">
+          <p className="text-[13px] font-bold text-foreground">Members</p>
+          <button
+            onClick={() => navigate("invite_member")}
+            className="grid h-8 w-8 place-items-center rounded-full bg-[var(--muted)] text-foreground"
+          >
+            <UserPlus className="h-4 w-4" strokeWidth={2.25} />
+          </button>
+        </div>
+
+        <div className="mt-3 space-y-2">
+          {members.map((m) => (
+            <button
+              key={m.id}
+              onClick={() => {
+                setSelectedMemberId(m.id);
+                navigate("permissions");
+              }}
+              className={`flex w-full items-center gap-3 rounded-2xl bg-white px-3 py-2.5 text-left shadow-[var(--shadow-soft)] ${selectedMemberId === m.id ? "ring-2 ring-[var(--primary)]" : ""}`}
+            >
+              <div
+                className="grid h-10 w-10 place-items-center rounded-full text-white text-[12px] font-bold"
+                style={{
+                  background: "linear-gradient(135deg, oklch(0.65 0.22 265), oklch(0.45 0.24 265))",
+                }}
+              >
+                {m.initials}
+              </div>
+              <div className="flex-1 leading-tight">
+                <p className="text-[12px] font-bold text-foreground">{m.name}</p>
+                <p className="text-[10px] text-muted-foreground">
+                  {m.role}
+                  {m.allowanceUsd ? ` · $${m.allowanceUsd} allowance` : ""}
+                </p>
+              </div>
+              {m.admin && (
+                <Crown className="h-4 w-4 text-[oklch(0.75_0.15_85)]" strokeWidth={2.25} />
+              )}
+            </button>
+          ))}
+          {members.length === 0 && (
+            <button
+              onClick={() => navigate("signup")}
+              className="w-full rounded-2xl bg-white px-4 py-5 text-center shadow-[var(--shadow-soft)]"
+            >
+              <p className="text-[13px] font-bold text-foreground">No members yet</p>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Create a household or join one with an invite code.
+              </p>
+            </button>
+          )}
+        </div>
+
+        <div className="mt-4 space-y-2">
+          {items.map(({ Icon, label, hint, screen }) => (
+            <button
+              key={label}
+              onClick={() => navigate(screen)}
+              className="flex w-full items-center gap-3 rounded-2xl bg-white px-3 py-3 text-left shadow-[var(--shadow-soft)] hover:bg-slate-50 transition-colors cursor-pointer"
+            >
+              <div className="grid h-10 w-10 place-items-center rounded-xl bg-[oklch(0.95_0.04_265)] text-[var(--primary)]">
+                <Icon className="h-4 w-4" strokeWidth={2.25} />
+              </div>
+              <span className="flex-1 text-[13px] font-bold text-foreground">{label}</span>
+              <span className="text-[11px] text-muted-foreground">{hint}</span>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" strokeWidth={2.25} />
+            </button>
+          ))}
+        </div>
+
+        <button
+          onClick={() => navigate("remove_member")}
+          className="mt-4 flex items-center justify-center gap-2 rounded-full bg-[var(--muted)] py-3 text-[13px] font-semibold text-[var(--danger)]"
+        >
+          <LogOut className="h-4 w-4" strokeWidth={2.25} />
+          Remove selected member
+        </button>
+      </div>
+      <BottomNav active="user" />
+    </PhoneFrame>
+  );
+}
