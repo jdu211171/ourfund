@@ -39,10 +39,8 @@ export function EditTransactionScreen() {
       category,
     ]),
   ].filter(Boolean);
-  const amountPrefix =
-    currency === "JPY"
-      ? currencyMeta[currency].suffix?.trim() || currency
-      : currencyMeta[currency].symbol || currency;
+  const amountPrefix = currencyMeta[currency].symbol || currency;
+  const amountSuffix = currency === "JPY" ? currencyMeta[currency].suffix?.trim() : "";
 
   if (!txn) {
     return (
@@ -122,12 +120,17 @@ export function EditTransactionScreen() {
             />
           </div>
           <div className="mt-3 flex items-center justify-center gap-1">
-            <span className="text-[20px] font-bold text-muted-foreground">{amountPrefix}</span>
+            {currency !== "JPY" && (
+              <span className="text-[20px] font-bold text-muted-foreground">{amountPrefix}</span>
+            )}
             <input
               value={amount}
               onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
               className="w-40 bg-transparent text-center text-[34px] font-extrabold tracking-tight text-foreground outline-none border-b border-transparent focus:border-[var(--primary)]"
             />
+            {currency === "JPY" && amountSuffix && (
+              <span className="text-[20px] font-bold text-muted-foreground">{amountSuffix}</span>
+            )}
           </div>
           <p className="text-[11px] uppercase tracking-widest text-muted-foreground">
             {currencyInputLabel(currency)}
