@@ -14,7 +14,7 @@ import {
 import { useEffect } from "react";
 import { PhoneFrame } from "./PhoneFrame";
 import { BottomNav } from "./BottomNav";
-import { BudgetModeToggle } from "./BudgetModeToggle";
+import { BalanceHeader } from "./BalanceHeader";
 import { Money } from "./Money";
 import { useAppNavigation } from "@/lib/navigation";
 
@@ -48,8 +48,6 @@ export function HomeScreen() {
 
   const firstName = profile.name.trim().split(" ").filter(Boolean)[0] ?? "there";
   const unreadCount = notifications.filter((notification) => !notification.read).length;
-  const netUsd = incomeUsd - spentUsd;
-  const savingsPct = incomeUsd > 0 ? Math.round((Math.max(netUsd, 0) / incomeUsd) * 100) : 0;
   const upcomingBills = subscriptions.slice(0, 2);
   const expectedIncomeUsd = recurringIncome.reduce((sum, item) => sum + item.amountUsd, 0);
   const primaryGoal = goals.find((goal) => goal.savedUsd < goal.targetUsd) ?? goals[0];
@@ -101,51 +99,14 @@ export function HomeScreen() {
           </button>
         </header>
 
-        <div className="mt-4 flex items-center justify-between gap-3">
-          <BudgetModeToggle />
-          <button
-            type="button"
-            onClick={() => navigate("history_search")}
-            className="rounded-full bg-white px-3 py-2 text-[11px] font-bold text-foreground"
-          >
-            History
-          </button>
+        <div className="mt-4">
+          <BalanceHeader
+            balanceUsd={balanceUsd}
+            incomeUsd={incomeUsd}
+            spentUsd={spentUsd}
+            interactive
+          />
         </div>
-
-        <section className="mt-4 rounded-3xl bg-[oklch(0.18_0.04_265)] p-4 text-white">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-[10px] uppercase tracking-widest text-white/60">
-                {budgetMode === "personal" ? "Personal cash left" : "Household cash left"}
-              </p>
-              <div className="mt-1">
-                <Money usd={balanceUsd} size="lg" className="text-white [&_*]:text-white" />
-              </div>
-            </div>
-            <div
-              className={`rounded-2xl px-3 py-2 text-right ${
-                netUsd >= 0 ? "bg-white/12 text-white" : "bg-[oklch(0.6_0.22_25)] text-white"
-              }`}
-            >
-              <p className="text-[10px] font-semibold opacity-75">Net</p>
-              <Money usd={netUsd} size="sm" tone={netUsd >= 0 ? "success" : "danger"} signed />
-            </div>
-          </div>
-          <div className="mt-4 grid grid-cols-3 gap-2 text-left">
-            <div className="rounded-2xl bg-white/10 p-3">
-              <p className="text-[10px] text-white/60">Income</p>
-              <Money usd={incomeUsd} size="sm" className="[&_*]:text-white" />
-            </div>
-            <div className="rounded-2xl bg-white/10 p-3">
-              <p className="text-[10px] text-white/60">Spent</p>
-              <Money usd={spentUsd} size="sm" className="[&_*]:text-white" />
-            </div>
-            <div className="rounded-2xl bg-white/10 p-3">
-              <p className="text-[10px] text-white/60">Saved</p>
-              <p className="mt-1 text-[13px] font-extrabold">{savingsPct}%</p>
-            </div>
-          </div>
-        </section>
 
         <div className="mt-4 grid grid-cols-4 gap-2">
           {quickActions.map(({ label, Icon, screen }) => (
