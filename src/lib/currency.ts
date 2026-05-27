@@ -7,7 +7,7 @@ export const currencyMeta: Record<CurrencyCode, { symbol: string; rate: number; 
     EUR: { symbol: "€", rate: 0.92 },
     GBP: { symbol: "£", rate: 0.79 },
     AUD: { symbol: "$", rate: 1.52 },
-    JPY: { symbol: "", rate: 159.40, suffix: "円" },
+    JPY: { symbol: "", rate: 159.4, suffix: "円" },
     CHF: { symbol: "Fr ", rate: 0.89 },
     SEK: { symbol: "kr ", rate: 10.6 },
     NOK: { symbol: "kr ", rate: 10.9 },

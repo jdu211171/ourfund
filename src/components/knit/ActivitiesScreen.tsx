@@ -1,37 +1,32 @@
-import { useState } from "react";
-import { Bell, ShoppingBag, Home, Car, Coffee } from "lucide-react";
+import { Bell, ShoppingBag } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis, ReferenceLine } from "recharts";
 import { PhoneFrame } from "./PhoneFrame";
 import { BottomNav } from "./BottomNav";
 import { BalanceHeader } from "./BalanceHeader";
 import { Money } from "./Money";
-import { useAppNavigation } from "@/lib/navigation";
+import { useAppNavigation, type ReportPeriod } from "@/lib/navigation";
+import { categoryIconMap } from "./categoryOptions";
 
-type Tab = "Week" | "Month" | "Year";
-
-const labels: Record<Tab, string[]> = {
+const labels: Record<ReportPeriod, string[]> = {
   Week: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
   Month: ["W1", "W2", "W3", "W4"],
   Year: ["Jan", "Mar", "May", "Jul", "Sep", "Nov"],
 };
 
-const tabLabels: Record<Tab, string> = {
+const tabLabels: Record<ReportPeriod, string> = {
   Week: "This week",
   Month: "This month",
   Year: "This year",
 };
 
-const categoryIcons: Record<string, typeof Home> = {
-  home: Home,
-  shopping: ShoppingBag,
-  car: Car,
-  coffee: Coffee,
-};
-
-export function ActivitiesScreen({ initial = "Month" as Tab }: { initial?: Tab } = {}) {
+export function ActivitiesScreen({
+  initial = "Month" as ReportPeriod,
+}: { initial?: ReportPeriod } = {}) {
   const {
     navigate,
     budgetMode,
+    reportPeriod,
+    setReportPeriod,
     balanceUsd,
     incomeUsd,
     spentUsd,
@@ -39,7 +34,7 @@ export function ActivitiesScreen({ initial = "Month" as Tab }: { initial?: Tab }
     categories,
     categorySpentUsd,
   } = useAppNavigation();
-  const [tab, setTab] = useState<Tab>(initial);
+  const tab = reportPeriod ?? initial;
   const expenses = activeTransactions.filter((transaction) => transaction.usd < 0);
   const chartData = labels[tab].map((label, index) => ({
     m: label,
@@ -49,7 +44,7 @@ export function ActivitiesScreen({ initial = "Month" as Tab }: { initial?: Tab }
   const categoryRows = (
     categories.length > 0
       ? categories.map((category) => ({
-          Icon: categoryIcons[category.icon] ?? ShoppingBag,
+          Icon: categoryIconMap[category.icon] ?? ShoppingBag,
           name: category.label,
           note: "Budget category",
           usd: -categorySpentUsd(category.label),
@@ -90,10 +85,10 @@ export function ActivitiesScreen({ initial = "Month" as Tab }: { initial?: Tab }
         </div>
 
         <div className="mt-4 grid grid-cols-3 rounded-full bg-[var(--muted)] p-1 text-[12px] font-semibold">
-          {(["Week", "Month", "Year"] as Tab[]).map((t) => (
+          {(["Week", "Month", "Year"] as ReportPeriod[]).map((t) => (
             <button
               key={t}
-              onClick={() => setTab(t)}
+              onClick={() => setReportPeriod(t)}
               className={`rounded-full py-2 transition ${
                 t === tab
                   ? "bg-white text-foreground shadow-[var(--shadow-soft)]"

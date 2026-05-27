@@ -4,23 +4,22 @@ import { useAppNavigation, type CurrencyCode } from "@/lib/navigation";
 import { useState } from "react";
 
 export function CreateWalletScreen() {
-  const { navigate, goBack, profile, members, currency, addWallet } = useAppNavigation();
+  const { navigate, goBack, members, currentMemberId, currency, addWallet } = useAppNavigation();
   const [name, setName] = useState("");
   const [walletType, setWalletType] = useState<"shared" | "private">("shared");
   const [walletCurrency, setWalletCurrency] = useState<CurrencyCode>(currency);
   const [memberIds, setMemberIds] = useState(() => members.slice(0, 2).map((member) => member.id));
-  const currentMemberId =
-    members.find((member) => member.email === profile.email)?.id ?? members[0]?.id ?? "me";
+  const ownerMemberId = currentMemberId ?? members[0]?.id ?? "me";
 
   const createWallet = () => {
-    const selectedMemberIds = memberIds.length > 0 ? memberIds : [currentMemberId];
+    const selectedMemberIds = memberIds.length > 0 ? memberIds : [ownerMemberId];
     addWallet({
       label: name.trim() || "New wallet",
       sub:
         walletType === "shared" ? `Shared · ${selectedMemberIds.length} members` : "Private wallet",
       type: walletType,
       currency: walletCurrency,
-      members: walletType === "shared" ? selectedMemberIds : [currentMemberId],
+      members: walletType === "shared" ? selectedMemberIds : [ownerMemberId],
       color: walletType === "shared" ? "oklch(0.55 0.24 265)" : "oklch(0.3 0.05 265)",
     });
     navigate("wallet");

@@ -4,17 +4,28 @@ import { BottomNav } from "./BottomNav";
 import { BalanceHeader } from "./BalanceHeader";
 import { Money } from "./Money";
 import { useAppNavigation } from "@/lib/navigation";
+import { useEffect } from "react";
 
 export function HomeScreen() {
   const {
     navigate,
+    budgetMode,
     household,
     activeTransactions,
     balanceUsd,
     incomeUsd,
     spentUsd,
+    currentMemberId,
+    selectedMemberId,
+    setSelectedMemberId,
     setSelectedTransactionId,
   } = useAppNavigation();
+
+  useEffect(() => {
+    if (budgetMode === "personal" && currentMemberId && selectedMemberId !== currentMemberId) {
+      setSelectedMemberId(currentMemberId);
+    }
+  }, [budgetMode, currentMemberId, selectedMemberId, setSelectedMemberId]);
 
   const currentTxns = activeTransactions.slice(0, 5).map((t) => ({
     id: t.id,

@@ -549,6 +549,30 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
         break;
       }
 
+      case "updateCategory": {
+        if (!householdId) throw new Error("No household linked");
+        const cat = await prisma.budgetCategory.findUnique({ where: { id: payload.id } });
+        if (!cat || cat.householdId !== householdId) throw new Error("Forbidden");
+        await prisma.budgetCategory.update({
+          where: { id: payload.id },
+          data: {
+            label: payload.label,
+            limitUsd: payload.limitUsd,
+            color: payload.color,
+            icon: payload.icon,
+          },
+        });
+        break;
+      }
+
+      case "deleteCategory": {
+        if (!householdId) throw new Error("No household linked");
+        const cat = await prisma.budgetCategory.findUnique({ where: { id: payload.id } });
+        if (!cat || cat.householdId !== householdId) throw new Error("Forbidden");
+        await prisma.budgetCategory.delete({ where: { id: payload.id } });
+        break;
+      }
+
       // ── Goals ──────────────────────────────────────────────────────────────
       case "addGoal": {
         if (!householdId) throw new Error("No household linked");

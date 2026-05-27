@@ -73,6 +73,7 @@ export type ScreenName =
   | "history_search";
 
 export type BudgetMode = "personal" | "family";
+export type ReportPeriod = "Week" | "Month" | "Year";
 export type CurrencyCode =
   | "UZS"
   | "USD"
@@ -214,6 +215,7 @@ export interface CurrencySettings {
 
 export interface AppSeed {
   budgetMode: BudgetMode;
+  reportPeriod: ReportPeriod;
   profile: Profile;
   household: Household | null;
   currencies: CurrencySettings;
@@ -246,6 +248,8 @@ interface NavigationContextType {
   logout: () => Promise<void>;
   budgetMode: BudgetMode;
   setBudgetMode: (mode: BudgetMode) => void;
+  reportPeriod: ReportPeriod;
+  setReportPeriod: (period: ReportPeriod) => void;
   profile: Profile;
   updateProfile: (profile: Partial<Profile>) => void;
   household: Household | null;
@@ -276,13 +280,16 @@ interface NavigationContextType {
   selectedTransactionId: string | null;
   setSelectedTransactionId: (id: string | null) => void;
   wallets: WalletAccount[];
+  activeWallets: WalletAccount[];
   addWallet: (
     wallet: Omit<WalletAccount, "id" | "startingBalanceUsd"> & { startingBalanceUsd?: number },
   ) => WalletAccount;
   walletBalanceUsd: (walletLabel: string) => number;
   categories: BudgetCategory[];
   addCategory: (category: Omit<BudgetCategory, "id">) => BudgetCategory;
+  updateCategory: (categoryId: string, updates: Partial<Omit<BudgetCategory, "id">>) => void;
   updateCategoryLimit: (categoryId: string, limitUsd: number) => void;
+  deleteCategory: (categoryId: string) => void;
   categorySpentUsd: (label: string) => number;
   goals: Goal[];
   selectedGoalId: string | null;
@@ -291,12 +298,16 @@ interface NavigationContextType {
   contributeToGoal: (goalId: string, amountUsd: number, who?: string) => void;
   withdrawFromGoal: (goalId: string, amountUsd: number, wallet: string) => void;
   members: FamilyMember[];
+  currentMemberId: string | null;
   selectedMemberId: string | null;
   setSelectedMemberId: (id: string | null) => void;
+  selectedMemberIds: string[];
+  setSelectedMemberIds: (ids: string[]) => void;
   inviteMember: (role: MemberRole) => FamilyMember;
   updateMember: (id: string, updates: Partial<FamilyMember>) => void;
   updateMemberPermission: (memberId: string, permission: string, on: boolean) => void;
   removeMember: (id: string) => void;
+  removeMembers: (ids: string[]) => void;
   scheduleAllowance: (memberId: string, amountUsd: number, day: string) => void;
   linkedBanks: LinkedBank[];
   selectedBankName: string;
@@ -359,9 +370,12 @@ function categoryAliases(label: string) {
   if (lower.includes("rent") || lower.includes("util")) return ["rent", "housing", "electric"];
   if (lower.includes("dining")) return ["dining", "coffee", "restaurant"];
   if (lower.includes("transport")) return ["transport", "gas", "car"];
-  if (lower.includes("health") || lower.includes("medical")) return ["health", "medical", "pharmacy", "doctor", "dental"];
-  if (lower.includes("entertainment") || lower.includes("fun")) return ["entertainment", "movie", "games", "fun", "concert"];
-  if (lower.includes("education") || lower.includes("school")) return ["education", "school", "tuition", "books", "course"];
+  if (lower.includes("health") || lower.includes("medical"))
+    return ["health", "medical", "pharmacy", "doctor", "dental"];
+  if (lower.includes("entertainment") || lower.includes("fun"))
+    return ["entertainment", "movie", "games", "fun", "concert"];
+  if (lower.includes("education") || lower.includes("school"))
+    return ["education", "school", "tuition", "books", "course"];
   return [lower];
 }
 
@@ -372,6 +386,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [signupHouseholdMode, setSignupHouseholdMode] = useState<"new" | "join">("new");
   const [budgetMode, setBudgetMode] = useState<BudgetMode>(initialSeed.budgetMode);
+  const [reportPeriod, setReportPeriod] = useState<ReportPeriod>(initialSeed.reportPeriod);
   const [profile, setProfile] = useState<Profile>(initialSeed.profile);
   const [household, setHousehold] = useState<Household | null>(initialSeed.household);
   const [pendingInvite, setPendingInvite] = useState<HouseholdInvite | null>(null);
@@ -387,6 +402,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(
     initialSeed.selectedMemberId,
   );
+  const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
   const [selectedBankName, setSelectedBankName] = useState(initialSeed.selectedBankName);
   const [linkedBanks, setLinkedBanks] = useState<LinkedBank[]>(initialSeed.linkedBanks);
   const [notifications, setNotifications] = useState<AppNotification[]>(initialSeed.notifications);
@@ -406,6 +422,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
 
   const applySeed = useCallback((seed: AppSeed) => {
     setBudgetMode(seed.budgetMode);
+    setReportPeriod(seed.reportPeriod);
     setProfile(seed.profile);
     setHousehold(seed.household);
     setCurrencies(seed.currencies);
@@ -418,6 +435,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     setSelectedTransactionId(null);
     setSelectedGoalId(seed.selectedGoalId);
     setSelectedMemberId(seed.selectedMemberId);
+    setSelectedMemberIds([]);
     setSelectedBankName(seed.selectedBankName);
     setLinkedBanks(seed.linkedBanks);
     setNotifications(seed.notifications);
@@ -452,6 +470,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
 
     persistAppSeed({
       budgetMode,
+      reportPeriod,
       profile,
       household,
       currencies,
@@ -474,6 +493,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     });
   }, [
     budgetMode,
+    reportPeriod,
     profile,
     household,
     currencies,
@@ -529,6 +549,25 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const currentMemberId = useMemo(() => {
+    const profileEmail = profile.email.trim().toLowerCase();
+    return (
+      members.find((member) => member.email?.trim().toLowerCase() === profileEmail)?.id ??
+      members.find((member) => member.name === profile.name)?.id ??
+      members[0]?.id ??
+      null
+    );
+  }, [members, profile.email, profile.name]);
+
+  useEffect(() => {
+    if (!currentMemberId) return;
+    if (!selectedMemberId || !members.some((member) => member.id === selectedMemberId)) {
+      setSelectedMemberId(currentMemberId);
+    }
+  }, [currentMemberId, members, selectedMemberId]);
+
+  const viewedMemberId = selectedMemberId ?? currentMemberId;
+
   const currency = currencies[budgetMode];
 
   const setCurrencyForMode = (mode: BudgetMode, nextCurrency: CurrencyCode) => {
@@ -541,9 +580,9 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
 
         if (mode === "personal" && wallet.type === "private") {
           const ownsWallet =
-            selectedMemberId === null ||
+            viewedMemberId === null ||
             wallet.members.length === 0 ||
-            wallet.members.includes(selectedMemberId);
+            wallet.members.includes(viewedMemberId);
           return ownsWallet ? { ...wallet, currency: nextCurrency } : wallet;
         }
 
@@ -561,10 +600,14 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
 
   const activeWallets = useMemo(
     () =>
-      wallets.filter((w) =>
-        budgetMode === "personal" ? w.type === "private" : w.type !== "private",
-      ),
-    [budgetMode, wallets],
+      wallets.filter((wallet) => {
+        if (budgetMode === "family") return wallet.type !== "private";
+        if (wallet.type !== "private") return false;
+        return (
+          !viewedMemberId || wallet.members.length === 0 || wallet.members.includes(viewedMemberId)
+        );
+      }),
+    [budgetMode, viewedMemberId, wallets],
   );
 
   const activeTransactions = useMemo(() => {
@@ -868,11 +911,23 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     return newCategory;
   };
 
-  const updateCategoryLimit = (categoryId: string, limitUsd: number) => {
-    setCategories((prev) => prev.map((c) => (c.id === categoryId ? { ...c, limitUsd } : c)));
-    // Persist to DB in background
+  const updateCategory = (categoryId: string, updates: Partial<Omit<BudgetCategory, "id">>) => {
+    setCategories((prev) =>
+      prev.map((category) => (category.id === categoryId ? { ...category, ...updates } : category)),
+    );
     syncMutationServerFn({
-      data: { type: "updateCategoryLimit", data: { id: categoryId, limitUsd } },
+      data: { type: "updateCategory", data: { id: categoryId, ...updates } },
+    }).catch(console.error);
+  };
+
+  const updateCategoryLimit = (categoryId: string, limitUsd: number) => {
+    updateCategory(categoryId, { limitUsd });
+  };
+
+  const deleteCategory = (categoryId: string) => {
+    setCategories((prev) => prev.filter((category) => category.id !== categoryId));
+    syncMutationServerFn({
+      data: { type: "deleteCategory", data: { id: categoryId } },
     }).catch(console.error);
   };
 
@@ -1045,8 +1100,20 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   const removeMember = (id: string) => {
     setMembers((prev) => prev.filter((m) => m.id !== id));
     if (selectedMemberId === id) setSelectedMemberId(null);
+    setSelectedMemberIds((prev) => prev.filter((memberId) => memberId !== id));
     // Persist to DB in background
     syncMutationServerFn({ data: { type: "removeMember", data: { id } } }).catch(console.error);
+  };
+
+  const removeMembers = (ids: string[]) => {
+    const uniqueIds = Array.from(new Set(ids));
+    if (uniqueIds.length === 0) return;
+    setMembers((prev) => prev.filter((member) => !uniqueIds.includes(member.id)));
+    if (selectedMemberId && uniqueIds.includes(selectedMemberId)) setSelectedMemberId(null);
+    setSelectedMemberIds([]);
+    uniqueIds.forEach((id) => {
+      syncMutationServerFn({ data: { type: "removeMember", data: { id } } }).catch(console.error);
+    });
   };
 
   const scheduleAllowance = (memberId: string, amountUsd: number, day: string) => {
@@ -1219,7 +1286,6 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
           role: data.household.role as MemberRole,
           createdAt: data.household.createdAt,
         });
-        setBudgetMode("family");
         setCurrencyTarget("family");
       } else {
         setHousehold(null);
@@ -1233,7 +1299,12 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         admin: m.role === "Admin",
       }));
       setMembers(nextMembers);
-      setSelectedMemberId(nextMembers[0]?.id ?? null);
+      const currentMember =
+        nextMembers.find(
+          (member) => member.email?.trim().toLowerCase() === data.user.email.trim().toLowerCase(),
+        ) ?? nextMembers[0];
+      setSelectedMemberId(currentMember?.id ?? null);
+      setSelectedMemberIds([]);
 
       setWallets(
         data.wallets.map((w) => ({
@@ -1274,6 +1345,8 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         logout,
         budgetMode,
         setBudgetMode,
+        reportPeriod,
+        setReportPeriod,
         profile,
         updateProfile,
         household,
@@ -1300,11 +1373,14 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         selectedTransactionId,
         setSelectedTransactionId,
         wallets,
+        activeWallets,
         addWallet,
         walletBalanceUsd,
         categories,
         addCategory,
+        updateCategory,
         updateCategoryLimit,
+        deleteCategory,
         categorySpentUsd,
         goals,
         selectedGoalId,
@@ -1313,12 +1389,16 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         contributeToGoal,
         withdrawFromGoal,
         members,
+        currentMemberId,
         selectedMemberId,
         setSelectedMemberId,
+        selectedMemberIds,
+        setSelectedMemberIds,
         inviteMember,
         updateMember,
         updateMemberPermission,
         removeMember,
+        removeMembers,
         scheduleAllowance,
         linkedBanks,
         selectedBankName,

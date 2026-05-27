@@ -1,24 +1,22 @@
 import { useState } from "react";
-import { ArrowLeft, ChevronDown, ShoppingBag, Users, Delete } from "lucide-react";
+import { ArrowLeft, ShoppingBag, Users, Delete } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { Money } from "./Money";
 import { currencyValueToUsd } from "@/lib/currency";
 import { useAppNavigation } from "@/lib/navigation";
+import { OptionSelect } from "./OptionSelect";
 
 const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "del"] as const;
 
 export function SendMoneyScreen() {
-  const { navigate, goBack, budgetMode, currency, profile, addTransaction, categories, wallets } =
+  const { navigate, goBack, currency, profile, addTransaction, categories, activeWallets } =
     useAppNavigation();
   const [amount, setAmount] = useState("0");
   const amountUsd = currencyValueToUsd(parseFloat(amount || "0"), currency);
-  const activeWallets = wallets.filter((w) =>
-    budgetMode === "personal" ? w.type === "private" : w.type !== "private",
-  );
-  const [categoryIdx, setCategoryIdx] = useState(0);
-  const [walletIdx, setWalletIdx] = useState(0);
-  const category = categories[categoryIdx] ?? categories[0];
-  const wallet = activeWallets[walletIdx] ?? activeWallets[0];
+  const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "");
+  const [walletId, setWalletId] = useState(activeWallets[0]?.id ?? "");
+  const category = categories.find((item) => item.id === categoryId) ?? categories[0];
+  const wallet = activeWallets.find((item) => item.id === walletId) ?? activeWallets[0];
   const hasWallet = Boolean(wallet);
 
   const handleKeyPress = (k: (typeof keys)[number]) => {
@@ -62,43 +60,31 @@ export function SendMoneyScreen() {
         </div>
 
         <div className="mt-7 space-y-3">
-          <div className="flex items-center gap-3 rounded-2xl bg-white px-3 py-3 shadow-[var(--shadow-soft)]">
-            <div className="grid h-11 w-11 place-items-center rounded-xl bg-[oklch(0.95_0.05_265)] text-[var(--primary)]">
-              <ShoppingBag className="h-5 w-5" strokeWidth={2.25} />
-            </div>
-            <div className="flex-1 leading-tight">
-              <p className="text-[11px] text-muted-foreground">Category</p>
-              <p className="text-[14px] font-bold text-foreground">
-                {category?.label ?? "Expense"}
-              </p>
-            </div>
-            <button
-              onClick={() => setCategoryIdx((prev) => (prev + 1) % Math.max(categories.length, 1))}
-              className="grid h-7 w-7 place-items-center rounded-full text-muted-foreground"
-              aria-label="Change category"
-            >
-              <ChevronDown className="h-4 w-4" strokeWidth={2.5} />
-            </button>
-          </div>
+          <OptionSelect
+            label="Category"
+            value={category?.id ?? ""}
+            options={categories.map((item) => ({
+              value: item.id,
+              label: item.label,
+              description: `$${item.limitUsd.toLocaleString()} monthly limit`,
+            }))}
+            onChange={setCategoryId}
+            emptyLabel="No categories yet"
+            icon={<ShoppingBag className="h-5 w-5" strokeWidth={2.25} />}
+          />
 
-          <div className="flex items-center gap-3 rounded-2xl bg-white px-3 py-3 shadow-[var(--shadow-soft)]">
-            <div className="grid h-11 w-11 place-items-center rounded-xl bg-[oklch(0.95_0.05_265)] text-[var(--primary)]">
-              <Users className="h-5 w-5" strokeWidth={2.25} />
-            </div>
-            <div className="flex-1 leading-tight">
-              <p className="text-[11px] text-muted-foreground">Paid from</p>
-              <p className="text-[14px] font-bold text-foreground">
-                {wallet?.label ?? "Create a wallet first"}
-              </p>
-            </div>
-            <button
-              onClick={() => setWalletIdx((prev) => (prev + 1) % Math.max(activeWallets.length, 1))}
-              className="grid h-7 w-7 place-items-center rounded-full text-muted-foreground"
-              aria-label="Change wallet"
-            >
-              <ChevronDown className="h-4 w-4" strokeWidth={2.5} />
-            </button>
-          </div>
+          <OptionSelect
+            label="Paid from"
+            value={wallet?.id ?? ""}
+            options={activeWallets.map((item) => ({
+              value: item.id,
+              label: item.label,
+              description: item.sub,
+            }))}
+            onChange={setWalletId}
+            emptyLabel="Create a wallet first"
+            icon={<Users className="h-5 w-5" strokeWidth={2.25} />}
+          />
         </div>
 
         <div className="mt-6 grid flex-1 grid-cols-3 place-items-center gap-y-1">

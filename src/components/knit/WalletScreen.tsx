@@ -1,32 +1,29 @@
-import { Plus, Users, Lock, ShoppingBag, Coffee, Car, Home, PiggyBank } from "lucide-react";
+import { Plus, Users, Lock, ShoppingBag, PiggyBank } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { BottomNav } from "./BottomNav";
 import { BalanceHeader } from "./BalanceHeader";
 import { Money } from "./Money";
 import { useAppNavigation } from "@/lib/navigation";
-
-const categoryIcons: Record<string, typeof Home> = {
-  home: Home,
-  shopping: ShoppingBag,
-  car: Car,
-  coffee: Coffee,
-};
+import { categoryIconMap } from "./categoryOptions";
 
 export function WalletScreen() {
   const {
     navigate,
     budgetMode,
-    wallets,
+    activeWallets,
     walletBalanceUsd,
     categories,
     categorySpentUsd,
     balanceUsd,
     incomeUsd,
     spentUsd,
+    members,
+    selectedMemberId,
   } = useAppNavigation();
+  const viewedMember = members.find((member) => member.id === selectedMemberId);
 
   // Sort wallets so the active budget wallet is on top
-  const sortedWallets = [...wallets].sort((a, b) => {
+  const sortedWallets = [...activeWallets].sort((a, b) => {
     if (budgetMode === "personal") {
       return a.type === "private" ? -1 : 1;
     } else {
@@ -60,18 +57,15 @@ export function WalletScreen() {
         </div>
 
         <p className="mt-5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-          Your wallets
+          {budgetMode === "personal" && viewedMember
+            ? `${viewedMember.name.split(" ")[0]}'s private wallets`
+            : "Household wallets"}
         </p>
         <div className="mt-2 space-y-2">
           {sortedWallets.map((w) => (
             <div
               key={w.label}
-              className={`flex items-center gap-3 rounded-2xl bg-white px-3 py-3 shadow-[var(--shadow-soft)] transition-opacity duration-300 ${
-                (budgetMode === "personal" && w.type !== "private") ||
-                (budgetMode === "family" && w.type === "private")
-                  ? "opacity-60"
-                  : "opacity-100"
-              }`}
+              className="flex items-center gap-3 rounded-2xl bg-white px-3 py-3 shadow-[var(--shadow-soft)]"
             >
               <div
                 className="grid h-11 w-11 place-items-center rounded-2xl"
@@ -92,6 +86,17 @@ export function WalletScreen() {
               <Money usd={walletBalanceUsd(w.label)} size="sm" />
             </div>
           ))}
+          {sortedWallets.length === 0 && (
+            <button
+              onClick={() => navigate("new_wallet")}
+              className="w-full rounded-2xl bg-white px-4 py-5 text-center shadow-[var(--shadow-soft)]"
+            >
+              <p className="text-[13px] font-bold text-foreground">No wallet here yet</p>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Create a wallet for this view.
+              </p>
+            </button>
+          )}
         </div>
 
         <button
@@ -106,7 +111,7 @@ export function WalletScreen() {
 
         <div className="mt-3 space-y-2.5">
           {categories.map((category) => {
-            const Icon = categoryIcons[category.icon] ?? ShoppingBag;
+            const Icon = categoryIconMap[category.icon] ?? ShoppingBag;
             const usd = categorySpentUsd(category.label);
             const pct =
               category.limitUsd > 0

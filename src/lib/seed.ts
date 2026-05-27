@@ -155,10 +155,28 @@ const demoCategories: BudgetCategory[] = [
   { id: "dining", label: "Dining", limitUsd: 200, color: "oklch(0.65 0.22 30)", icon: "coffee" },
   { id: "health", label: "Health", limitUsd: 250, color: "oklch(0.65 0.22 0)", icon: "heart" },
   { id: "gifts", label: "Gifts", limitUsd: 150, color: "oklch(0.65 0.22 320)", icon: "gift" },
-  { id: "utilities", label: "Bills & Utilities", limitUsd: 300, color: "oklch(0.75 0.15 80)", icon: "utilities" },
-  { id: "entertainment", label: "Entertainment", limitUsd: 150, color: "oklch(0.6 0.2 300)", icon: "entertainment" },
+  {
+    id: "utilities",
+    label: "Bills & Utilities",
+    limitUsd: 300,
+    color: "oklch(0.75 0.15 80)",
+    icon: "utilities",
+  },
+  {
+    id: "entertainment",
+    label: "Entertainment",
+    limitUsd: 150,
+    color: "oklch(0.6 0.2 300)",
+    icon: "entertainment",
+  },
   { id: "travel", label: "Travel", limitUsd: 250, color: "oklch(0.5 0.15 220)", icon: "travel" },
-  { id: "education", label: "Education", limitUsd: 100, color: "oklch(0.7 0.1 100)", icon: "education" },
+  {
+    id: "education",
+    label: "Education",
+    limitUsd: 100,
+    color: "oklch(0.7 0.1 100)",
+    icon: "education",
+  },
 ];
 
 const demoMembers: FamilyMember[] = [
@@ -372,6 +390,7 @@ const STORAGE_KEY = "ourfund.appSeed.v1";
 
 const emptySeed: AppSeed = {
   budgetMode: "personal",
+  reportPeriod: "Month",
   profile: { name: "", email: "", phone: "", pronouns: "", initials: "" },
   household: null,
   currencies: { personal: "USD", family: "UZS" },
@@ -395,6 +414,7 @@ const emptySeed: AppSeed = {
 
 const demoSeed: AppSeed = {
   budgetMode: "personal",
+  reportPeriod: "Month",
   profile: {
     name: "James Morgan",
     email: "james@morgan.family",
@@ -416,7 +436,7 @@ const demoSeed: AppSeed = {
   goals: demoGoals,
   members: demoMembers,
   selectedGoalId: "vacation",
-  selectedMemberId: "emma",
+  selectedMemberId: "james",
   selectedBankName: "Chase",
   linkedBanks: [],
   notifications: demoNotifications,
@@ -453,6 +473,7 @@ function normalizeSeed(seed: Partial<AppSeed>): AppSeed {
   return {
     ...cloneSeed(emptySeed),
     ...seed,
+    reportPeriod: seed.reportPeriod ?? emptySeed.reportPeriod,
     profile: { ...emptySeed.profile, ...seed.profile },
     currencies: { ...emptySeed.currencies, ...seed.currencies },
     notificationPrefs: { ...emptySeed.notificationPrefs, ...seed.notificationPrefs },

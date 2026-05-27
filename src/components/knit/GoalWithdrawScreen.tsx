@@ -2,13 +2,15 @@ import { ArrowLeft, Plane, ArrowDownLeft } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { useState } from "react";
 import { useAppNavigation } from "@/lib/navigation";
+import { OptionSelect } from "./OptionSelect";
 
 export function GoalWithdrawScreen() {
-  const { navigate, goBack, goals, selectedGoalId, wallets, withdrawFromGoal } = useAppNavigation();
+  const { navigate, goBack, goals, selectedGoalId, activeWallets, withdrawFromGoal } =
+    useAppNavigation();
   const goal = goals.find((g) => g.id === selectedGoalId) ?? goals[0];
   const [amount, setAmount] = useState("0");
-  const [selectedWallet, setSelectedWallet] = useState(0);
-  const wallet = wallets[selectedWallet] ?? wallets[0];
+  const [selectedWalletId, setSelectedWalletId] = useState(activeWallets[0]?.id ?? "");
+  const wallet = activeWallets.find((item) => item.id === selectedWalletId) ?? activeWallets[0];
 
   if (!goal) {
     return (
@@ -94,32 +96,19 @@ export function GoalWithdrawScreen() {
         <p className="mt-5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
           Send to
         </p>
-        <div className="mt-2 space-y-1.5">
-          {wallets.map((w, i) => (
-            <button
-              key={w.id}
-              onClick={() => setSelectedWallet(i)}
-              className={`flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left text-[12px] font-semibold active:scale-95 transition-all cursor-pointer ${
-                i === selectedWallet
-                  ? "bg-[var(--primary)] text-white shadow-md"
-                  : "bg-white text-foreground shadow-[var(--shadow-soft)] hover:bg-slate-50"
-              }`}
-            >
-              <span>{w.label}</span>
-              <ArrowDownLeft className="h-4 w-4" strokeWidth={2.25} />
-            </button>
-          ))}
-          {wallets.length === 0 && (
-            <button
-              onClick={() => navigate("new_wallet")}
-              className="w-full rounded-2xl bg-white px-4 py-4 text-center shadow-[var(--shadow-soft)]"
-            >
-              <p className="text-[13px] font-bold text-foreground">No wallet available</p>
-              <p className="mt-1 text-[11px] text-muted-foreground">
-                Create a wallet to receive withdrawals.
-              </p>
-            </button>
-          )}
+        <div className="mt-2">
+          <OptionSelect
+            label="Wallet"
+            value={wallet?.id ?? ""}
+            options={activeWallets.map((item) => ({
+              value: item.id,
+              label: item.label,
+              description: item.sub,
+            }))}
+            onChange={setSelectedWalletId}
+            emptyLabel="No wallet available"
+            icon={<ArrowDownLeft className="h-5 w-5" strokeWidth={2.25} />}
+          />
         </div>
 
         <p className="mt-4 text-[11px] text-muted-foreground">

@@ -1,17 +1,8 @@
-import { ArrowLeft, ShoppingBag, Coffee, Car, Heart, Gift, Plane, Book, Music } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { useState } from "react";
 import { useAppNavigation } from "@/lib/navigation";
-
-const icons = [ShoppingBag, Coffee, Car, Heart, Gift, Plane, Book, Music];
-const colors = [
-  "oklch(0.55 0.24 265)",
-  "oklch(0.65 0.22 200)",
-  "oklch(0.7 0.18 150)",
-  "oklch(0.65 0.22 30)",
-  "oklch(0.65 0.22 0)",
-  "oklch(0.65 0.22 320)",
-];
+import { categoryColorOptions, categoryIconOptions } from "./categoryOptions";
 
 export function AddCategoryScreen() {
   const { navigate, goBack, addCategory } = useAppNavigation();
@@ -20,7 +11,9 @@ export function AddCategoryScreen() {
   const [selectedColorIdx, setSelectedColorIdx] = useState(0);
   const [limit, setLimit] = useState("0");
 
-  const ActiveIcon = icons[selectedIconIdx];
+  const selectedIcon = categoryIconOptions[selectedIconIdx] ?? categoryIconOptions[0];
+  const ActiveIcon = selectedIcon.Icon;
+  const selectedColor = categoryColorOptions[selectedColorIdx] ?? categoryColorOptions[0];
 
   return (
     <PhoneFrame>
@@ -40,7 +33,7 @@ export function AddCategoryScreen() {
         <div className="mt-5 flex flex-col items-center">
           <div
             className="grid h-16 w-16 place-items-center rounded-2xl text-white shadow-[var(--shadow-tile)] transition-all duration-300"
-            style={{ background: colors[selectedColorIdx] }}
+            style={{ background: selectedColor }}
           >
             <ActiveIcon className="h-6 w-6 animate-pulse" strokeWidth={2.25} />
           </div>
@@ -57,9 +50,9 @@ export function AddCategoryScreen() {
           Icon
         </p>
         <div className="mt-2 grid grid-cols-4 gap-2">
-          {icons.map((I, i) => (
+          {categoryIconOptions.map(({ key, Icon }, i) => (
             <button
-              key={i}
+              key={key}
               onClick={() => setSelectedIconIdx(i)}
               className={`grid h-12 place-items-center rounded-2xl transition-all cursor-pointer ${
                 i === selectedIconIdx
@@ -75,8 +68,8 @@ export function AddCategoryScreen() {
         <p className="mt-4 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
           Color
         </p>
-        <div className="mt-2 flex gap-2">
-          {colors.map((c, i) => (
+        <div className="mt-2 grid grid-cols-6 gap-2">
+          {categoryColorOptions.map((c, i) => (
             <button
               key={c}
               onClick={() => setSelectedColorIdx(i)}
@@ -114,11 +107,8 @@ export function AddCategoryScreen() {
             addCategory({
               label: title.trim() || "New category",
               limitUsd: parseFloat(limit || "0"),
-              color: colors[selectedColorIdx],
-              icon:
-                ["shopping", "coffee", "car", "heart", "gift", "plane", "book", "music"][
-                  selectedIconIdx
-                ] ?? "shopping",
+              color: selectedColor,
+              icon: selectedIcon.key,
             });
             navigate("categories");
           }}

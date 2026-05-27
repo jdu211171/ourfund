@@ -2,19 +2,21 @@ import { ArrowLeft, ArrowDown, Users, Lock } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { useState } from "react";
 import { useAppNavigation } from "@/lib/navigation";
+import { OptionSelect } from "./OptionSelect";
 
 const presets = ["$50", "$100", "$250", "$500"];
 
 export function TransferFundsScreen() {
-  const { navigate, goBack, wallets, walletBalanceUsd, recordTransfer } = useAppNavigation();
+  const { navigate, goBack, activeWallets, walletBalanceUsd, recordTransfer } = useAppNavigation();
   const [amount, setAmount] = useState("0");
   const [note, setNote] = useState("");
-  const [fromIdx, setFromIdx] = useState(0);
-  const [toIdx, setToIdx] = useState(1);
-  const fromWallet = wallets[fromIdx] ?? wallets[0];
-  const toWallet = wallets[toIdx] ?? wallets[1] ?? wallets[0];
+  const [fromId, setFromId] = useState(activeWallets[0]?.id ?? "");
+  const [toId, setToId] = useState(activeWallets[1]?.id ?? activeWallets[0]?.id ?? "");
+  const fromWallet = activeWallets.find((wallet) => wallet.id === fromId) ?? activeWallets[0];
+  const toWallet =
+    activeWallets.find((wallet) => wallet.id === toId) ?? activeWallets[1] ?? activeWallets[0];
   const canTransfer = Boolean(
-    wallets.length >= 2 && fromWallet && toWallet && fromWallet.id !== toWallet.id,
+    activeWallets.length >= 2 && fromWallet && toWallet && fromWallet.id !== toWallet.id,
   );
 
   return (
@@ -47,40 +49,37 @@ export function TransferFundsScreen() {
         </div>
 
         <div className="mt-6 relative space-y-2">
-          <button
-            onClick={() => setFromIdx((prev) => (prev + 1) % Math.max(wallets.length, 1))}
-            className="rounded-2xl p-4 text-white shadow-[var(--shadow-soft)]"
-            style={{
-              background: "linear-gradient(135deg, oklch(0.45 0.24 265), oklch(0.65 0.22 265))",
-            }}
-          >
-            <p className="text-[10px] uppercase tracking-widest text-white/60">From</p>
-            <div className="mt-1 flex items-center gap-2">
-              <Users className="h-4 w-4" strokeWidth={2.25} />
-              <p className="text-[15px] font-bold">{fromWallet?.label ?? "Create a wallet"}</p>
-            </div>
-            <p className="mt-1 text-[11px] text-white/70">
-              Balance · ${walletBalanceUsd(fromWallet?.label ?? "").toLocaleString()}
-            </p>
-          </button>
+          <OptionSelect
+            label="From"
+            value={fromWallet?.id ?? ""}
+            options={activeWallets.map((wallet) => ({
+              value: wallet.id,
+              label: wallet.label,
+              description: `Balance · $${walletBalanceUsd(wallet.label).toLocaleString()}`,
+              disabled: wallet.id === toWallet?.id,
+            }))}
+            onChange={setFromId}
+            emptyLabel="Create a wallet"
+            icon={<Users className="h-5 w-5" strokeWidth={2.25} />}
+          />
 
           <div className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 grid h-10 w-10 place-items-center rounded-full bg-white text-[var(--primary)] shadow-[var(--shadow-soft)]">
             <ArrowDown className="h-4 w-4" strokeWidth={2.5} />
           </div>
 
-          <button
-            onClick={() => setToIdx((prev) => (prev + 1) % Math.max(wallets.length, 1))}
-            className="rounded-2xl bg-white p-4 text-left shadow-[var(--shadow-soft)]"
-          >
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">To</p>
-            <div className="mt-1 flex items-center gap-2 text-foreground">
-              <Lock className="h-4 w-4" strokeWidth={2.25} />
-              <p className="text-[15px] font-bold">{toWallet?.label ?? "Create another wallet"}</p>
-            </div>
-            <p className="mt-1 text-[11px] text-muted-foreground">
-              {toWallet?.sub ?? "Transfers need two wallets"}
-            </p>
-          </button>
+          <OptionSelect
+            label="To"
+            value={toWallet?.id ?? ""}
+            options={activeWallets.map((wallet) => ({
+              value: wallet.id,
+              label: wallet.label,
+              description: wallet.sub,
+              disabled: wallet.id === fromWallet?.id,
+            }))}
+            onChange={setToId}
+            emptyLabel="Create another wallet"
+            icon={<Lock className="h-5 w-5" strokeWidth={2.25} />}
+          />
         </div>
 
         <div className="mt-5 flex gap-2">

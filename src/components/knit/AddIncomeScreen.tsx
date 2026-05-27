@@ -1,23 +1,21 @@
 import { useState } from "react";
-import { ArrowLeft, ChevronDown, Briefcase, Users, Delete } from "lucide-react";
+import { ArrowLeft, Briefcase, Users, Delete } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { Money } from "./Money";
 import { currencyValueToUsd } from "@/lib/currency";
 import { useAppNavigation } from "@/lib/navigation";
+import { OptionSelect } from "./OptionSelect";
 
 const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "del"] as const;
 
 export function AddIncomeScreen() {
-  const { navigate, goBack, budgetMode, currency, addTransaction, wallets } = useAppNavigation();
+  const { navigate, goBack, currency, addTransaction, activeWallets } = useAppNavigation();
   const [amount, setAmount] = useState("0");
   const amountUsd = currencyValueToUsd(parseFloat(amount || "0"), currency);
   const sources = ["Monthly salary", "Freelance invoice", "Allowance", "Gift"];
-  const activeWallets = wallets.filter((w) =>
-    budgetMode === "personal" ? w.type === "private" : w.type !== "private",
-  );
-  const [sourceIdx, setSourceIdx] = useState(0);
-  const [walletIdx, setWalletIdx] = useState(0);
-  const wallet = activeWallets[walletIdx] ?? activeWallets[0];
+  const [source, setSource] = useState(sources[0]);
+  const [walletId, setWalletId] = useState(activeWallets[0]?.id ?? "");
+  const wallet = activeWallets.find((item) => item.id === walletId) ?? activeWallets[0];
   const hasWallet = Boolean(wallet);
 
   const handleKeyPress = (k: (typeof keys)[number]) => {
@@ -61,41 +59,26 @@ export function AddIncomeScreen() {
         </div>
 
         <div className="mt-7 space-y-3">
-          <div className="flex items-center gap-3 rounded-2xl bg-white px-3 py-3 shadow-[var(--shadow-soft)]">
-            <div className="grid h-11 w-11 place-items-center rounded-xl bg-[oklch(0.95_0.05_265)] text-[var(--primary)]">
-              <Briefcase className="h-5 w-5" strokeWidth={2.25} />
-            </div>
-            <div className="flex-1 leading-tight">
-              <p className="text-[11px] text-muted-foreground">Source</p>
-              <p className="text-[14px] font-bold text-foreground">{sources[sourceIdx]}</p>
-            </div>
-            <button
-              onClick={() => setSourceIdx((prev) => (prev + 1) % sources.length)}
-              className="grid h-7 w-7 place-items-center rounded-full text-muted-foreground"
-              aria-label="Change source"
-            >
-              <ChevronDown className="h-4 w-4" strokeWidth={2.5} />
-            </button>
-          </div>
+          <OptionSelect
+            label="Source"
+            value={source}
+            options={sources.map((item) => ({ value: item, label: item }))}
+            onChange={setSource}
+            icon={<Briefcase className="h-5 w-5" strokeWidth={2.25} />}
+          />
 
-          <div className="flex items-center gap-3 rounded-2xl bg-white px-3 py-3 shadow-[var(--shadow-soft)]">
-            <div className="grid h-11 w-11 place-items-center rounded-xl bg-[oklch(0.95_0.05_265)] text-[var(--primary)]">
-              <Users className="h-5 w-5" strokeWidth={2.25} />
-            </div>
-            <div className="flex-1 leading-tight">
-              <p className="text-[11px] text-muted-foreground">Deposit to</p>
-              <p className="text-[14px] font-bold text-foreground">
-                {wallet?.label ?? "Create a wallet first"}
-              </p>
-            </div>
-            <button
-              onClick={() => setWalletIdx((prev) => (prev + 1) % Math.max(activeWallets.length, 1))}
-              className="grid h-7 w-7 place-items-center rounded-full text-muted-foreground"
-              aria-label="Change wallet"
-            >
-              <ChevronDown className="h-4 w-4" strokeWidth={2.5} />
-            </button>
-          </div>
+          <OptionSelect
+            label="Deposit to"
+            value={wallet?.id ?? ""}
+            options={activeWallets.map((item) => ({
+              value: item.id,
+              label: item.label,
+              description: item.sub,
+            }))}
+            onChange={setWalletId}
+            emptyLabel="Create a wallet first"
+            icon={<Users className="h-5 w-5" strokeWidth={2.25} />}
+          />
         </div>
 
         <div className="mt-6 grid flex-1 grid-cols-3 place-items-center gap-y-1">
@@ -125,7 +108,7 @@ export function AddIncomeScreen() {
             }
             if (amountUsd > 0) {
               addTransaction({
-                name: sources[sourceIdx],
+                name: source,
                 who: "Income · today",
                 usd: amountUsd,
                 category: "Salary",

@@ -1,31 +1,47 @@
-import { 
-  ArrowLeft, ShoppingBag, Coffee, Car, Home, Heart, Gift, Plus, Minus, 
-  Utensils, Zap, Film, Activity, Plane, GraduationCap 
-} from "lucide-react";
+import { ArrowLeft, Check, Plus, Save, ShoppingBag, Trash2 } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAppNavigation } from "@/lib/navigation";
-
-const icons: Record<string, typeof Home> = {
-  home: Home,
-  shopping: ShoppingBag,
-  car: Car,
-  coffee: Coffee,
-  heart: Heart,
-  gift: Gift,
-  food: Utensils,
-  utilities: Zap,
-  entertainment: Film,
-  health: Activity,
-  travel: Plane,
-  education: GraduationCap,
-};
+import { categoryColorOptions, categoryIconMap, categoryIconOptions } from "./categoryOptions";
 
 export function CategoryEditorScreen() {
-  const { navigate, goBack, categories, updateCategoryLimit, categorySpentUsd } =
+  const { navigate, goBack, categories, updateCategory, deleteCategory, categorySpentUsd } =
     useAppNavigation();
   const [selectedId, setSelectedId] = useState(categories[1]?.id ?? categories[0]?.id ?? "");
   const selected = categories.find((c) => c.id === selectedId) ?? categories[0];
+  const [draftLabel, setDraftLabel] = useState(selected?.label ?? "");
+  const [draftLimit, setDraftLimit] = useState(String(selected?.limitUsd ?? 0));
+  const [draftIcon, setDraftIcon] = useState(selected?.icon ?? categoryIconOptions[0].key);
+  const [draftColor, setDraftColor] = useState(selected?.color ?? categoryColorOptions[0]);
+  const SelectedIcon = categoryIconMap[draftIcon] ?? ShoppingBag;
+
+  useEffect(() => {
+    setDraftLabel(selected?.label ?? "");
+    setDraftLimit(String(selected?.limitUsd ?? 0));
+    setDraftIcon(selected?.icon ?? categoryIconOptions[0].key);
+    setDraftColor(selected?.color ?? categoryColorOptions[0]);
+  }, [selected]);
+
+  const saveSelected = () => {
+    if (!selected) return;
+    updateCategory(selected.id, {
+      label: draftLabel.trim() || "Category",
+      limitUsd: parseFloat(draftLimit || "0"),
+      icon: draftIcon,
+      color: draftColor,
+    });
+  };
+
+  const deleteSelected = () => {
+    if (!selected) return;
+    const nextCategory = categories.find((category) => category.id !== selected.id);
+    deleteCategory(selected.id);
+    setSelectedId(nextCategory?.id ?? "");
+  };
+
+  useEffect(() => {
+    if (!selectedId && categories[0]) setSelectedId(categories[0].id);
+  }, [categories, selectedId]);
 
   return (
     <PhoneFrame>
@@ -50,35 +66,88 @@ export function CategoryEditorScreen() {
 
         <div className="mt-5 rounded-2xl bg-white p-4 shadow-[var(--shadow-soft)]">
           <div className="flex items-center gap-3">
-            <div className="grid h-11 w-11 place-items-center rounded-xl bg-[oklch(0.95_0.04_265)] text-[var(--primary)]">
-              <ShoppingBag className="h-5 w-5" strokeWidth={2.25} />
+            <div
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white"
+              style={{ background: draftColor }}
+            >
+              <SelectedIcon className="h-5 w-5" strokeWidth={2.25} />
             </div>
             <div className="flex-1 leading-tight">
-              <p className="text-[13px] font-bold text-foreground">
-                {selected?.label ?? "Category"}
-              </p>
+              <input
+                type="text"
+                value={draftLabel}
+                onChange={(event) => setDraftLabel(event.target.value)}
+                className="w-full bg-transparent text-[13px] font-bold text-foreground outline-none"
+                placeholder="Category"
+              />
               <p className="text-[10px] text-muted-foreground">Monthly limit</p>
             </div>
           </div>
-          <div className="mt-3 flex items-center justify-between rounded-full bg-[var(--muted)] px-3 py-2">
+
+          <div className="mt-3 flex items-center gap-2 rounded-2xl bg-[var(--muted)] px-3 py-2">
+            <span className="text-[16px] font-bold text-muted-foreground">$</span>
+            <input
+              type="text"
+              value={draftLimit}
+              onChange={(event) => setDraftLimit(event.target.value.replace(/[^0-9.]/g, ""))}
+              className="w-24 bg-transparent text-[20px] font-extrabold tracking-tight text-foreground outline-none"
+            />
+            <span className="ml-auto text-[11px] font-semibold text-muted-foreground">
+              per month
+            </span>
+          </div>
+
+          <div className="mt-3 grid max-h-24 grid-cols-6 gap-1.5 overflow-y-auto pr-1">
+            {categoryIconOptions.map(({ key, Icon }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setDraftIcon(key)}
+                className={`grid h-8 place-items-center rounded-xl ${
+                  draftIcon === key ? "bg-[var(--primary)] text-white" : "bg-[var(--muted)]"
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5" strokeWidth={2.25} />
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-3 grid grid-cols-6 gap-1.5">
+            {categoryColorOptions.map((color) => (
+              <button
+                key={color}
+                type="button"
+                onClick={() => setDraftColor(color)}
+                className={`grid h-7 place-items-center rounded-full ${
+                  draftColor === color ? "ring-2 ring-foreground ring-offset-2" : ""
+                }`}
+                style={{ background: color }}
+              >
+                {draftColor === color && (
+                  <Check className="h-3.5 w-3.5 text-white" strokeWidth={3} />
+                )}
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-4 grid grid-cols-[1fr_auto] gap-2">
             <button
-              onClick={() =>
-                selected && updateCategoryLimit(selected.id, Math.max(0, selected.limitUsd - 50))
-              }
-              className="grid h-7 w-7 place-items-center rounded-full bg-white text-foreground shadow-[var(--shadow-soft)] active:scale-90 transition-all cursor-pointer hover:bg-slate-50"
-              aria-label="Decrease"
+              type="button"
+              onClick={saveSelected}
+              disabled={!selected}
+              className="flex items-center justify-center gap-2 rounded-full bg-[var(--primary)] py-3 text-[12px] font-semibold text-white disabled:opacity-50"
             >
-              <Minus className="h-3 w-3" strokeWidth={3} />
+              <Save className="h-4 w-4" strokeWidth={2.25} />
+              Save changes
             </button>
-            <p className="text-[18px] font-extrabold tracking-tight text-foreground">
-              ${selected?.limitUsd ?? 0}
-            </p>
             <button
-              onClick={() => selected && updateCategoryLimit(selected.id, selected.limitUsd + 50)}
-              className="grid h-7 w-7 place-items-center rounded-full bg-[var(--primary)] text-white active:scale-90 transition-all cursor-pointer hover:bg-[oklch(0.5_0.2_265)]"
-              aria-label="Increase"
+              type="button"
+              onClick={deleteSelected}
+              disabled={!selected}
+              className="grid h-11 w-11 place-items-center rounded-full bg-[oklch(0.96_0.04_30)] text-[var(--danger)] disabled:opacity-50"
+              aria-label="Delete category"
             >
-              <Plus className="h-3 w-3" strokeWidth={3} />
+              <Trash2 className="h-4 w-4" strokeWidth={2.25} />
             </button>
           </div>
         </div>
@@ -87,9 +156,9 @@ export function CategoryEditorScreen() {
           All categories
         </p>
 
-        <div className="mt-2 flex-1 space-y-2 overflow-hidden">
+        <div className="mt-2 flex-1 space-y-2 overflow-y-auto pr-1">
           {categories.map((c) => {
-            const Icon = icons[c.icon] ?? ShoppingBag;
+            const Icon = categoryIconMap[c.icon] ?? ShoppingBag;
             const spent = categorySpentUsd(c.label);
             const pct =
               c.limitUsd > 0 ? Math.min(100, Math.round((spent / c.limitUsd) * 100)) : 100;
@@ -97,7 +166,9 @@ export function CategoryEditorScreen() {
               <button
                 key={c.id}
                 onClick={() => setSelectedId(c.id)}
-                className="w-full rounded-2xl bg-white px-3 py-2.5 text-left shadow-[var(--shadow-soft)]"
+                className={`w-full rounded-2xl px-3 py-2.5 text-left shadow-[var(--shadow-soft)] ${
+                  selectedId === c.id ? "bg-[var(--accent)]" : "bg-white"
+                }`}
               >
                 <div className="flex items-center gap-3">
                   <div
