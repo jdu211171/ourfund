@@ -1,0 +1,2 @@
+ALTER TABLE "User" ADD COLUMN "personalCurrency" TEXT NOT NULL DEFAULT 'USD';
+ALTER TABLE "Household" ADD COLUMN "familyCurrency" TEXT NOT NULL DEFAULT 'UZS';

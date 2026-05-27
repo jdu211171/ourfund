@@ -1,19 +1,5 @@
 import { useOptionalAppNavigation, type CurrencyCode } from "@/lib/navigation";
-
-const currencyMeta: Record<CurrencyCode, { symbol: string; rate: number; suffix?: string }> = {
-  UZS: { symbol: "", rate: 12600, suffix: " so'm" },
-  USD: { symbol: "$", rate: 1 },
-  EUR: { symbol: "€", rate: 0.92 },
-  GBP: { symbol: "£", rate: 0.79 },
-  AUD: { symbol: "$", rate: 1.52 },
-  JPY: { symbol: "￥", rate: 157, suffix: "円" },
-  CHF: { symbol: "Fr ", rate: 0.89 },
-  SEK: { symbol: "kr ", rate: 10.6 },
-  NOK: { symbol: "kr ", rate: 10.9 },
-  DKK: { symbol: "kr ", rate: 6.86 },
-  MXN: { symbol: "$", rate: 17.1 },
-  BRL: { symbol: "R$", rate: 5.15 },
-};
+import { currencyMeta, usdToCurrencyValue } from "@/lib/currency";
 
 const sizeMap = {
   sm: { primary: "text-[13px]", sub: "text-[9px]" },
@@ -32,7 +18,7 @@ function fmtUSD(usd: number) {
 
 function fmtCurrency(usd: number, currency: CurrencyCode) {
   const meta = currencyMeta[currency];
-  const value = Math.abs(usd) * meta.rate;
+  const value = usdToCurrencyValue(usd, currency);
   const formatted = new Intl.NumberFormat("en-US", {
     minimumFractionDigits: currency === "UZS" || currency === "JPY" ? 0 : 2,
     maximumFractionDigits: currency === "UZS" || currency === "JPY" ? 0 : 2,

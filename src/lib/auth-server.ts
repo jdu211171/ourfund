@@ -19,7 +19,7 @@ export function parseCookies(cookieHeader: string | null | undefined): Record<st
     cookieHeader.split(";").map((c) => {
       const parts = c.split("=");
       return [parts[0].trim(), parts.slice(1).join("=").trim()];
-    })
+    }),
   );
 }
 
@@ -46,12 +46,14 @@ export async function verifyGoogleToken(idToken: string) {
 export function createSessionCookie(userId: string) {
   const token = jwt.sign({ userId }, JWT_SECRET, { expiresIn: "90d" });
   const maxAge = 90 * 24 * 60 * 60; // 90 days in seconds
-  const cookieValue = `${COOKIE_NAME}=${token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${maxAge}`;
+  const secureFlag = process.env.NODE_ENV === "production" ? "; Secure" : "";
+  const cookieValue = `${COOKIE_NAME}=${token}; HttpOnly${secureFlag}; SameSite=Lax; Path=/; Max-Age=${maxAge}`;
   setResponseHeader("Set-Cookie", cookieValue);
 }
 
 export function clearSessionCookie() {
-  const cookieValue = `${COOKIE_NAME}=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+  const secureFlag = process.env.NODE_ENV === "production" ? "; Secure" : "";
+  const cookieValue = `${COOKIE_NAME}=; HttpOnly${secureFlag}; SameSite=Lax; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
   setResponseHeader("Set-Cookie", cookieValue);
 }
 

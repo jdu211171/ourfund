@@ -1,4 +1,4 @@
-import { ArrowLeft, Share2, Download, Edit3, ShoppingBag } from "lucide-react";
+import { ArrowLeft, Share2, Download, Edit3, ArrowDownLeft } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { Money } from "./Money";
 import { useAppNavigation } from "@/lib/navigation";
@@ -77,13 +77,8 @@ export function TransactionDetailScreen() {
         </header>
 
         <div className="mt-6 flex flex-col items-center">
-          <div
-            className="grid h-16 w-16 place-items-center rounded-2xl text-white shadow-[var(--shadow-tile)]"
-            style={{
-              background: "linear-gradient(135deg, oklch(0.65 0.22 265), oklch(0.45 0.24 265))",
-            }}
-          >
-            <ShoppingBag className="h-6 w-6" strokeWidth={2.25} />
+          <div className="grid h-16 w-16 place-items-center rounded-2xl bg-[oklch(0.96_0.05_25)] text-[var(--danger)] shadow-[var(--shadow-tile)]">
+            <ArrowDownLeft className="h-6 w-6 rotate-180" strokeWidth={2.25} />
           </div>
           <p className="mt-3 text-[12px] text-muted-foreground">
             {txn.category} · {txn.name}

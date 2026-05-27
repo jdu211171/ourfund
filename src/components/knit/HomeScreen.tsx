@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Bell, Briefcase, Receipt } from "lucide-react";
+import { Bell, ArrowDownLeft } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { BottomNav } from "./BottomNav";
 import { BalanceHeader } from "./BalanceHeader";
@@ -19,7 +18,6 @@ export function HomeScreen() {
 
   const currentTxns = activeTransactions.slice(0, 5).map((t) => ({
     id: t.id,
-    Icon: t.usd < 0 ? Receipt : Briefcase,
     name: t.name,
     who: t.who,
     usd: t.usd,
@@ -66,8 +64,17 @@ export function HomeScreen() {
               }}
               className="flex items-center gap-3 rounded-2xl bg-white px-3 py-2.5 shadow-[var(--shadow-soft)] cursor-pointer hover:bg-slate-50 transition-colors"
             >
-              <div className="grid h-10 w-10 place-items-center rounded-xl bg-[var(--muted)] text-muted-foreground">
-                <t.Icon className="h-4 w-4" strokeWidth={2.25} />
+              <div
+                className={`grid h-10 w-10 place-items-center rounded-xl ${
+                  t.usd < 0
+                    ? "bg-[oklch(0.96_0.05_25)] text-[var(--danger)]"
+                    : "bg-[oklch(0.95_0.08_150)] text-[var(--success)]"
+                }`}
+              >
+                <ArrowDownLeft
+                  className={`h-4 w-4 ${t.usd < 0 ? "rotate-180" : ""}`}
+                  strokeWidth={2.25}
+                />
               </div>
               <div className="flex-1 leading-tight">
                 <p className="text-[12px] font-bold text-foreground">{t.name}</p>

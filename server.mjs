@@ -13,8 +13,7 @@ const port = Number(process.env.PORT) || 3002;
 createServer(async (req, res) => {
   try {
     const url = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
-    const body =
-      req.method === "GET" || req.method === "HEAD" ? undefined : Readable.toWeb(req);
+    const body = req.method === "GET" || req.method === "HEAD" ? undefined : Readable.toWeb(req);
     const request = new Request(url, {
       method: req.method,
       headers: req.headers,

@@ -2,14 +2,16 @@ import { useState } from "react";
 import { ArrowLeft, ChevronDown, ShoppingBag, Users, Delete } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { Money } from "./Money";
+import { currencyValueToUsd } from "@/lib/currency";
 import { useAppNavigation } from "@/lib/navigation";
 
 const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "del"] as const;
 
 export function SendMoneyScreen() {
-  const { navigate, goBack, budgetMode, profile, addTransaction, categories, wallets } =
+  const { navigate, goBack, budgetMode, currency, profile, addTransaction, categories, wallets } =
     useAppNavigation();
   const [amount, setAmount] = useState("0");
+  const amountUsd = currencyValueToUsd(parseFloat(amount || "0"), currency);
   const activeWallets = wallets.filter((w) =>
     budgetMode === "personal" ? w.type === "private" : w.type !== "private",
   );
@@ -55,7 +57,7 @@ export function SendMoneyScreen() {
         <div className="mt-8 text-center">
           <p className="text-[11px] uppercase tracking-widest text-muted-foreground">Amount</p>
           <div className="mt-2 inline-block">
-            <Money usd={-parseFloat(amount || "0")} size="xl" tone="danger" signed />
+            <Money usd={-amountUsd} size="xl" tone="danger" signed />
           </div>
         </div>
 
@@ -124,12 +126,11 @@ export function SendMoneyScreen() {
               navigate("new_wallet");
               return;
             }
-            const val = parseFloat(amount || "0");
-            if (val > 0) {
+            if (amountUsd > 0) {
               addTransaction({
                 name: category?.label ? `${category.label} expense` : "Expense",
                 who: `${profile.name.split(" ").filter(Boolean)[0] ?? "You"} · today`,
-                usd: -val,
+                usd: -amountUsd,
                 category: category?.label ?? "Uncategorized",
                 wallet: wallet.label,
                 date: "today",

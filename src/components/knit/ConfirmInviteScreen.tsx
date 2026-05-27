@@ -1,12 +1,32 @@
 import { ArrowLeft, Users, Check } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { useAppNavigation } from "@/lib/navigation";
+import { useState } from "react";
 
 export function ConfirmInviteScreen() {
-  const { navigate, goBack, pendingInvite, acceptInvite } = useAppNavigation();
+  const { navigate, goBack, pendingInvite, acceptInvite, isAuthenticated, setSignupHouseholdMode } =
+    useAppNavigation();
+  const [loading, setLoading] = useState(false);
   const role = pendingInvite?.role ?? "Adult";
   const householdName = pendingInvite?.householdName ?? "No invite selected";
   const memberCount = pendingInvite?.memberCount ?? 0;
+
+  const join = async () => {
+    if (!pendingInvite) return;
+    if (!isAuthenticated) {
+      setSignupHouseholdMode("join");
+      navigate("signup");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await acceptInvite();
+      navigate("home");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <PhoneFrame>
@@ -73,14 +93,12 @@ export function ConfirmInviteScreen() {
 
         <div className="mt-auto space-y-2">
           <button
-            onClick={() => {
-              acceptInvite();
-              navigate("home");
-            }}
-            disabled={!pendingInvite}
+            onClick={join}
+            disabled={!pendingInvite || loading}
             className="flex w-full items-center justify-center gap-2 rounded-full bg-[oklch(0.18_0.04_265)] py-4 text-[15px] font-semibold text-white active:scale-95 transition-transform cursor-pointer disabled:opacity-50"
           >
-            <Check className="h-4 w-4" strokeWidth={3} /> Accept & join
+            <Check className="h-4 w-4" strokeWidth={3} />{" "}
+            {loading ? "Joining..." : isAuthenticated ? "Accept & join" : "Create account to join"}
           </button>
           <button
             onClick={goBack}

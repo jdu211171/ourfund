@@ -1,16 +1,33 @@
 import { useState } from "react";
-import { ArrowLeft, ShoppingBag, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowDownLeft, Trash2 } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { useAppNavigation } from "@/lib/navigation";
+import {
+  currencyInputLabel,
+  currencyMeta,
+  currencyValueToUsd,
+  usdToCurrencyValue,
+} from "@/lib/currency";
 
 export function EditTransactionScreen() {
-  const { navigate, goBack, selectedTransactionId, transactions, categories, updateTransaction } =
-    useAppNavigation();
+  const {
+    navigate,
+    goBack,
+    selectedTransactionId,
+    transactions,
+    categories,
+    currency,
+    updateTransaction,
+  } = useAppNavigation();
 
   // Find dynamic transaction
   const txn = transactions.find((t) => t.id === selectedTransactionId) || transactions[0];
 
-  const [amount, setAmount] = useState(Math.abs(txn?.usd ?? 0).toString());
+  const [amount, setAmount] = useState(
+    usdToCurrencyValue(Math.abs(txn?.usd ?? 0), currency).toFixed(
+      currency === "UZS" || currency === "JPY" ? 0 : 2,
+    ),
+  );
   const [description, setDescription] = useState(txn?.name ?? "");
   const [category, setCategory] = useState(
     txn?.category ?? categories[0]?.label ?? "Uncategorized",
@@ -22,6 +39,7 @@ export function EditTransactionScreen() {
       category,
     ]),
   ].filter(Boolean);
+  const amountPrefix = currencyMeta[currency].symbol || currency;
 
   if (!txn) {
     return (
@@ -55,10 +73,11 @@ export function EditTransactionScreen() {
   const handleSave = () => {
     const val = parseFloat(amount || "0");
     if (val <= 0) return;
+    const usdValue = currencyValueToUsd(val, currency);
 
     updateTransaction(txn.id, {
       name: description,
-      usd: txn.usd < 0 ? -val : val,
+      usd: txn.usd < 0 ? -usdValue : usdValue,
       category,
     });
 
@@ -88,22 +107,28 @@ export function EditTransactionScreen() {
 
         <div className="mt-6 flex flex-col items-center">
           <div
-            className="grid h-14 w-14 place-items-center rounded-2xl text-white shadow-[var(--shadow-tile)]"
-            style={{
-              background: "linear-gradient(135deg, oklch(0.65 0.22 265), oklch(0.45 0.24 265))",
-            }}
+            className={`grid h-14 w-14 place-items-center rounded-2xl shadow-[var(--shadow-tile)] ${
+              txn.usd < 0
+                ? "bg-[oklch(0.96_0.05_25)] text-[var(--danger)]"
+                : "bg-[oklch(0.95_0.08_150)] text-[var(--success)]"
+            }`}
           >
-            <ShoppingBag className="h-6 w-6" strokeWidth={2.25} />
+            <ArrowDownLeft
+              className={`h-6 w-6 ${txn.usd < 0 ? "rotate-180" : ""}`}
+              strokeWidth={2.25}
+            />
           </div>
           <div className="mt-3 flex items-center justify-center gap-1">
-            <span className="text-[20px] font-bold text-muted-foreground">$</span>
+            <span className="text-[20px] font-bold text-muted-foreground">{amountPrefix}</span>
             <input
               value={amount}
               onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
               className="w-40 bg-transparent text-center text-[34px] font-extrabold tracking-tight text-foreground outline-none border-b border-transparent focus:border-[var(--primary)]"
             />
           </div>
-          <p className="text-[11px] uppercase tracking-widest text-muted-foreground">USD</p>
+          <p className="text-[11px] uppercase tracking-widest text-muted-foreground">
+            {currencyInputLabel(currency)}
+          </p>
         </div>
 
         <div className="mt-5 space-y-2">

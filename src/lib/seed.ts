@@ -364,6 +364,8 @@ const notificationPrefs = {
   "Bill reminders": true,
 };
 
+const STORAGE_KEY = "ourfund.appSeed.v1";
+
 const emptySeed: AppSeed = {
   budgetMode: "personal",
   profile: { name: "", email: "", phone: "", pronouns: "", initials: "" },
@@ -439,7 +441,47 @@ function cloneSeed(seed: AppSeed): AppSeed {
   return structuredClone(seed);
 }
 
+function canUseStorage() {
+  return typeof window !== "undefined" && Boolean(window.localStorage);
+}
+
+function normalizeSeed(seed: Partial<AppSeed>): AppSeed {
+  return {
+    ...cloneSeed(emptySeed),
+    ...seed,
+    profile: { ...emptySeed.profile, ...seed.profile },
+    currencies: { ...emptySeed.currencies, ...seed.currencies },
+    notificationPrefs: { ...emptySeed.notificationPrefs, ...seed.notificationPrefs },
+    historyFilters: { ...emptySeed.historyFilters, ...seed.historyFilters },
+  };
+}
+
+export function getEmptySeed(): AppSeed {
+  return cloneSeed(emptySeed);
+}
+
+export function persistAppSeed(seed: AppSeed) {
+  if (!canUseStorage()) return;
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(seed));
+}
+
+export function clearPersistedAppSeed() {
+  if (!canUseStorage()) return;
+  window.localStorage.removeItem(STORAGE_KEY);
+}
+
 export function getInitialSeed(): AppSeed {
+  if (canUseStorage()) {
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      try {
+        return normalizeSeed(JSON.parse(stored) as Partial<AppSeed>);
+      } catch {
+        window.localStorage.removeItem(STORAGE_KEY);
+      }
+    }
+  }
+
   const forceEmpty = import.meta.env.VITE_EMPTY_DATA === "true";
   return cloneSeed(!forceEmpty && import.meta.env.DEV ? demoSeed : emptySeed);
 }

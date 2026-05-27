@@ -1,19 +1,36 @@
 import { ArrowLeft, User, Mail, Lock, Check, Users } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { useAppNavigation } from "@/lib/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { signUpWithEmailServerFn } from "@/lib/server-fns";
 
+function errorMessage(err: unknown, fallback: string) {
+  return err instanceof Error ? err.message : fallback;
+}
+
 export function SignUpScreen() {
-  const { navigate, goBack, updateProfile, createHousehold, syncDataAfterLogin } = useAppNavigation();
+  const {
+    navigate,
+    goBack,
+    updateProfile,
+    createHousehold,
+    syncDataAfterLogin,
+    signupHouseholdMode,
+    setSignupHouseholdMode,
+    pendingInvite,
+  } = useAppNavigation();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [householdName, setHouseholdName] = useState("");
-  const [householdMode, setHouseholdMode] = useState<"new" | "join">("new");
+  const [householdMode, setHouseholdMode] = useState<"new" | "join">(signupHouseholdMode);
   const [accepted, setAccepted] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setHouseholdMode(signupHouseholdMode);
+  }, [signupHouseholdMode]);
 
   const createAccount = async () => {
     setError("");
@@ -22,14 +39,14 @@ export function SignUpScreen() {
       await signUpWithEmailServerFn({ data: { email, name, passwordHash: password } });
       await syncDataAfterLogin();
       if (householdMode === "new") {
-        createHousehold({ name, email, householdName });
+        await createHousehold({ name, email, householdName });
         navigate("home");
       } else {
         updateProfile({ name, email });
-        navigate("join_family");
+        navigate(pendingInvite ? "confirm_invite" : "join_family");
       }
-    } catch (err: any) {
-      setError(err.message || "Registration failed. Please try again.");
+    } catch (err: unknown) {
+      setError(errorMessage(err, "Registration failed. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -90,14 +107,20 @@ export function SignUpScreen() {
         </p>
         <div className="mt-2 grid grid-cols-2 gap-2">
           <button
-            onClick={() => setHouseholdMode("new")}
+            onClick={() => {
+              setHouseholdMode("new");
+              setSignupHouseholdMode("new");
+            }}
             className={`rounded-2xl p-3 text-left shadow-[var(--shadow-soft)] ${householdMode === "new" ? "bg-[var(--accent)]" : "bg-white"}`}
           >
             <span className="text-[12px] font-bold text-foreground">Start new</span>
             <p className="text-[10px] text-muted-foreground">Create a household</p>
           </button>
           <button
-            onClick={() => setHouseholdMode("join")}
+            onClick={() => {
+              setHouseholdMode("join");
+              setSignupHouseholdMode("join");
+            }}
             className={`rounded-2xl p-3 text-left shadow-[var(--shadow-soft)] active:scale-95 transition-transform cursor-pointer ${householdMode === "join" ? "bg-[var(--accent)]" : "bg-white"}`}
           >
             <span className="text-[12px] font-bold text-foreground">Join existing</span>

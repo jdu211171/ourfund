@@ -1,6 +1,28 @@
-import { createContext, useContext, useMemo, useState, useCallback, ReactNode } from "react";
-import { defaultHistoryFilters, defaultPermissions, getInitialSeed, knownInvites } from "./seed";
-import { getAppDataServerFn, syncMutationServerFn } from "./server-fns";
+import {
+  createContext,
+  useContext,
+  useMemo,
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+  ReactNode,
+} from "react";
+import {
+  clearPersistedAppSeed,
+  defaultHistoryFilters,
+  defaultPermissions,
+  getEmptySeed,
+  getInitialSeed,
+  knownInvites,
+  persistAppSeed,
+} from "./seed";
+import {
+  getAppDataServerFn,
+  logoutServerFn,
+  syncMutationServerFn,
+  validateInviteCodeServerFn,
+} from "./server-fns";
 
 export type ScreenName =
   | "onboarding"
@@ -218,15 +240,23 @@ interface NavigationContextType {
   history: ScreenName[];
   navigate: (screen: ScreenName) => void;
   goBack: () => void;
+  isAuthenticated: boolean;
+  signupHouseholdMode: "new" | "join";
+  setSignupHouseholdMode: (mode: "new" | "join") => void;
+  logout: () => Promise<void>;
   budgetMode: BudgetMode;
   setBudgetMode: (mode: BudgetMode) => void;
   profile: Profile;
   updateProfile: (profile: Partial<Profile>) => void;
   household: Household | null;
   pendingInvite: HouseholdInvite | null;
-  createHousehold: (input: { name: string; email: string; householdName: string }) => Household;
+  createHousehold: (input: {
+    name: string;
+    email: string;
+    householdName: string;
+  }) => Promise<Household>;
   validateInviteCode: (code: string) => Promise<HouseholdInvite | null>;
-  acceptInvite: () => void;
+  acceptInvite: () => Promise<void>;
   syncDataAfterLogin: () => Promise<void>;
   currency: CurrencyCode;
   setCurrency: (currency: CurrencyCode) => void;
@@ -336,6 +366,8 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   const initialSeed = useMemo(() => getInitialSeed(), []);
   const [currentScreen, setCurrentScreen] = useState<ScreenName>("onboarding");
   const [history, setHistory] = useState<ScreenName[]>([]);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [signupHouseholdMode, setSignupHouseholdMode] = useState<"new" | "join">("new");
   const [budgetMode, setBudgetMode] = useState<BudgetMode>(initialSeed.budgetMode);
   const [profile, setProfile] = useState<Profile>(initialSeed.profile);
   const [household, setHousehold] = useState<Household | null>(initialSeed.household);
@@ -367,6 +399,98 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   );
   const [passcode, setPasscodeState] = useState(initialSeed.passcode);
   const [faceIdEnabled, setFaceIdEnabledState] = useState(initialSeed.faceIdEnabled);
+  const didMountRef = useRef(false);
+
+  const applySeed = useCallback((seed: AppSeed) => {
+    setBudgetMode(seed.budgetMode);
+    setProfile(seed.profile);
+    setHousehold(seed.household);
+    setCurrencies(seed.currencies);
+    setCurrencyTarget(seed.budgetMode);
+    setTransactions(seed.transactions);
+    setWallets(seed.wallets);
+    setCategories(seed.categories);
+    setGoals(seed.goals);
+    setMembers(seed.members);
+    setSelectedTransactionId(null);
+    setSelectedGoalId(seed.selectedGoalId);
+    setSelectedMemberId(seed.selectedMemberId);
+    setSelectedBankName(seed.selectedBankName);
+    setLinkedBanks(seed.linkedBanks);
+    setNotifications(seed.notifications);
+    setNotificationPrefs(seed.notificationPrefs);
+    setRecurringIncome(seed.recurringIncome);
+    setSubscriptions(seed.subscriptions);
+    setHistoryFilterState(seed.historyFilters);
+    setPasscodeState(seed.passcode);
+    setFaceIdEnabledState(seed.faceIdEnabled);
+  }, []);
+
+  const logout = useCallback(async () => {
+    try {
+      await logoutServerFn();
+    } catch {
+      // Local-only sessions can still be cleared client-side.
+    }
+    clearPersistedAppSeed();
+    applySeed(getEmptySeed());
+    setIsAuthenticated(false);
+    setPendingInvite(null);
+    setSignupHouseholdMode("new");
+    setHistory([]);
+    setCurrentScreen("onboarding");
+  }, [applySeed]);
+
+  useEffect(() => {
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    }
+
+    persistAppSeed({
+      budgetMode,
+      profile,
+      household,
+      currencies,
+      transactions,
+      wallets,
+      categories,
+      goals,
+      members,
+      selectedGoalId,
+      selectedMemberId,
+      selectedBankName,
+      linkedBanks,
+      notifications,
+      notificationPrefs,
+      recurringIncome,
+      subscriptions,
+      historyFilters,
+      passcode,
+      faceIdEnabled,
+    });
+  }, [
+    budgetMode,
+    profile,
+    household,
+    currencies,
+    transactions,
+    wallets,
+    categories,
+    goals,
+    members,
+    selectedGoalId,
+    selectedMemberId,
+    selectedBankName,
+    linkedBanks,
+    notifications,
+    notificationPrefs,
+    recurringIncome,
+    subscriptions,
+    historyFilters,
+    passcode,
+    faceIdEnabled,
+  ]);
 
   const setPasscode = (newPasscode: string) => {
     setPasscodeState(newPasscode);
@@ -406,6 +530,26 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
 
   const setCurrencyForMode = (mode: BudgetMode, nextCurrency: CurrencyCode) => {
     setCurrencies((prev) => ({ ...prev, [mode]: nextCurrency }));
+    setWallets((prev) =>
+      prev.map((wallet) => {
+        if (mode === "family" && wallet.type !== "private") {
+          return { ...wallet, currency: nextCurrency };
+        }
+
+        if (mode === "personal" && wallet.type === "private") {
+          const ownsWallet =
+            selectedMemberId === null ||
+            wallet.members.length === 0 ||
+            wallet.members.includes(selectedMemberId);
+          return ownsWallet ? { ...wallet, currency: nextCurrency } : wallet;
+        }
+
+        return wallet;
+      }),
+    );
+    syncMutationServerFn({
+      data: { type: "setCurrencyForMode", data: { mode, currency: nextCurrency } },
+    }).catch(console.error);
   };
 
   const setCurrency = (nextCurrency: CurrencyCode) => {
@@ -479,7 +623,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     setSelectedGoalId(null);
   };
 
-  const createHousehold = (input: { name: string; email: string; householdName: string }) => {
+  const createHousehold = async (input: { name: string; email: string; householdName: string }) => {
     const cleanName = input.name.trim() || "You";
     const cleanEmail = input.email.trim();
     const cleanHouseholdName = input.householdName.trim() || `${firstName(cleanName)}'s Household`;
@@ -516,13 +660,23 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     setBudgetMode("family");
     setCurrencyTarget("family");
 
-    // Persist to DB (creates household, member, and wallets in DB)
-    syncMutationServerFn({
-      data: {
-        type: "createHousehold",
-        data: { name: cleanName, householdName: cleanHouseholdName, initials: initialsFor(cleanName) },
-      },
-    }).catch(console.error);
+    try {
+      await syncMutationServerFn({
+        data: {
+          type: "createHousehold",
+          data: {
+            name: cleanName,
+            householdName: cleanHouseholdName,
+            initials: initialsFor(cleanName),
+            personalCurrency: currencies.personal,
+            familyCurrency: currencies.family,
+          },
+        },
+      });
+      await syncDataAfterLogin();
+    } catch (err) {
+      console.info("Household saved locally until sign-in is available:", err);
+    }
 
     return nextHousehold;
   };
@@ -550,9 +704,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     let dbInvite: HouseholdInvite | null = null;
     if (!currentInvite && !seededInvite) {
       try {
-        const result = await syncMutationServerFn({
-          data: { type: "validateInviteCode", data: { code: normalized } },
-        });
+        const result = await validateInviteCodeServerFn({ data: { code: normalized } });
         dbInvite = result as HouseholdInvite | null;
       } catch {
         // ignore lookup errors — treat as invalid code
@@ -564,7 +716,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     return invite;
   };
 
-  const acceptInvite = () => {
+  const acceptInvite = async () => {
     if (!pendingInvite) return;
 
     const cleanName = profile.name.trim() || "You";
@@ -613,18 +765,23 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     setBudgetMode("family");
     setCurrencyTarget("family");
 
-    // Persist to DB — joins the user to the household and creates a personal wallet
-    syncMutationServerFn({
-      data: {
-        type: "acceptInvite",
+    try {
+      await syncMutationServerFn({
         data: {
-          code: pendingInvite.code,
-          name: cleanName,
-          role: pendingInvite.role,
-          initials: initialsFor(cleanName),
+          type: "acceptInvite",
+          data: {
+            code: pendingInvite.code,
+            name: cleanName,
+            role: pendingInvite.role,
+            initials: initialsFor(cleanName),
+            personalCurrency: currencies.personal,
+          },
         },
-      },
-    }).catch(console.error);
+      });
+      await syncDataAfterLogin();
+    } catch (err) {
+      console.info("Invite accepted locally until sign-in is available:", err);
+    }
   };
 
   const addTransaction = (txn: Omit<Transaction, "id">) => {
@@ -640,7 +797,9 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     // Persist to DB in background
     const current = transactions.find((t) => t.id === id);
     if (current) {
-      syncMutationServerFn({ data: { type: "updateTransaction", data: { ...current, ...updatedFields } } }).catch(console.error);
+      syncMutationServerFn({
+        data: { type: "updateTransaction", data: { ...current, ...updatedFields } },
+      }).catch(console.error);
     }
   };
 
@@ -648,7 +807,9 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     setTransactions((prev) => prev.filter((t) => t.id !== id));
     setSelectedTransactionId(null);
     // Persist to DB in background
-    syncMutationServerFn({ data: { type: "deleteTransaction", data: { id } } }).catch(console.error);
+    syncMutationServerFn({ data: { type: "deleteTransaction", data: { id } } }).catch(
+      console.error,
+    );
   };
 
   const recordTransfer = (
@@ -764,7 +925,12 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     if (goalToUpdate) {
       const updatedSaved = Math.min(goalToUpdate.targetUsd, goalToUpdate.savedUsd + amountUsd);
       const updatedHistory = [contribution, ...goalToUpdate.history];
-      syncMutationServerFn({ data: { type: "updateGoalSavings", data: { id: goalId, savedUsd: updatedSaved, history: updatedHistory } } }).catch(console.error);
+      syncMutationServerFn({
+        data: {
+          type: "updateGoalSavings",
+          data: { id: goalId, savedUsd: updatedSaved, history: updatedHistory },
+        },
+      }).catch(console.error);
     }
     addTransaction({
       name: `Goal contribution · ${goals.find((g) => g.id === goalId)?.title ?? "Goal"}`,
@@ -863,7 +1029,11 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
       syncMutationServerFn({
         data: {
           type: "updateMember",
-          data: { ...current, permissions: { ...current.permissions, [permission]: on }, id: memberId },
+          data: {
+            ...current,
+            permissions: { ...current.permissions, [permission]: on },
+            id: memberId,
+          },
         },
       }).catch(console.error);
     }
@@ -936,18 +1106,26 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
       ...prev,
     ]);
     // Persist bank connection and wallet to DB in background
-    syncMutationServerFn({ data: { type: "connectSelectedBank", data: bank } }).catch(console.error);
-    syncMutationServerFn({ data: { type: "addWallet", data: connectedWallet } }).catch(console.error);
+    syncMutationServerFn({ data: { type: "connectSelectedBank", data: bank } }).catch(
+      console.error,
+    );
+    syncMutationServerFn({ data: { type: "addWallet", data: connectedWallet } }).catch(
+      console.error,
+    );
   };
 
   const markAllNotificationsRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    syncMutationServerFn({ data: { type: "markAllNotificationsRead", data: {} } }).catch(console.error);
+    syncMutationServerFn({ data: { type: "markAllNotificationsRead", data: {} } }).catch(
+      console.error,
+    );
   };
 
   const markNotificationRead = (id: string) => {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
-    syncMutationServerFn({ data: { type: "markNotificationRead", data: { id } } }).catch(console.error);
+    syncMutationServerFn({ data: { type: "markNotificationRead", data: { id } } }).catch(
+      console.error,
+    );
   };
 
   const toggleNotificationPref = (key: string) => {
@@ -1007,7 +1185,13 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   const syncDataAfterLogin = useCallback(async () => {
     try {
       const data = await getAppDataServerFn();
-      if (!data || !data.isAuthenticated) return;
+      if (!data || !data.isAuthenticated) {
+        setIsAuthenticated(false);
+        return;
+      }
+
+      setIsAuthenticated(true);
+      setCurrentScreen((screen) => (screen === "onboarding" ? "home" : screen));
 
       setProfile({
         name: data.user.name,
@@ -1017,6 +1201,13 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         initials: data.user.initials,
       });
 
+      setCurrencies({
+        personal: (data.currencies?.personal ?? "USD") as CurrencyCode,
+        family: (data.currencies?.family ?? "UZS") as CurrencyCode,
+      });
+      setPasscodeState(data.user.passcode ?? "");
+      setFaceIdEnabledState(data.user.faceIdEnabled);
+
       if (data.household) {
         setHousehold({
           id: data.household.id,
@@ -1025,47 +1216,47 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
           role: data.household.role as MemberRole,
           createdAt: data.household.createdAt,
         });
+        setBudgetMode("family");
+        setCurrencyTarget("family");
+      } else {
+        setHousehold(null);
+        setBudgetMode("personal");
+        setCurrencyTarget("personal");
       }
 
-      if (data.members.length > 0) {
-        setMembers(
-          data.members.map((m) => ({
-            ...m,
-            role: m.role as MemberRole,
-            admin: m.role === "Admin",
-          }))
-        );
-      }
+      const nextMembers = data.members.map((m) => ({
+        ...m,
+        role: m.role as MemberRole,
+        admin: m.role === "Admin",
+      }));
+      setMembers(nextMembers);
+      setSelectedMemberId(nextMembers[0]?.id ?? null);
 
-      if (data.wallets.length > 0) {
-        setWallets(
-          data.wallets.map((w) => ({
-            ...w,
-            type: w.type as WalletType,
-            currency: w.currency as CurrencyCode,
-          }))
-        );
-      }
+      setWallets(
+        data.wallets.map((w) => ({
+          ...w,
+          type: w.type as WalletType,
+          currency: w.currency as CurrencyCode,
+        })),
+      );
 
-      if (data.categories.length > 0) setCategories(data.categories);
-      if (data.transactions.length > 0) setTransactions(data.transactions);
-      if (data.goals.length > 0) setGoals(data.goals);
-      if (data.linkedBanks.length > 0) setLinkedBanks(data.linkedBanks);
-      if (data.recurringIncome.length > 0) setRecurringIncome(data.recurringIncome);
-      if (data.subscriptions.length > 0) setSubscriptions(data.subscriptions);
-      if (data.notifications.length > 0) setNotifications(data.notifications as AppNotification[]);
-
-      if (data.household) setBudgetMode("family");
+      setCategories(data.categories);
+      setTransactions(data.transactions);
+      setGoals(data.goals);
+      setSelectedGoalId(data.goals[0]?.id ?? null);
+      setLinkedBanks(data.linkedBanks);
+      setRecurringIncome(data.recurringIncome);
+      setSubscriptions(data.subscriptions);
+      setNotifications(data.notifications as AppNotification[]);
     } catch (err) {
       console.error("Failed to sync data after login:", err);
     }
   }, []);
 
   // Fire syncDataAfterLogin once on mount if already authenticated
-  useMemo(() => {
+  useEffect(() => {
     syncDataAfterLogin();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [syncDataAfterLogin]);
 
   return (
     <NavigationContext.Provider
@@ -1074,6 +1265,10 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         history,
         navigate,
         goBack,
+        isAuthenticated,
+        signupHouseholdMode,
+        setSignupHouseholdMode,
+        logout,
         budgetMode,
         setBudgetMode,
         profile,

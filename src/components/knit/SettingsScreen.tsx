@@ -4,8 +4,16 @@ import { useState } from "react";
 import { useAppNavigation } from "@/lib/navigation";
 
 export function SettingsScreen() {
-  const { navigate, goBack, profile, household, currencies, setCurrencyTarget, faceIdEnabled } =
-    useAppNavigation();
+  const {
+    navigate,
+    goBack,
+    profile,
+    household,
+    currencies,
+    setCurrencyTarget,
+    faceIdEnabled,
+    logout,
+  } = useAppNavigation();
   const [themeIdx, setThemeIdx] = useState(1);
   const [quietHours, setQuietHours] = useState(false);
 
@@ -138,7 +146,7 @@ export function SettingsScreen() {
         </div>
 
         <button
-          onClick={() => navigate("onboarding")}
+          onClick={() => void logout()}
           className="mt-auto w-full rounded-full bg-[var(--muted)] py-3.5 text-[13px] font-semibold text-[var(--danger)] active:scale-95 transition-all hover:bg-red-50 cursor-pointer"
         >
           Log out

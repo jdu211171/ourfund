@@ -3,7 +3,7 @@ import { PhoneFrame } from "./PhoneFrame";
 import { useAppNavigation } from "@/lib/navigation";
 
 export function OnboardingScreen() {
-  const { navigate } = useAppNavigation();
+  const { navigate, setSignupHouseholdMode } = useAppNavigation();
 
   return (
     <PhoneFrame>
@@ -13,10 +13,10 @@ export function OnboardingScreen() {
             Nest<span className="text-[var(--primary)]">.</span>
           </h2>
           <button
-            onClick={() => navigate("home")}
+            onClick={() => navigate("login")}
             className="text-[12px] font-semibold text-muted-foreground hover:text-foreground active:scale-95 transition-all"
           >
-            Skip
+            Sign in
           </button>
         </header>
 
@@ -72,13 +72,19 @@ export function OnboardingScreen() {
 
         <div className="mt-auto space-y-2">
           <button
-            onClick={() => navigate("signup")}
+            onClick={() => {
+              setSignupHouseholdMode("new");
+              navigate("signup");
+            }}
             className="w-full rounded-full bg-[oklch(0.18_0.04_265)] py-4 text-[14px] font-semibold text-white active:scale-95 transition-transform cursor-pointer"
           >
             Create our family
           </button>
           <button
-            onClick={() => navigate("join_family")}
+            onClick={() => {
+              setSignupHouseholdMode("join");
+              navigate("join_family");
+            }}
             className="w-full rounded-full bg-[var(--muted)] py-4 text-[14px] font-semibold text-foreground active:scale-95 transition-transform cursor-pointer"
           >
             Join with invite code

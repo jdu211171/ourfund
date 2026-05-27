@@ -12,8 +12,8 @@ export function BottomNav({ active }: { active?: NavKey }) {
     }`;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 sm:absolute">
-      <nav className="flex w-full items-center justify-around bg-white px-6 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4 shadow-[0_-10px_28px_-24px_oklch(0.18_0.04_265)] sm:rounded-b-[40px] sm:pb-6 sm:shadow-none">
+    <div className="absolute inset-x-0 bottom-0 z-50">
+      <nav className="mx-auto flex w-full max-w-full items-center justify-around bg-white px-6 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-4 shadow-[0_-10px_28px_-24px_oklch(0.18_0.04_265)] sm:rounded-b-[40px] sm:pb-6 sm:shadow-none">
         <button className={cls("home")} aria-label="Home" onClick={() => navigate("home")}>
           <Home className="h-5 w-5" strokeWidth={2.25} />
         </button>

@@ -15,7 +15,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: "22"
           cache: "npm"
 
       - name: Install dependencies
@@ -60,6 +60,9 @@ jobs:
             -e "ssh $SSH_OPTS" \
             package.json package-lock.json ecosystem.config.cjs server.mjs \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/ourfund/
+          retry 5 rsync -avz --delete \
+            -e "ssh $SSH_OPTS" \
+            prisma/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/ourfund/prisma/
 
       - name: Install server deps & restart app
         run: |
@@ -84,8 +87,10 @@ jobs:
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
             "set -euo pipefail && \
              cd /var/www/ourfund && \
-             npm install --omit=dev --no-audit --no-fund && \
-             pm2 restart ourfund-web --update-env || pm2 start ecosystem.config.cjs --only ourfund-web"
+             npm install --no-audit --no-fund && \
+             npx prisma migrate deploy && \
+             npx prisma generate && \
+             (pm2 restart ourfund-web --update-env || pm2 start ecosystem.config.cjs --only ourfund-web)"
 
       - name: Cleanup SSH key
         if: always()

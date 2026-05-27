@@ -10,29 +10,31 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
-  passwordHash  String?
-  googleId      String?   @unique
-  name          String
-  phone         String?
-  pronouns      String?
-  initials      String
-  passcode      String?
-  faceIdEnabled Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id               String   @id @default(uuid())
+  email            String   @unique
+  passwordHash     String?
+  googleId         String?  @unique
+  name             String
+  phone            String?
+  pronouns         String?
+  initials         String
+  personalCurrency String   @default("USD")
+  passcode         String?
+  faceIdEnabled    Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   householdMembers FamilyMember[]
   notifications    AppNotification[]
 }
 
 model Household {
-  id         String   @id @default(uuid())
-  name       String
-  inviteCode String   @unique
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id             String   @id @default(uuid())
+  name           String
+  inviteCode     String   @unique
+  familyCurrency String   @default("UZS")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   members       FamilyMember[]
   wallets       WalletAccount[]
@@ -49,13 +51,13 @@ model FamilyMember {
   householdId  String
   name         String
   email        String?
-  role         String   // "Admin" | "Adult" | "Teen" | "Kid"
+  role         String // "Admin" | "Adult" | "Teen" | "Kid"
   initials     String
   age          Int?
   allowanceUsd Float?
   allowanceDay String?
   allowanceOn  Boolean  @default(false)
-  permissions  Json     // Record<string, boolean>
+  permissions  Json // Record<string, boolean>
   createdAt    DateTime @default(now())
 
   user      User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
@@ -67,9 +69,9 @@ model WalletAccount {
   householdId        String
   label              String
   sub                String
-  type               String   // "shared" | "private" | "connected"
+  type               String // "shared" | "private" | "connected"
   currency           String
-  members            Json     // string[] (family member IDs)
+  members            Json // string[] (family member IDs)
   color              String
   startingBalanceUsd Float    @default(0)
   createdAt          DateTime @default(now())
@@ -104,17 +106,17 @@ model Transaction {
 }
 
 model Goal {
-  id          String   @id @default(uuid())
-  householdId String
-  title       String
-  targetUsd   Float
-  savedUsd    Float
-  targetDate  String
-  icon        String
-  color       String
-  contributors Json     // string[]
-  history     Json     // Goal history array
-  createdAt   DateTime @default(now())
+  id           String   @id @default(uuid())
+  householdId  String
+  title        String
+  targetUsd    Float
+  savedUsd     Float
+  targetDate   String
+  icon         String
+  color        String
+  contributors Json // string[]
+  history      Json // Goal history array
+  createdAt    DateTime @default(now())
 
   household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
 }
@@ -124,7 +126,7 @@ model LinkedBank {
   householdId String
   name        String
   connectedAt String
-  accounts    Json     // Account array
+  accounts    Json // Account array
   createdAt   DateTime @default(now())
 
   household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
@@ -137,7 +139,7 @@ model ScheduleItem {
   every       String
   amountUsd   Float
   color       String
-  type        String   // "income" | "subscription"
+  type        String // "income" | "subscription"
   createdAt   DateTime @default(now())
 
   household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)

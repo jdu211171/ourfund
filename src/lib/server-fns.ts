@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createServerFn } from "@tanstack/react-start";
 import bcrypt from "bcryptjs";
 import { prisma } from "./db";
@@ -11,7 +12,7 @@ import {
 // ─── Auth Server Functions ──────────────────────────────────────────────────
 
 export const loginWithEmailServerFn = createServerFn({ method: "POST" })
-  .validator((d: { email: string; passwordHash: string }) => d)
+  .inputValidator((d: { email: string; passwordHash: string }) => d)
   .handler(async ({ data }) => {
     const { email, passwordHash: password } = data;
     const user = await prisma.user.findUnique({ where: { email } });
@@ -27,7 +28,7 @@ export const loginWithEmailServerFn = createServerFn({ method: "POST" })
   });
 
 export const signUpWithEmailServerFn = createServerFn({ method: "POST" })
-  .validator((d: { email: string; name: string; passwordHash: string }) => d)
+  .inputValidator((d: { email: string; name: string; passwordHash: string }) => d)
   .handler(async ({ data }) => {
     const { email, name, passwordHash: password } = data;
     const existing = await prisma.user.findUnique({ where: { email } });
@@ -57,7 +58,7 @@ export const signUpWithEmailServerFn = createServerFn({ method: "POST" })
   });
 
 export const loginWithGoogleServerFn = createServerFn({ method: "POST" })
-  .validator((d: { credential: string }) => d)
+  .inputValidator((d: { credential: string }) => d)
   .handler(async ({ data }) => {
     const { credential } = data;
     const googleProfile = await verifyGoogleToken(credential);
@@ -146,8 +147,13 @@ export const getAppDataServerFn = createServerFn({ method: "GET" }).handler(asyn
       phone: user.phone || "",
       pronouns: user.pronouns || "",
       initials: user.initials,
+      personalCurrency: user.personalCurrency,
       passcode: user.passcode || "",
       faceIdEnabled: user.faceIdEnabled,
+    },
+    currencies: {
+      personal: user.personalCurrency,
+      family: household?.familyCurrency || "UZS",
     },
     household: household
       ? {
@@ -242,12 +248,30 @@ export const getAppDataServerFn = createServerFn({ method: "GET" }).handler(asyn
   };
 });
 
+export const validateInviteCodeServerFn = createServerFn({ method: "POST" })
+  .inputValidator((d: { code: string }) => d)
+  .handler(async ({ data }) => {
+    const found = await prisma.household.findUnique({
+      where: { inviteCode: data.code.toUpperCase() },
+      include: { members: true },
+    });
+    if (!found) return null;
+    return {
+      code: found.inviteCode,
+      householdName: found.name,
+      memberCount: found.members.length,
+      role: "Adult",
+      inviter: found.members.find((m) => m.role === "Admin")?.name || "Family Admin",
+      familyCurrency: found.familyCurrency,
+    };
+  });
+
 // ─── Sync Mutation ──────────────────────────────────────────────────────────
 // Single entry-point for all write operations. Every case verifies that the
 // authenticated user owns the resource before mutating it (authorization).
 
 export const syncMutationServerFn = createServerFn({ method: "POST" })
-  .validator((d: { type: string; data: any }) => d)
+  .inputValidator((d: { type: string; data: any }) => d)
   .handler(async ({ data }) => {
     const user = await getSessionUser();
     if (!user) throw new Error("Unauthorized");
@@ -285,10 +309,17 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
       // ── Household setup ────────────────────────────────────────────────────
       case "createHousehold": {
         const inviteCode = `NEST-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+        const personalCurrency = payload.personalCurrency || user.personalCurrency || "USD";
+        const familyCurrency = payload.familyCurrency || "UZS";
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { personalCurrency },
+        });
         const household = await prisma.household.create({
           data: {
             name: payload.householdName,
             inviteCode,
+            familyCurrency,
           },
         });
         const familyMember = await prisma.familyMember.create({
@@ -314,7 +345,7 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
             label: `${payload.name || user.name} · Personal`,
             sub: "Private wallet",
             type: "private",
-            currency: "USD",
+            currency: personalCurrency,
             members: [familyMember.id],
             color: "oklch(0.3 0.05 265)",
             startingBalanceUsd: 0,
@@ -326,7 +357,7 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
             label: `${payload.householdName} Shared`,
             sub: "Shared · 0 balance",
             type: "shared",
-            currency: "UZS",
+            currency: familyCurrency,
             members: [familyMember.id],
             color: "oklch(0.55 0.24 265)",
             startingBalanceUsd: 0,
@@ -348,7 +379,7 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
           memberCount: found.members.length,
           role: "Adult",
           inviter: found.members.find((m) => m.role === "Admin")?.name || "Family Admin",
-          familyCurrency: "UZS",
+          familyCurrency: found.familyCurrency,
         };
       }
 
@@ -364,6 +395,12 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
           where: { userId: user.id, householdId: found.id },
         });
         if (alreadyMember) break; // idempotent — already a member
+
+        const personalCurrency = payload.personalCurrency || user.personalCurrency || "USD";
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { personalCurrency },
+        });
 
         const familyMember = await prisma.familyMember.create({
           data: {
@@ -388,7 +425,7 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
             label: `${payload.name || user.name} · Personal`,
             sub: "Private wallet",
             type: "private",
-            currency: "USD",
+            currency: personalCurrency,
             members: [familyMember.id],
             color: "oklch(0.3 0.05 265)",
             startingBalanceUsd: 0,
@@ -458,6 +495,28 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
             color: payload.color,
             startingBalanceUsd: payload.startingBalanceUsd || 0,
           },
+        });
+        break;
+      }
+
+      case "setCurrencyForMode": {
+        const currency = payload.currency;
+        if (payload.mode === "personal") {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { personalCurrency: currency },
+          });
+          break;
+        }
+
+        if (!householdId) throw new Error("No household linked");
+        await prisma.household.update({
+          where: { id: householdId },
+          data: { familyCurrency: currency },
+        });
+        await prisma.walletAccount.updateMany({
+          where: { householdId, type: { not: "private" } },
+          data: { currency },
         });
         break;
       }

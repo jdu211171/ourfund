@@ -1,22 +1,54 @@
 import { Mail, Lock, Eye } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useAppNavigation } from "@/lib/navigation";
 import { loginWithEmailServerFn, loginWithGoogleServerFn } from "@/lib/server-fns";
 
 const GOOGLE_CLIENT_ID = "648158368972-tl49o2fco00r73tor6c4es4kqs9ash9m.apps.googleusercontent.com";
 const GSI_SRC = "https://accounts.google.com/gsi/client";
 
-function loadGsi(): Promise<any> {
+interface GoogleCredentialResponse {
+  credential: string;
+}
+
+interface GoogleAccountsClient {
+  accounts: {
+    id: {
+      initialize: (options: {
+        client_id: string;
+        callback: (response: GoogleCredentialResponse) => void;
+        ux_mode: "popup";
+      }) => void;
+      renderButton: (
+        element: HTMLElement,
+        options: {
+          theme: "outline";
+          size: "large";
+          width: number;
+          text: "signin_with";
+          shape: "pill";
+        },
+      ) => void;
+    };
+  };
+}
+
+type GoogleWindow = Window & typeof globalThis & { google?: GoogleAccountsClient };
+
+function errorMessage(err: unknown, fallback: string) {
+  return err instanceof Error ? err.message : fallback;
+}
+
+function loadGsi(): Promise<GoogleAccountsClient | null> {
   if (typeof window === "undefined") return Promise.resolve(null);
-  const win = window as any;
+  const win = window as GoogleWindow;
   if (win.google && win.google.accounts && win.google.accounts.id) {
     return Promise.resolve(win.google);
   }
   return new Promise((resolve, reject) => {
     const existing = document.querySelector(`script[src="${GSI_SRC}"]`);
     if (existing) {
-      existing.addEventListener("load", () => resolve(win.google));
+      existing.addEventListener("load", () => resolve(win.google ?? null));
       existing.addEventListener("error", reject);
       return;
     }
@@ -24,14 +56,14 @@ function loadGsi(): Promise<any> {
     s.src = GSI_SRC;
     s.async = true;
     s.defer = true;
-    s.onload = () => resolve(win.google);
+    s.onload = () => resolve(win.google ?? null);
     s.onerror = reject;
     document.head.appendChild(s);
   });
 }
 
 export function LoginScreen() {
-  const { navigate, profile, syncDataAfterLogin } = useAppNavigation();
+  const { navigate, profile, pendingInvite, syncDataAfterLogin } = useAppNavigation();
   const [email, setEmail] = useState(profile.email);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -47,27 +79,30 @@ export function LoginScreen() {
     try {
       await loginWithEmailServerFn({ data: { email, passwordHash: password } });
       await syncDataAfterLogin();
-      navigate("home");
-    } catch (err: any) {
-      setError(err.message || "Invalid credentials");
+      navigate(pendingInvite ? "confirm_invite" : "home");
+    } catch (err: unknown) {
+      setError(errorMessage(err, "Invalid credentials"));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleCredential = async (response: any) => {
-    setError("");
-    setLoading(true);
-    try {
-      await loginWithGoogleServerFn({ data: { credential: response.credential } });
-      await syncDataAfterLogin();
-      navigate("home");
-    } catch (err: any) {
-      setError(err.message || "Google sign-in failed");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const handleGoogleCredential = useCallback(
+    async (response: GoogleCredentialResponse) => {
+      setError("");
+      setLoading(true);
+      try {
+        await loginWithGoogleServerFn({ data: { credential: response.credential } });
+        await syncDataAfterLogin();
+        navigate(pendingInvite ? "confirm_invite" : "home");
+      } catch (err: unknown) {
+        setError(errorMessage(err, "Google sign-in failed"));
+      } finally {
+        setLoading(false);
+      }
+    },
+    [navigate, pendingInvite, syncDataAfterLogin],
+  );
 
   useEffect(() => {
     if (!googleBtnRef.current) return;
@@ -94,7 +129,7 @@ export function LoginScreen() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [handleGoogleCredential]);
 
   return (
     <PhoneFrame>
@@ -175,7 +210,7 @@ export function LoginScreen() {
 
         <div className="flex flex-col items-center gap-2">
           <div ref={googleBtnRef} className="flex justify-center" />
-          
+
           <button
             onClick={() => navigate("home")}
             className="w-full rounded-full bg-white py-3.5 text-[13px] font-semibold text-foreground shadow-[var(--shadow-soft)]"
@@ -194,4 +229,3 @@ export function LoginScreen() {
     </PhoneFrame>
   );
 }
-
