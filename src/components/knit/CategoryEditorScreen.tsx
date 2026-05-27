@@ -1,4 +1,7 @@
-import { ArrowLeft, ShoppingBag, Coffee, Car, Home, Heart, Gift, Plus, Minus } from "lucide-react";
+import { 
+  ArrowLeft, ShoppingBag, Coffee, Car, Home, Heart, Gift, Plus, Minus, 
+  Utensils, Zap, Film, Activity, Plane, GraduationCap 
+} from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { useState } from "react";
 import { useAppNavigation } from "@/lib/navigation";
@@ -10,6 +13,12 @@ const icons: Record<string, typeof Home> = {
   coffee: Coffee,
   heart: Heart,
   gift: Gift,
+  food: Utensils,
+  utilities: Zap,
+  entertainment: Film,
+  health: Activity,
+  travel: Plane,
+  education: GraduationCap,
 };
 
 export function CategoryEditorScreen() {

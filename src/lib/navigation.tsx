@@ -359,6 +359,9 @@ function categoryAliases(label: string) {
   if (lower.includes("rent") || lower.includes("util")) return ["rent", "housing", "electric"];
   if (lower.includes("dining")) return ["dining", "coffee", "restaurant"];
   if (lower.includes("transport")) return ["transport", "gas", "car"];
+  if (lower.includes("health") || lower.includes("medical")) return ["health", "medical", "pharmacy", "doctor", "dental"];
+  if (lower.includes("entertainment") || lower.includes("fun")) return ["entertainment", "movie", "games", "fun", "concert"];
+  if (lower.includes("education") || lower.includes("school")) return ["education", "school", "tuition", "books", "course"];
   return [lower];
 }
 
