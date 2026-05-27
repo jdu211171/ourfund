@@ -50,14 +50,18 @@ export function Money({
         : "text-foreground";
 
   const sign = signed ? (usd >= 0 ? "+ " : "- ") : "";
+  const displayUsd = signed ? Math.abs(usd) : usd;
   return (
     <span className={`inline-flex flex-col leading-none ${className}`}>
       <span className={`${s.primary} font-extrabold tracking-tight ${toneClass}`}>
         {sign}
-        {fmtCurrency(usd, currency)}
+        {fmtCurrency(displayUsd, currency)}
       </span>
       {currency !== "USD" && (
-        <span className={`${s.sub} mt-1 font-medium text-muted-foreground`}>≈ {fmtUSD(usd)}</span>
+        <span className={`${s.sub} mt-1 font-medium text-muted-foreground`}>
+          ≈ {sign}
+          {fmtUSD(displayUsd)}
+        </span>
       )}
     </span>
   );

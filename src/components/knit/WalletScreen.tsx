@@ -1,7 +1,19 @@
-import { Plus, Users, Lock, ShoppingBag, PiggyBank } from "lucide-react";
+import {
+  ArrowRightLeft,
+  ChevronRight,
+  Landmark,
+  Lock,
+  PiggyBank,
+  Plus,
+  Repeat,
+  ShoppingBag,
+  Target,
+  Users,
+  WalletCards,
+} from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { BottomNav } from "./BottomNav";
-import { BalanceHeader } from "./BalanceHeader";
+import { BudgetModeToggle } from "./BudgetModeToggle";
 import { Money } from "./Money";
 import { useAppNavigation } from "@/lib/navigation";
 import { categoryIconMap } from "./categoryOptions";
@@ -15,29 +27,48 @@ export function WalletScreen() {
     categories,
     categorySpentUsd,
     balanceUsd,
-    incomeUsd,
-    spentUsd,
     members,
     selectedMemberId,
+    goals,
+    linkedBanks,
+    subscriptions,
+    recurringIncome,
   } = useAppNavigation();
   const viewedMember = members.find((member) => member.id === selectedMemberId);
 
-  // Sort wallets so the active budget wallet is on top
   const sortedWallets = [...activeWallets].sort((a, b) => {
     if (budgetMode === "personal") {
       return a.type === "private" ? -1 : 1;
-    } else {
-      return a.type !== "private" ? -1 : 1;
     }
+    return a.type !== "private" ? -1 : 1;
   });
+  const primaryWallet = sortedWallets[0] ?? null;
+  const visibleOwner =
+    budgetMode === "personal" && viewedMember ? viewedMember.name.split(" ")[0] : "Household";
+  const categoryRows = categories
+    .map((category) => {
+      const usedUsd = categorySpentUsd(category.label);
+      const pct =
+        category.limitUsd > 0 ? Math.min(100, Math.round((usedUsd / category.limitUsd) * 100)) : 0;
+      return { ...category, usedUsd, pct };
+    })
+    .sort((a, b) => b.pct - a.pct)
+    .slice(0, 4);
+  const upcomingTotalUsd = subscriptions.slice(0, 3).reduce((sum, item) => sum + item.amountUsd, 0);
+  const incomingTotalUsd = recurringIncome
+    .slice(0, 3)
+    .reduce((sum, item) => sum + item.amountUsd, 0);
 
   return (
     <PhoneFrame>
       <div className="flex-1 overflow-y-auto flex flex-col px-7 pt-10 pb-28 min-h-0">
-        <header className="flex items-center justify-between">
-          <h2 className="text-[18px] font-extrabold tracking-tight text-[oklch(0.2_0.08_265)]">
-            Wallets
-          </h2>
+        <header className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-[18px] font-extrabold tracking-tight text-[oklch(0.2_0.08_265)]">
+              Wallets
+            </h2>
+            <p className="text-[11px] text-muted-foreground">{visibleOwner} money map</p>
+          </div>
           <button
             onClick={() => navigate("new_wallet")}
             className="grid h-9 w-9 place-items-center rounded-full bg-[var(--muted)] hover:bg-slate-200 transition-colors active:scale-95 cursor-pointer"
@@ -47,49 +78,106 @@ export function WalletScreen() {
           </button>
         </header>
 
-        <div className="mt-4">
-          <BalanceHeader
-            balanceUsd={balanceUsd}
-            incomeUsd={incomeUsd}
-            spentUsd={spentUsd}
-            label={budgetMode === "personal" ? "Personal balance" : "Family balance"}
-          />
+        <div className="mt-4 flex items-center justify-between gap-3">
+          <BudgetModeToggle />
+          <button
+            type="button"
+            onClick={() => navigate("connect_bank")}
+            className="rounded-full bg-white px-3 py-2 text-[11px] font-bold text-foreground"
+          >
+            Connect bank
+          </button>
         </div>
 
-        <p className="mt-5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-          {budgetMode === "personal" && viewedMember
-            ? `${viewedMember.name.split(" ")[0]}'s private wallets`
-            : "Household wallets"}
-        </p>
-        <div className="mt-2 space-y-2">
-          {sortedWallets.map((w) => (
-            <div
-              key={w.label}
-              className="flex items-center gap-3 rounded-2xl bg-white px-3 py-3 shadow-[var(--shadow-soft)]"
+        <section className="mt-4 rounded-3xl bg-white p-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                Active containers
+              </p>
+              <p className="mt-1 text-[18px] font-extrabold text-foreground">
+                {activeWallets.length} wallets
+              </p>
+              <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                {primaryWallet ? `${primaryWallet.label} is primary` : "Create a wallet to start"}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Total</p>
+              <Money usd={balanceUsd} size="md" />
+            </div>
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => navigate("transfer")}
+              className="flex items-center gap-2 rounded-2xl bg-[var(--muted)] px-3 py-3 text-left"
             >
+              <span className="grid h-8 w-8 place-items-center rounded-xl bg-white text-[var(--primary)]">
+                <ArrowRightLeft className="h-4 w-4" strokeWidth={2.25} />
+              </span>
+              <span>
+                <span className="block text-[11px] font-bold text-foreground">Move money</span>
+                <span className="block text-[10px] text-muted-foreground">Between wallets</span>
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("new_wallet")}
+              className="flex items-center gap-2 rounded-2xl bg-[var(--muted)] px-3 py-3 text-left"
+            >
+              <span className="grid h-8 w-8 place-items-center rounded-xl bg-white text-[var(--primary)]">
+                <WalletCards className="h-4 w-4" strokeWidth={2.25} />
+              </span>
+              <span>
+                <span className="block text-[11px] font-bold text-foreground">New wallet</span>
+                <span className="block text-[10px] text-muted-foreground">Shared or private</span>
+              </span>
+            </button>
+          </div>
+        </section>
+
+        <div className="mt-5 flex items-center justify-between">
+          <p className="text-[13px] font-bold text-[oklch(0.2_0.08_265)]">
+            {budgetMode === "personal" && viewedMember
+              ? `${viewedMember.name.split(" ")[0]}'s wallets`
+              : "Household wallets"}
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate("new_wallet")}
+            className="text-[11px] font-bold text-[var(--primary)]"
+          >
+            Add
+          </button>
+        </div>
+
+        <div className="mt-2 space-y-2">
+          {sortedWallets.map((wallet) => (
+            <div key={wallet.id} className="flex items-center gap-3 rounded-2xl bg-white px-3 py-3">
               <div
                 className="grid h-11 w-11 place-items-center rounded-2xl"
-                style={{ background: "oklch(0.96 0.05 265)", color: w.color }}
+                style={{ background: "oklch(0.96 0.05 265)", color: wallet.color }}
               >
-                {w.type === "private" ? (
+                {wallet.type === "private" ? (
                   <Lock className="h-4 w-4" strokeWidth={2.25} />
-                ) : w.type === "connected" ? (
+                ) : wallet.type === "connected" ? (
                   <PiggyBank className="h-4 w-4" strokeWidth={2.25} />
                 ) : (
                   <Users className="h-4 w-4" strokeWidth={2.25} />
                 )}
               </div>
-              <div className="flex-1 leading-tight">
-                <p className="text-[12px] font-bold text-foreground">{w.label}</p>
-                <p className="text-[10px] text-muted-foreground">{w.sub}</p>
+              <div className="min-w-0 flex-1 leading-tight">
+                <p className="truncate text-[12px] font-bold text-foreground">{wallet.label}</p>
+                <p className="text-[10px] text-muted-foreground">{wallet.sub}</p>
               </div>
-              <Money usd={walletBalanceUsd(w.label)} size="sm" />
+              <Money usd={walletBalanceUsd(wallet.label)} size="sm" />
             </div>
           ))}
           {sortedWallets.length === 0 && (
             <button
               onClick={() => navigate("new_wallet")}
-              className="w-full rounded-2xl bg-white px-4 py-5 text-center shadow-[var(--shadow-soft)]"
+              className="w-full rounded-2xl bg-white px-4 py-5 text-center"
             >
               <p className="text-[13px] font-bold text-foreground">No wallet here yet</p>
               <p className="mt-1 text-[11px] text-muted-foreground">
@@ -99,56 +187,92 @@ export function WalletScreen() {
           )}
         </div>
 
-        <button
-          onClick={() => navigate("new_wallet")}
-          className="mt-3 flex items-center justify-center gap-2 rounded-2xl bg-[oklch(0.97_0.01_265)] py-3 text-[12px] font-semibold text-[var(--primary)] hover:bg-[oklch(0.93_0.02_265)] transition-colors active:scale-95 cursor-pointer"
-        >
-          <Plus className="h-4 w-4" strokeWidth={2.25} />
-          Add a wallet
-        </button>
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => navigate("connect_bank")}
+            className="rounded-2xl bg-white p-3 text-left"
+          >
+            <div className="flex items-center gap-2">
+              <span className="grid h-8 w-8 place-items-center rounded-xl bg-[oklch(0.95_0.04_265)] text-[var(--primary)]">
+                <Landmark className="h-4 w-4" strokeWidth={2.25} />
+              </span>
+              <span className="text-[11px] font-bold text-foreground">Banks</span>
+            </div>
+            <p className="mt-3 text-[13px] font-extrabold text-foreground">{linkedBanks.length}</p>
+            <p className="mt-0.5 text-[10px] text-muted-foreground">Connected accounts</p>
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate("subscriptions")}
+            className="rounded-2xl bg-white p-3 text-left"
+          >
+            <div className="flex items-center gap-2">
+              <span className="grid h-8 w-8 place-items-center rounded-xl bg-[oklch(0.96_0.05_25)] text-[var(--danger)]">
+                <Repeat className="h-4 w-4" strokeWidth={2.25} />
+              </span>
+              <span className="text-[11px] font-bold text-foreground">Scheduled</span>
+            </div>
+            <div className="mt-3 flex items-end justify-between gap-2">
+              <Money usd={upcomingTotalUsd} size="sm" tone="danger" />
+              <Money usd={incomingTotalUsd} size="sm" tone="success" />
+            </div>
+            <p className="mt-0.5 text-[10px] text-muted-foreground">Bills and deposits</p>
+          </button>
+        </div>
 
-        <p className="mt-5 text-[13px] font-bold text-[oklch(0.2_0.08_265)]">Category limits</p>
+        <div className="mt-5 flex items-center justify-between">
+          <p className="text-[13px] font-bold text-[oklch(0.2_0.08_265)]">Category controls</p>
+          <button
+            type="button"
+            onClick={() => navigate("categories")}
+            className="text-[11px] font-bold text-[var(--primary)]"
+          >
+            Manage
+          </button>
+        </div>
 
-        <div className="mt-3 space-y-2.5">
-          {categories.map((category) => {
+        <div className="mt-2 space-y-2.5">
+          {categoryRows.map((category) => {
             const Icon = categoryIconMap[category.icon] ?? ShoppingBag;
-            const usd = categorySpentUsd(category.label);
-            const pct =
-              category.limitUsd > 0
-                ? Math.min(100, Math.round((usd / category.limitUsd) * 100))
-                : 100;
             return (
-              <div
+              <button
+                type="button"
                 key={category.id}
                 onClick={() => navigate("categories")}
-                className="rounded-2xl bg-white px-3 py-2.5 shadow-[var(--shadow-soft)] cursor-pointer hover:bg-slate-50 transition-colors"
+                className="w-full rounded-2xl bg-white px-3 py-2.5 text-left"
               >
                 <div className="flex items-center gap-3">
-                  <div className="grid h-10 w-10 place-items-center rounded-xl bg-[oklch(0.96_0.04_265)] text-[var(--primary)]">
+                  <div
+                    className="grid h-10 w-10 place-items-center rounded-xl text-white"
+                    style={{ background: category.color }}
+                  >
                     <Icon className="h-4 w-4" strokeWidth={2.25} />
                   </div>
-                  <div className="flex-1 leading-tight">
-                    <p className="text-[12px] font-bold text-foreground">{category.label}</p>
-                    <p className="text-[10px] text-muted-foreground">{pct}% of limit</p>
+                  <div className="min-w-0 flex-1 leading-tight">
+                    <p className="truncate text-[12px] font-bold text-foreground">
+                      {category.label}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">{category.pct}% of limit</p>
                   </div>
-                  <Money usd={usd} size="sm" />
+                  <Money usd={category.usedUsd} size="sm" />
                 </div>
-                <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-[var(--muted)]">
+                <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[var(--muted)]">
                   <div
                     className="h-full rounded-full"
                     style={{
-                      width: `${pct}%`,
-                      background: pct > 80 ? "var(--danger)" : "var(--primary)",
+                      width: `${category.pct}%`,
+                      background: category.pct > 80 ? "var(--danger)" : category.color,
                     }}
                   />
                 </div>
-              </div>
+              </button>
             );
           })}
-          {categories.length === 0 && (
+          {categoryRows.length === 0 && (
             <button
               onClick={() => navigate("new_category")}
-              className="w-full rounded-2xl bg-white px-4 py-5 text-center shadow-[var(--shadow-soft)]"
+              className="w-full rounded-2xl bg-white px-4 py-5 text-center"
             >
               <p className="text-[13px] font-bold text-foreground">No limits yet</p>
               <p className="mt-1 text-[11px] text-muted-foreground">
@@ -156,6 +280,46 @@ export function WalletScreen() {
               </p>
             </button>
           )}
+        </div>
+
+        <div className="mt-5 flex items-center justify-between">
+          <p className="text-[13px] font-bold text-[oklch(0.2_0.08_265)]">Goals</p>
+          <button
+            type="button"
+            onClick={() => navigate("new_goal")}
+            className="text-[11px] font-bold text-[var(--primary)]"
+          >
+            New
+          </button>
+        </div>
+        <div className="mt-2 space-y-2">
+          {goals.slice(0, 2).map((goal) => {
+            const pct = Math.min(
+              100,
+              Math.round((goal.savedUsd / Math.max(goal.targetUsd, 1)) * 100),
+            );
+            return (
+              <button
+                key={goal.id}
+                type="button"
+                onClick={() => navigate("goal_detail")}
+                className="flex w-full items-center gap-3 rounded-2xl bg-white px-3 py-3 text-left"
+              >
+                <span className="grid h-10 w-10 place-items-center rounded-xl bg-[oklch(0.95_0.04_265)] text-[var(--primary)]">
+                  <Target className="h-4 w-4" strokeWidth={2.25} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[12px] font-bold text-foreground">
+                    {goal.title}
+                  </span>
+                  <span className="block text-[10px] text-muted-foreground">
+                    {pct}% funded by {goal.targetDate}
+                  </span>
+                </span>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" strokeWidth={2.25} />
+              </button>
+            );
+          })}
         </div>
       </div>
       <BottomNav active="wallet" />
