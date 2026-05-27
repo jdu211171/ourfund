@@ -63,6 +63,9 @@ export function CategoryEditorScreen() {
             <Plus className="h-4 w-4" strokeWidth={2.5} />
           </button>
         </header>
+        <p className="mt-3 text-[11px] text-muted-foreground">
+          Tap + to create. Tap a category below to edit, then save changes or delete.
+        </p>
 
         <div className="mt-5 rounded-2xl bg-white p-4 shadow-[var(--shadow-soft)]">
           <div className="flex items-center gap-3">
@@ -130,7 +133,7 @@ export function CategoryEditorScreen() {
             ))}
           </div>
 
-          <div className="mt-4 grid grid-cols-[1fr_auto] gap-2">
+          <div className="mt-4 grid grid-cols-2 gap-2">
             <button
               type="button"
               onClick={saveSelected}
@@ -144,10 +147,11 @@ export function CategoryEditorScreen() {
               type="button"
               onClick={deleteSelected}
               disabled={!selected}
-              className="grid h-11 w-11 place-items-center rounded-full bg-[oklch(0.96_0.04_30)] text-[var(--danger)] disabled:opacity-50"
+              className="flex items-center justify-center gap-2 rounded-full bg-[oklch(0.96_0.04_30)] py-3 text-[12px] font-semibold text-[var(--danger)] disabled:opacity-50"
               aria-label="Delete category"
             >
               <Trash2 className="h-4 w-4" strokeWidth={2.25} />
+              Delete
             </button>
           </div>
         </div>
@@ -155,6 +159,7 @@ export function CategoryEditorScreen() {
         <p className="mt-5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
           All categories
         </p>
+        <p className="mt-1 text-[10px] text-muted-foreground">Tap a category to select it.</p>
 
         <div className="mt-2 flex-1 space-y-2 overflow-y-auto pr-1">
           {categories.map((c) => {
@@ -167,7 +172,9 @@ export function CategoryEditorScreen() {
                 key={c.id}
                 onClick={() => setSelectedId(c.id)}
                 className={`w-full rounded-2xl px-3 py-2.5 text-left shadow-[var(--shadow-soft)] ${
-                  selectedId === c.id ? "bg-[var(--accent)]" : "bg-white"
+                  selectedId === c.id
+                    ? "bg-[var(--accent)] ring-2 ring-[var(--primary)]"
+                    : "bg-white"
                 }`}
               >
                 <div className="flex items-center gap-3">

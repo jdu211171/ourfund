@@ -60,7 +60,7 @@ export function AddCategoryScreen() {
                   : "bg-white text-foreground shadow-[var(--shadow-soft)] hover:bg-slate-50 active:scale-95"
               }`}
             >
-              <I className="h-4 w-4" strokeWidth={2.25} />
+              <Icon className="h-4 w-4" strokeWidth={2.25} />
             </button>
           ))}
         </div>
