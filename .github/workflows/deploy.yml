@@ -96,14 +96,14 @@ jobs:
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
             "set -euo pipefail && \
              cd /var/www/ourfund && \
-             cat > .env <<'EOF'
-DATABASE_URL=${{ secrets.DATABASE_URL }}
-GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
-JWT_SECRET=${{ secrets.JWT_SECRET }}
-PORT=3002
-NODE_ENV=production
-VITE_EMPTY_DATA=false
-EOF
+             printf '%s\n' \
+               'DATABASE_URL=${{ secrets.DATABASE_URL }}' \
+               'GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}' \
+               'JWT_SECRET=${{ secrets.JWT_SECRET }}' \
+               'PORT=3002' \
+               'NODE_ENV=production' \
+               'VITE_EMPTY_DATA=false' \
+               > .env && \
              npm install --no-audit --no-fund && \
              npx prisma migrate deploy && \
              npx prisma generate && \
