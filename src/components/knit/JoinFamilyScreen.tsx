@@ -7,15 +7,23 @@ export function JoinFamilyScreen() {
   const { navigate, goBack, validateInviteCode } = useAppNavigation();
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const submitCode = () => {
-    const invite = validateInviteCode(code);
-    if (invite) {
-      navigate("confirm_invite");
-      return;
+  const submitCode = async () => {
+    if (!code.trim()) return;
+    setError("");
+    setLoading(true);
+    try {
+      const invite = await validateInviteCode(code);
+      if (invite) {
+        navigate("confirm_invite");
+        return;
+      }
+      setError("Invalid or expired code. Double-check with your admin.");
+      navigate("join_family_error");
+    } finally {
+      setLoading(false);
     }
-    setError("Invalid or expired code. Double-check with your admin.");
-    navigate("join_family_error");
   };
 
   return (
@@ -72,10 +80,10 @@ export function JoinFamilyScreen() {
 
         <button
           onClick={submitCode}
-          disabled={!code.trim()}
-          className="mt-auto w-full rounded-full bg-[oklch(0.18_0.04_265)] py-4 text-[15px] font-semibold text-white active:scale-95 transition-transform cursor-pointer"
+          disabled={!code.trim() || loading}
+          className="mt-auto w-full rounded-full bg-[oklch(0.18_0.04_265)] py-4 text-[15px] font-semibold text-white active:scale-95 transition-transform cursor-pointer disabled:opacity-50"
         >
-          Join
+          {loading ? "Checking..." : "Join"}
         </button>
       </div>
     </PhoneFrame>

@@ -1,5 +1,6 @@
-import { createContext, useContext, useMemo, useState, ReactNode } from "react";
+import { createContext, useContext, useMemo, useState, useCallback, ReactNode } from "react";
 import { defaultHistoryFilters, defaultPermissions, getInitialSeed, knownInvites } from "./seed";
+import { getAppDataServerFn, syncMutationServerFn } from "./server-fns";
 
 export type ScreenName =
   | "onboarding"
@@ -224,8 +225,9 @@ interface NavigationContextType {
   household: Household | null;
   pendingInvite: HouseholdInvite | null;
   createHousehold: (input: { name: string; email: string; householdName: string }) => Household;
-  validateInviteCode: (code: string) => HouseholdInvite | null;
+  validateInviteCode: (code: string) => Promise<HouseholdInvite | null>;
   acceptInvite: () => void;
+  syncDataAfterLogin: () => Promise<void>;
   currency: CurrencyCode;
   setCurrency: (currency: CurrencyCode) => void;
   currencies: CurrencySettings;
@@ -363,8 +365,24 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   const [historyFilters, setHistoryFilterState] = useState<HistoryFilters>(
     initialSeed.historyFilters,
   );
-  const [passcode, setPasscode] = useState(initialSeed.passcode);
-  const [faceIdEnabled, setFaceIdEnabled] = useState(initialSeed.faceIdEnabled);
+  const [passcode, setPasscodeState] = useState(initialSeed.passcode);
+  const [faceIdEnabled, setFaceIdEnabledState] = useState(initialSeed.faceIdEnabled);
+
+  const setPasscode = (newPasscode: string) => {
+    setPasscodeState(newPasscode);
+    // Persist to DB in background
+    syncMutationServerFn({
+      data: { type: "setPasscode", data: { passcode: newPasscode, faceIdEnabled } },
+    }).catch(console.error);
+  };
+
+  const setFaceIdEnabled = (enabled: boolean) => {
+    setFaceIdEnabledState(enabled);
+    // Persist to DB in background
+    syncMutationServerFn({
+      data: { type: "setPasscode", data: { passcode, faceIdEnabled: enabled } },
+    }).catch(console.error);
+  };
 
   const navigate = (screen: ScreenName) => {
     setHistory((prev) => (screen === currentScreen ? prev : [...prev, currentScreen]));
@@ -498,11 +516,21 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     setBudgetMode("family");
     setCurrencyTarget("family");
 
+    // Persist to DB (creates household, member, and wallets in DB)
+    syncMutationServerFn({
+      data: {
+        type: "createHousehold",
+        data: { name: cleanName, householdName: cleanHouseholdName, initials: initialsFor(cleanName) },
+      },
+    }).catch(console.error);
+
     return nextHousehold;
   };
 
-  const validateInviteCode = (code: string) => {
+  const validateInviteCode = async (code: string): Promise<HouseholdInvite | null> => {
     const normalized = code.trim().toUpperCase();
+
+    // 1. Check if it matches the current user's own household
     const currentInvite: HouseholdInvite | null =
       household?.inviteCode.toUpperCase() === normalized
         ? {
@@ -514,9 +542,24 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
             familyCurrency: currencies.family,
           }
         : null;
-    const seededInvite = knownInvites.find((invite) => invite.code === normalized) ?? null;
-    const invite = currentInvite ?? seededInvite;
 
+    // 2. Check against seeded (demo) invite codes
+    const seededInvite = knownInvites.find((invite) => invite.code === normalized) ?? null;
+
+    // 3. Fall back to a live DB lookup
+    let dbInvite: HouseholdInvite | null = null;
+    if (!currentInvite && !seededInvite) {
+      try {
+        const result = await syncMutationServerFn({
+          data: { type: "validateInviteCode", data: { code: normalized } },
+        });
+        dbInvite = result as HouseholdInvite | null;
+      } catch {
+        // ignore lookup errors — treat as invalid code
+      }
+    }
+
+    const invite = currentInvite ?? seededInvite ?? dbInvite;
     setPendingInvite(invite);
     return invite;
   };
@@ -569,21 +612,43 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     setPendingInvite(null);
     setBudgetMode("family");
     setCurrencyTarget("family");
+
+    // Persist to DB — joins the user to the household and creates a personal wallet
+    syncMutationServerFn({
+      data: {
+        type: "acceptInvite",
+        data: {
+          code: pendingInvite.code,
+          name: cleanName,
+          role: pendingInvite.role,
+          initials: initialsFor(cleanName),
+        },
+      },
+    }).catch(console.error);
   };
 
   const addTransaction = (txn: Omit<Transaction, "id">) => {
     const newTxn = { ...txn, id: makeId("txn") };
     setTransactions((prev) => [newTxn, ...prev]);
+    // Persist to DB in background
+    syncMutationServerFn({ data: { type: "addTransaction", data: newTxn } }).catch(console.error);
     return newTxn;
   };
 
   const updateTransaction = (id: string, updatedFields: Partial<Transaction>) => {
     setTransactions((prev) => prev.map((t) => (t.id === id ? { ...t, ...updatedFields } : t)));
+    // Persist to DB in background
+    const current = transactions.find((t) => t.id === id);
+    if (current) {
+      syncMutationServerFn({ data: { type: "updateTransaction", data: { ...current, ...updatedFields } } }).catch(console.error);
+    }
   };
 
   const deleteTransaction = (id: string) => {
     setTransactions((prev) => prev.filter((t) => t.id !== id));
     setSelectedTransactionId(null);
+    // Persist to DB in background
+    syncMutationServerFn({ data: { type: "deleteTransaction", data: { id } } }).catch(console.error);
   };
 
   const recordTransfer = (
@@ -626,17 +691,25 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
       startingBalanceUsd: wallet.startingBalanceUsd ?? 0,
     };
     setWallets((prev) => [newWallet, ...prev]);
+    // Persist to DB in background
+    syncMutationServerFn({ data: { type: "addWallet", data: newWallet } }).catch(console.error);
     return newWallet;
   };
 
   const addCategory = (category: Omit<BudgetCategory, "id">) => {
     const newCategory = { ...category, id: makeId("category") };
     setCategories((prev) => [newCategory, ...prev]);
+    // Persist to DB in background
+    syncMutationServerFn({ data: { type: "addCategory", data: newCategory } }).catch(console.error);
     return newCategory;
   };
 
   const updateCategoryLimit = (categoryId: string, limitUsd: number) => {
     setCategories((prev) => prev.map((c) => (c.id === categoryId ? { ...c, limitUsd } : c)));
+    // Persist to DB in background
+    syncMutationServerFn({
+      data: { type: "updateCategoryLimit", data: { id: categoryId, limitUsd } },
+    }).catch(console.error);
   };
 
   const categorySpentUsd = (label: string) => {
@@ -661,6 +734,8 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     };
     setGoals((prev) => [newGoal, ...prev]);
     setSelectedGoalId(newGoal.id);
+    // Persist to DB in background
+    syncMutationServerFn({ data: { type: "addGoal", data: newGoal } }).catch(console.error);
     return newGoal;
   };
 
@@ -684,6 +759,13 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
           : goal,
       ),
     );
+    // Persist updated goal savings to DB in background
+    const goalToUpdate = goals.find((g) => g.id === goalId);
+    if (goalToUpdate) {
+      const updatedSaved = Math.min(goalToUpdate.targetUsd, goalToUpdate.savedUsd + amountUsd);
+      const updatedHistory = [contribution, ...goalToUpdate.history];
+      syncMutationServerFn({ data: { type: "updateGoalSavings", data: { id: goalId, savedUsd: updatedSaved, history: updatedHistory } } }).catch(console.error);
+    }
     addTransaction({
       name: `Goal contribution · ${goals.find((g) => g.id === goalId)?.title ?? "Goal"}`,
       who: `${who} · today`,
@@ -753,11 +835,20 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
       },
       ...prev,
     ]);
+    // Persist to DB in background
+    syncMutationServerFn({ data: { type: "inviteMember", data: newMember } }).catch(console.error);
     return newMember;
   };
 
   const updateMember = (id: string, updates: Partial<FamilyMember>) => {
     setMembers((prev) => prev.map((m) => (m.id === id ? { ...m, ...updates } : m)));
+    // Persist to DB in background — merge updates with current member
+    const current = members.find((m) => m.id === id);
+    if (current) {
+      syncMutationServerFn({
+        data: { type: "updateMember", data: { ...current, ...updates, id } },
+      }).catch(console.error);
+    }
   };
 
   const updateMemberPermission = (memberId: string, permission: string, on: boolean) => {
@@ -766,28 +857,45 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         m.id === memberId ? { ...m, permissions: { ...m.permissions, [permission]: on } } : m,
       ),
     );
+    // Persist updated permissions to DB in background
+    const current = members.find((m) => m.id === memberId);
+    if (current) {
+      syncMutationServerFn({
+        data: {
+          type: "updateMember",
+          data: { ...current, permissions: { ...current.permissions, [permission]: on }, id: memberId },
+        },
+      }).catch(console.error);
+    }
   };
 
   const removeMember = (id: string) => {
     setMembers((prev) => prev.filter((m) => m.id !== id));
     if (selectedMemberId === id) setSelectedMemberId(null);
+    // Persist to DB in background
+    syncMutationServerFn({ data: { type: "removeMember", data: { id } } }).catch(console.error);
   };
 
   const scheduleAllowance = (memberId: string, amountUsd: number, day: string) => {
     const member = members.find((m) => m.id === memberId);
     if (!member || amountUsd <= 0) return;
     updateMember(memberId, { allowanceUsd: amountUsd, allowanceDay: day, allowanceOn: true });
+    const newAllowance: ScheduleItem = {
+      id: makeId("allowance"),
+      label: `Allowance · ${member.name.split(" ")[0]}`,
+      every: `Weekly · ${day}`,
+      amountUsd,
+      color: "oklch(0.65 0.22 320)",
+      type: "income",
+    };
     setRecurringIncome((prev) => [
-      {
-        id: makeId("allowance"),
-        label: `Allowance · ${member.name.split(" ")[0]}`,
-        every: `Weekly · ${day}`,
-        amountUsd,
-        color: "oklch(0.65 0.22 320)",
-        type: "income",
-      },
+      newAllowance,
       ...prev.filter((item) => item.label !== `Allowance · ${member.name.split(" ")[0]}`),
     ]);
+    // Persist allowance schedule item to DB in background
+    syncMutationServerFn({
+      data: { type: "addScheduleItem", data: newAllowance },
+    }).catch(console.error);
   };
 
   const connectSelectedBank = () => {
@@ -799,22 +907,20 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
       accounts: [{ name: `${selectedBankName} Checking`, balanceUsd: 0 }],
     };
     setLinkedBanks((prev) => [bank, ...prev]);
+    const connectedWallet: WalletAccount = {
+      id: makeId("wallet"),
+      label: `${selectedBankName} Checking`,
+      sub: "Connected bank",
+      type: "connected",
+      currency: currencies.personal,
+      members: [members.find((member) => member.email === profile.email)?.id ?? "me"],
+      color: "oklch(0.45 0.18 250)",
+      startingBalanceUsd: 0,
+    };
     setWallets((prev) =>
       prev.some((wallet) => wallet.label === `${selectedBankName} Checking`)
         ? prev
-        : [
-            {
-              id: makeId("wallet"),
-              label: `${selectedBankName} Checking`,
-              sub: "Connected bank",
-              type: "connected",
-              currency: currencies.personal,
-              members: [members.find((member) => member.email === profile.email)?.id ?? "me"],
-              color: "oklch(0.45 0.18 250)",
-              startingBalanceUsd: 0,
-            },
-            ...prev,
-          ],
+        : [connectedWallet, ...prev],
     );
     setNotifications((prev) => [
       {
@@ -829,14 +935,19 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
       },
       ...prev,
     ]);
+    // Persist bank connection and wallet to DB in background
+    syncMutationServerFn({ data: { type: "connectSelectedBank", data: bank } }).catch(console.error);
+    syncMutationServerFn({ data: { type: "addWallet", data: connectedWallet } }).catch(console.error);
   };
 
   const markAllNotificationsRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    syncMutationServerFn({ data: { type: "markAllNotificationsRead", data: {} } }).catch(console.error);
   };
 
   const markNotificationRead = (id: string) => {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+    syncMutationServerFn({ data: { type: "markNotificationRead", data: { id } } }).catch(console.error);
   };
 
   const toggleNotificationPref = (key: string) => {
@@ -853,6 +964,8 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
       type: "income",
     };
     setRecurringIncome((prev) => [newItem, ...prev]);
+    // Persist to DB in background
+    syncMutationServerFn({ data: { type: "addScheduleItem", data: newItem } }).catch(console.error);
   };
 
   const addSubscription = (item: Partial<ScheduleItem> = {}) => {
@@ -865,6 +978,8 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
       type: "subscription",
     };
     setSubscriptions((prev) => [newItem, ...prev]);
+    // Persist to DB in background
+    syncMutationServerFn({ data: { type: "addScheduleItem", data: newItem } }).catch(console.error);
   };
 
   const setHistoryFilters = (filters: Partial<HistoryFilters>) => {
@@ -876,12 +991,81 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   };
 
   const updateProfile = (updates: Partial<Profile>) => {
-    setProfile((prev) => ({
-      ...prev,
-      ...updates,
-      initials: updates.name ? initialsFor(updates.name) : prev.initials,
-    }));
+    setProfile((prev) => {
+      const next = {
+        ...prev,
+        ...updates,
+        initials: updates.name ? initialsFor(updates.name) : prev.initials,
+      };
+      // Persist to DB in background
+      syncMutationServerFn({ data: { type: "updateProfile", data: next } }).catch(console.error);
+      return next;
+    });
   };
+
+  // Fetch data from the database and populate local state after authentication
+  const syncDataAfterLogin = useCallback(async () => {
+    try {
+      const data = await getAppDataServerFn();
+      if (!data || !data.isAuthenticated) return;
+
+      setProfile({
+        name: data.user.name,
+        email: data.user.email,
+        phone: data.user.phone,
+        pronouns: data.user.pronouns,
+        initials: data.user.initials,
+      });
+
+      if (data.household) {
+        setHousehold({
+          id: data.household.id,
+          name: data.household.name,
+          inviteCode: data.household.inviteCode,
+          role: data.household.role as MemberRole,
+          createdAt: data.household.createdAt,
+        });
+      }
+
+      if (data.members.length > 0) {
+        setMembers(
+          data.members.map((m) => ({
+            ...m,
+            role: m.role as MemberRole,
+            admin: m.role === "Admin",
+          }))
+        );
+      }
+
+      if (data.wallets.length > 0) {
+        setWallets(
+          data.wallets.map((w) => ({
+            ...w,
+            type: w.type as WalletType,
+            currency: w.currency as CurrencyCode,
+          }))
+        );
+      }
+
+      if (data.categories.length > 0) setCategories(data.categories);
+      if (data.transactions.length > 0) setTransactions(data.transactions);
+      if (data.goals.length > 0) setGoals(data.goals);
+      if (data.linkedBanks.length > 0) setLinkedBanks(data.linkedBanks);
+      if (data.recurringIncome.length > 0) setRecurringIncome(data.recurringIncome);
+      if (data.subscriptions.length > 0) setSubscriptions(data.subscriptions);
+      if (data.notifications.length > 0) setNotifications(data.notifications as AppNotification[]);
+
+      if (data.household) setBudgetMode("family");
+    } catch (err) {
+      console.error("Failed to sync data after login:", err);
+    }
+  }, []);
+
+  // Fire syncDataAfterLogin once on mount if already authenticated
+  useMemo(() => {
+    syncDataAfterLogin();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <NavigationContext.Provider
@@ -899,6 +1083,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         createHousehold,
         validateInviteCode,
         acceptInvite,
+        syncDataAfterLogin,
         currency,
         setCurrency,
         currencies,

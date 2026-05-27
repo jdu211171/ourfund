@@ -2,25 +2,37 @@ import { ArrowLeft, User, Mail, Lock, Check, Users } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { useAppNavigation } from "@/lib/navigation";
 import { useState } from "react";
+import { signUpWithEmailServerFn } from "@/lib/server-fns";
 
 export function SignUpScreen() {
-  const { navigate, goBack, updateProfile, createHousehold } = useAppNavigation();
+  const { navigate, goBack, updateProfile, createHousehold, syncDataAfterLogin } = useAppNavigation();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [householdName, setHouseholdName] = useState("");
   const [householdMode, setHouseholdMode] = useState<"new" | "join">("new");
   const [accepted, setAccepted] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const createAccount = () => {
-    if (householdMode === "new") {
-      createHousehold({ name, email, householdName });
-      navigate("home");
-      return;
+  const createAccount = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      await signUpWithEmailServerFn({ data: { email, name, passwordHash: password } });
+      await syncDataAfterLogin();
+      if (householdMode === "new") {
+        createHousehold({ name, email, householdName });
+        navigate("home");
+      } else {
+        updateProfile({ name, email });
+        navigate("join_family");
+      }
+    } catch (err: any) {
+      setError(err.message || "Registration failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
-
-    updateProfile({ name, email });
-    navigate("join_family");
   };
 
   return (
@@ -122,12 +134,16 @@ export function SignUpScreen() {
           <span className="font-bold text-foreground">Privacy</span>
         </button>
 
+        {error && (
+          <p className="mt-3 text-center text-[11px] font-semibold text-red-500">{error}</p>
+        )}
+
         <button
           onClick={createAccount}
-          disabled={!name || !email || !password || !accepted}
+          disabled={!name || !email || !password || !accepted || loading}
           className="mt-auto w-full rounded-full bg-[var(--primary)] py-4 text-[15px] font-semibold text-white active:scale-95 transition-transform cursor-pointer disabled:opacity-50"
         >
-          Create account
+          {loading ? "Creating account..." : "Create account"}
         </button>
       </div>
     </PhoneFrame>

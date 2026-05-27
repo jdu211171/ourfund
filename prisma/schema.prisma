@@ -1,0 +1,159 @@
+// ourfund Prisma schema (PostgreSQL)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String?
+  googleId      String?   @unique
+  name          String
+  phone         String?
+  pronouns      String?
+  initials      String
+  passcode      String?
+  faceIdEnabled Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  householdMembers FamilyMember[]
+  notifications    AppNotification[]
+}
+
+model Household {
+  id         String   @id @default(uuid())
+  name       String
+  inviteCode String   @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  members       FamilyMember[]
+  wallets       WalletAccount[]
+  categories    BudgetCategory[]
+  transactions  Transaction[]
+  goals         Goal[]
+  linkedBanks   LinkedBank[]
+  scheduleItems ScheduleItem[]
+}
+
+model FamilyMember {
+  id           String   @id @default(uuid())
+  userId       String?
+  householdId  String
+  name         String
+  email        String?
+  role         String   // "Admin" | "Adult" | "Teen" | "Kid"
+  initials     String
+  age          Int?
+  allowanceUsd Float?
+  allowanceDay String?
+  allowanceOn  Boolean  @default(false)
+  permissions  Json     // Record<string, boolean>
+  createdAt    DateTime @default(now())
+
+  user      User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+}
+
+model WalletAccount {
+  id                 String   @id @default(uuid())
+  householdId        String
+  label              String
+  sub                String
+  type               String   // "shared" | "private" | "connected"
+  currency           String
+  members            Json     // string[] (family member IDs)
+  color              String
+  startingBalanceUsd Float    @default(0)
+  createdAt          DateTime @default(now())
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+}
+
+model BudgetCategory {
+  id          String   @id @default(uuid())
+  householdId String
+  label       String
+  limitUsd    Float
+  color       String
+  icon        String
+  createdAt   DateTime @default(now())
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+}
+
+model Transaction {
+  id          String   @id @default(uuid())
+  householdId String
+  name        String
+  who         String
+  usd         Float
+  category    String
+  wallet      String
+  date        String
+  createdAt   DateTime @default(now())
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+}
+
+model Goal {
+  id          String   @id @default(uuid())
+  householdId String
+  title       String
+  targetUsd   Float
+  savedUsd    Float
+  targetDate  String
+  icon        String
+  color       String
+  contributors Json     // string[]
+  history     Json     // Goal history array
+  createdAt   DateTime @default(now())
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+}
+
+model LinkedBank {
+  id          String   @id @default(uuid())
+  householdId String
+  name        String
+  connectedAt String
+  accounts    Json     // Account array
+  createdAt   DateTime @default(now())
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+}
+
+model ScheduleItem {
+  id          String   @id @default(uuid())
+  householdId String
+  label       String
+  every       String
+  amountUsd   Float
+  color       String
+  type        String   // "income" | "subscription"
+  createdAt   DateTime @default(now())
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+}
+
+model AppNotification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  desc      String
+  time      String
+  group     String
+  tone      String
+  read      Boolean  @default(false)
+  screen    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

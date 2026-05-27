@@ -6,10 +6,17 @@ import { useState } from "react";
 export function JoinFamilyErrorScreen() {
   const { goBack, navigate, validateInviteCode } = useAppNavigation();
   const [code, setCode] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const tryCode = () => {
-    const invite = validateInviteCode(code);
-    navigate(invite ? "confirm_invite" : "join_family_error");
+  const tryCode = async () => {
+    if (!code.trim()) return;
+    setLoading(true);
+    try {
+      const invite = await validateInviteCode(code);
+      navigate(invite ? "confirm_invite" : "join_family_error");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -61,10 +68,10 @@ export function JoinFamilyErrorScreen() {
 
         <button
           onClick={tryCode}
-          disabled={!code.trim()}
-          className={`mt-auto w-full rounded-full py-4 text-[15px] font-semibold ${code.trim() ? "bg-[oklch(0.18_0.04_265)] text-white" : "bg-[var(--muted)] text-muted-foreground"}`}
+          disabled={!code.trim() || loading}
+          className={`mt-auto w-full rounded-full py-4 text-[15px] font-semibold transition-opacity ${code.trim() && !loading ? "bg-[oklch(0.18_0.04_265)] text-white" : "bg-[var(--muted)] text-muted-foreground opacity-50"}`}
         >
-          Try code
+          {loading ? "Checking..." : "Try code"}
         </button>
       </div>
     </PhoneFrame>
