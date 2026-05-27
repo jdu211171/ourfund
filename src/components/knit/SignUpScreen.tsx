@@ -149,7 +149,11 @@ export function SignUpScreen() {
           className="mt-5 flex items-center gap-2 text-left text-[11px] text-muted-foreground"
         >
           <span
-            className={`grid h-5 w-5 place-items-center rounded-md ${accepted ? "bg-[var(--primary)] text-white" : "bg-white"}`}
+            className={`grid h-5 w-5 shrink-0 place-items-center rounded-md border transition-colors ${
+              accepted
+                ? "border-[var(--primary)] bg-[var(--primary)] text-white"
+                : "border-slate-300 bg-white"
+            }`}
           >
             {accepted && <Check className="h-3 w-3" strokeWidth={3} />}
           </span>

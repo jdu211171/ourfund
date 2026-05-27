@@ -14,11 +14,16 @@ createServer(async (req, res) => {
   try {
     const url = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
     const body = req.method === "GET" || req.method === "HEAD" ? undefined : Readable.toWeb(req);
-    const request = new Request(url, {
+    const requestInit = {
       method: req.method,
       headers: req.headers,
       body,
-    });
+    };
+    if (body) {
+      requestInit.duplex = "half";
+    }
+
+    const request = new Request(url, requestInit);
 
     const response = await server.fetch(request, {}, {});
 
