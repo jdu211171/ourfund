@@ -27,6 +27,12 @@ jobs:
           ROLLUP_VERSION=$(node -p "require('rollup/package.json').version")
           npm install --no-save "@rollup/rollup-linux-x64-gnu@${ROLLUP_VERSION}"
 
+      - name: Ensure Lightning CSS native binary
+        run: |
+          set -euo pipefail
+          LIGHTNING_VERSION=$(node -p "require('lightningcss/package.json').version")
+          npm install --no-save "lightningcss-linux-x64-gnu@${LIGHTNING_VERSION}"
+
       - name: Build app
         run: npm run build
 
