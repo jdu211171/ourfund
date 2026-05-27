@@ -30,7 +30,7 @@ jobs:
       - name: Ensure Lightning CSS native binary
         run: |
           set -euo pipefail
-          LIGHTNING_VERSION=$(node -p "require('lightningcss/package.json').version")
+          LIGHTNING_VERSION=$(node -e "const fs=require('fs'); const path=require('path'); const entry=require.resolve('lightningcss'); const pkg=path.resolve(path.dirname(entry), '..', 'package.json'); console.log(JSON.parse(fs.readFileSync(pkg, 'utf8')).version);")
           npm install --no-save "lightningcss-linux-x64-gnu@${LIGHTNING_VERSION}"
 
       - name: Build app
