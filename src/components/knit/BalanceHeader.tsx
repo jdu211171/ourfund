@@ -1,4 +1,4 @@
-import { ArrowDownLeft } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { Money } from "./Money";
 import { useAppNavigation } from "@/lib/navigation";
 
@@ -67,7 +67,7 @@ export function BalanceHeader({
         <Cell
           tint="oklch(0.96 0.05 25)"
           fg="var(--danger)"
-          icon={<ArrowDownLeft className="h-3.5 w-3.5" strokeWidth={2.75} />}
+          icon={<ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2.75} />}
           label="Expense"
           usd={spentUsd}
           interactive={interactive}
