@@ -39,7 +39,10 @@ export function EditTransactionScreen() {
       category,
     ]),
   ].filter(Boolean);
-  const amountPrefix = currencyMeta[currency].symbol || currency;
+  const amountPrefix =
+    currency === "JPY"
+      ? currencyMeta[currency].suffix?.trim() || currency
+      : currencyMeta[currency].symbol || currency;
 
   if (!txn) {
     return (

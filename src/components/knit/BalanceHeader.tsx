@@ -1,4 +1,4 @@
-import { Briefcase } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { Money } from "./Money";
 import { useAppNavigation } from "@/lib/navigation";
 
@@ -59,7 +59,7 @@ export function BalanceHeader({
         <Cell
           tint="oklch(0.96 0.04 145)"
           fg="var(--success)"
-          icon={<Briefcase className="h-3.5 w-3.5" strokeWidth={2.75} />}
+          icon={<ChevronDown className="h-3.5 w-3.5" strokeWidth={2.75} />}
           label="Income"
           usd={incomeUsd}
           interactive={interactive}
@@ -67,7 +67,7 @@ export function BalanceHeader({
         <Cell
           tint="oklch(0.96 0.05 25)"
           fg="var(--danger)"
-          icon={<Briefcase className="h-3.5 w-3.5 rotate-180" strokeWidth={2.75} />}
+          icon={<ChevronUp className="h-3.5 w-3.5" strokeWidth={2.75} />}
           label="Expense"
           usd={spentUsd}
           interactive={interactive}
