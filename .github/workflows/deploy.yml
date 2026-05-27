@@ -21,17 +21,12 @@ jobs:
       - name: Install dependencies
         run: npm install --include=optional --no-audit --no-fund
 
-      - name: Ensure Rollup native binary
+      - name: Ensure native binaries
         run: |
           set -euo pipefail
           ROLLUP_VERSION=$(node -p "require('rollup/package.json').version")
-          npm install --no-save "@rollup/rollup-linux-x64-gnu@${ROLLUP_VERSION}"
-
-      - name: Ensure Lightning CSS native binary
-        run: |
-          set -euo pipefail
           LIGHTNING_VERSION=$(node -e "const fs=require('fs'); const path=require('path'); const entry=require.resolve('lightningcss'); const pkg=path.resolve(path.dirname(entry), '..', 'package.json'); console.log(JSON.parse(fs.readFileSync(pkg, 'utf8')).version);")
-          npm install --no-save "lightningcss-linux-x64-gnu@${LIGHTNING_VERSION}"
+          npm install --no-save "@rollup/rollup-linux-x64-gnu@${ROLLUP_VERSION}" "lightningcss-linux-x64-gnu@${LIGHTNING_VERSION}"
 
       - name: Build app
         run: npm run build
