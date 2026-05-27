@@ -9,6 +9,66 @@ import {
   verifyGoogleToken,
 } from "./auth-server";
 
+const defaultNotificationPrefs = {
+  "Category at 80%": true,
+  "Category over budget": true,
+  "Large transaction": false,
+  "New member expense": true,
+  "Transfer requests": true,
+  "Goal contributions": false,
+  "Daily digest": true,
+  "Weekly report": true,
+  "Bill reminders": true,
+};
+
+const defaultHistoryFilters = {
+  kind: "All",
+  member: "Anyone",
+  categories: [],
+  sort: "Newest",
+  minUsd: 0,
+  maxUsd: 5000,
+};
+
+function asRecord(value: unknown): Record<string, any> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, any>)
+    : {};
+}
+
+function normalizeBudgetMode(value: unknown) {
+  return value === "family" ? "family" : "personal";
+}
+
+function normalizeReportPeriod(value: unknown) {
+  return value === "Week" || value === "Year" ? value : "Month";
+}
+
+function normalizeHistoryFilters(value: unknown) {
+  const filters = asRecord(value);
+  const kind = ["All", "Expense", "Income", "Goals", "Transfer"].includes(String(filters.kind))
+    ? String(filters.kind)
+    : defaultHistoryFilters.kind;
+  const sort = ["Newest", "Oldest", "Highest amount", "Lowest amount"].includes(
+    String(filters.sort),
+  )
+    ? String(filters.sort)
+    : defaultHistoryFilters.sort;
+  return {
+    ...defaultHistoryFilters,
+    ...filters,
+    kind,
+    categories: Array.isArray(filters.categories) ? filters.categories : [],
+    sort,
+    minUsd: Number.isFinite(Number(filters.minUsd))
+      ? Number(filters.minUsd)
+      : defaultHistoryFilters.minUsd,
+    maxUsd: Number.isFinite(Number(filters.maxUsd))
+      ? Number(filters.maxUsd)
+      : defaultHistoryFilters.maxUsd,
+  };
+}
+
 // ─── Auth Server Functions ──────────────────────────────────────────────────
 
 export const loginWithEmailServerFn = createServerFn({ method: "POST" })
@@ -148,6 +208,13 @@ export const getAppDataServerFn = createServerFn({ method: "GET" }).handler(asyn
       pronouns: user.pronouns || "",
       initials: user.initials,
       personalCurrency: user.personalCurrency,
+      budgetMode: normalizeBudgetMode(user.budgetMode),
+      reportPeriod: normalizeReportPeriod(user.reportPeriod),
+      notificationPrefs: {
+        ...defaultNotificationPrefs,
+        ...asRecord(user.notificationPrefs),
+      },
+      historyFilters: normalizeHistoryFilters(user.historyFilters),
       passcode: user.passcode || "",
       faceIdEnabled: user.faceIdEnabled,
     },
@@ -306,6 +373,44 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
         break;
       }
 
+      case "setBudgetMode": {
+        const budgetMode = payload.budgetMode === "family" && householdId ? "family" : "personal";
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { budgetMode },
+        });
+        break;
+      }
+
+      case "setReportPeriod": {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { reportPeriod: normalizeReportPeriod(payload.reportPeriod) },
+        });
+        break;
+      }
+
+      case "setNotificationPrefs": {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            notificationPrefs: {
+              ...defaultNotificationPrefs,
+              ...asRecord(payload.notificationPrefs),
+            },
+          },
+        });
+        break;
+      }
+
+      case "setHistoryFilters": {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { historyFilters: normalizeHistoryFilters(payload.historyFilters) },
+        });
+        break;
+      }
+
       // ── Household setup ────────────────────────────────────────────────────
       case "createHousehold": {
         const inviteCode = `NEST-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
@@ -313,7 +418,7 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
         const familyCurrency = payload.familyCurrency || "UZS";
         await prisma.user.update({
           where: { id: user.id },
-          data: { personalCurrency },
+          data: { personalCurrency, budgetMode: "family" },
         });
         const household = await prisma.household.create({
           data: {
@@ -399,7 +504,7 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
         const personalCurrency = payload.personalCurrency || user.personalCurrency || "USD";
         await prisma.user.update({
           where: { id: user.id },
-          data: { personalCurrency },
+          data: { personalCurrency, budgetMode: "family" },
         });
 
         const familyMember = await prisma.familyMember.create({
@@ -477,6 +582,49 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
         const txn = await prisma.transaction.findUnique({ where: { id: payload.id } });
         if (!txn || txn.householdId !== householdId) throw new Error("Forbidden");
         await prisma.transaction.delete({ where: { id: payload.id } });
+        break;
+      }
+
+      case "recordTransfer": {
+        if (!householdId) throw new Error("No household linked");
+        const transferTransactions = Array.isArray(payload.transactions)
+          ? payload.transactions
+          : [];
+        if (transferTransactions.length !== 2) {
+          throw new Error("Transfer requires two transaction legs");
+        }
+        const amounts = transferTransactions.map((txn: any) => Number(txn.usd));
+        const outgoing = amounts.filter((amount) => amount < 0);
+        const incoming = amounts.filter((amount) => amount > 0);
+        if (
+          outgoing.length !== 1 ||
+          incoming.length !== 1 ||
+          Math.abs(outgoing[0] + incoming[0]) > 0.001
+        ) {
+          throw new Error("Transfer legs must balance");
+        }
+        const walletLabels = Array.from(
+          new Set(transferTransactions.map((txn: any) => String(txn.wallet || ""))),
+        ).filter(Boolean);
+        if (walletLabels.length !== 2) throw new Error("Transfer requires two wallets");
+        const walletCount = await prisma.walletAccount.count({
+          where: { householdId, label: { in: walletLabels } },
+        });
+        if (walletCount !== walletLabels.length) throw new Error("Forbidden");
+
+        await prisma.transaction.createMany({
+          data: transferTransactions.map((txn: any) => ({
+            id: txn.id,
+            householdId,
+            name: txn.name,
+            who: txn.who,
+            usd: txn.usd,
+            category: "Transfer",
+            wallet: txn.wallet,
+            date: txn.date,
+          })),
+          skipDuplicates: true,
+        });
         break;
       }
 
@@ -688,8 +836,18 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
       // ── Schedule items (income / subscriptions) ────────────────────────────
       case "addScheduleItem": {
         if (!householdId) throw new Error("No household linked");
-        await prisma.scheduleItem.create({
-          data: {
+        const item = await prisma.scheduleItem.findUnique({ where: { id: payload.id } });
+        if (item && item.householdId !== householdId) throw new Error("Forbidden");
+        await prisma.scheduleItem.upsert({
+          where: { id: payload.id },
+          update: {
+            label: payload.label,
+            every: payload.every,
+            amountUsd: payload.amountUsd,
+            color: payload.color,
+            type: payload.type,
+          },
+          create: {
             id: payload.id,
             householdId,
             label: payload.label,

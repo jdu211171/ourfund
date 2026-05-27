@@ -379,14 +379,56 @@ function categoryAliases(label: string) {
   return [lower];
 }
 
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function normalizeBudgetModeInput(value: unknown): BudgetMode {
+  return value === "family" ? "family" : "personal";
+}
+
+function normalizeReportPeriodInput(value: unknown): ReportPeriod {
+  return value === "Week" || value === "Year" ? value : "Month";
+}
+
+function normalizeHistoryFiltersInput(value: unknown): HistoryFilters {
+  const filters = asRecord(value);
+  const kind = ["All", "Expense", "Income", "Goals", "Transfer"].includes(String(filters.kind))
+    ? (filters.kind as TxnKind)
+    : defaultHistoryFilters.kind;
+  const sort = ["Newest", "Oldest", "Highest amount", "Lowest amount"].includes(
+    String(filters.sort),
+  )
+    ? String(filters.sort)
+    : defaultHistoryFilters.sort;
+
+  return {
+    ...defaultHistoryFilters,
+    kind,
+    member: typeof filters.member === "string" ? filters.member : defaultHistoryFilters.member,
+    categories: Array.isArray(filters.categories)
+      ? filters.categories.filter((category): category is string => typeof category === "string")
+      : defaultHistoryFilters.categories,
+    sort,
+    minUsd: Number.isFinite(Number(filters.minUsd))
+      ? Number(filters.minUsd)
+      : defaultHistoryFilters.minUsd,
+    maxUsd: Number.isFinite(Number(filters.maxUsd))
+      ? Number(filters.maxUsd)
+      : defaultHistoryFilters.maxUsd,
+  };
+}
+
 export function AppNavigationProvider({ children }: { children: ReactNode }) {
   const initialSeed = useMemo(() => getInitialSeed(), []);
   const [currentScreen, setCurrentScreen] = useState<ScreenName>("onboarding");
   const [history, setHistory] = useState<ScreenName[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [signupHouseholdMode, setSignupHouseholdMode] = useState<"new" | "join">("new");
-  const [budgetMode, setBudgetMode] = useState<BudgetMode>(initialSeed.budgetMode);
-  const [reportPeriod, setReportPeriod] = useState<ReportPeriod>(initialSeed.reportPeriod);
+  const [budgetMode, setBudgetModeState] = useState<BudgetMode>(initialSeed.budgetMode);
+  const [reportPeriod, setReportPeriodState] = useState<ReportPeriod>(initialSeed.reportPeriod);
   const [profile, setProfile] = useState<Profile>(initialSeed.profile);
   const [household, setHousehold] = useState<Household | null>(initialSeed.household);
   const [pendingInvite, setPendingInvite] = useState<HouseholdInvite | null>(null);
@@ -421,8 +463,8 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   const didMountRef = useRef(false);
 
   const applySeed = useCallback((seed: AppSeed) => {
-    setBudgetMode(seed.budgetMode);
-    setReportPeriod(seed.reportPeriod);
+    setBudgetModeState(seed.budgetMode);
+    setReportPeriodState(seed.reportPeriod);
     setProfile(seed.profile);
     setHousehold(seed.household);
     setCurrencies(seed.currencies);
@@ -514,6 +556,20 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     passcode,
     faceIdEnabled,
   ]);
+
+  const setBudgetMode = useCallback((mode: BudgetMode) => {
+    setBudgetModeState(mode);
+    syncMutationServerFn({ data: { type: "setBudgetMode", data: { budgetMode: mode } } }).catch(
+      console.error,
+    );
+  }, []);
+
+  const setReportPeriod = useCallback((period: ReportPeriod) => {
+    setReportPeriodState(period);
+    syncMutationServerFn({
+      data: { type: "setReportPeriod", data: { reportPeriod: period } },
+    }).catch(console.error);
+  }, []);
 
   const setPasscode = (newPasscode: string) => {
     setPasscodeState(newPasscode);
@@ -703,7 +759,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     setSelectedMemberId(memberId);
     setWallets(createBaseWallets(memberId, cleanName, cleanHouseholdName, currencies.family));
     clearHouseholdLedger();
-    setBudgetMode("family");
+    setBudgetModeState("family");
     setCurrencyTarget("family");
 
     try {
@@ -808,7 +864,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     );
     clearHouseholdLedger();
     setPendingInvite(null);
-    setBudgetMode("family");
+    setBudgetModeState("family");
     setCurrencyTarget("family");
 
     try {
@@ -866,7 +922,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   ) => {
     if (amountUsd <= 0) return;
     const id = makeId("transfer");
-    setTransactions((prev) => [
+    const transferTransactions: Transaction[] = [
       {
         id: `${id}-out`,
         name: note || `Transfer to ${toWallet}`,
@@ -885,8 +941,11 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         wallet: toWallet,
         date: "today",
       },
-      ...prev,
-    ]);
+    ];
+    setTransactions((prev) => [...transferTransactions, ...prev]);
+    syncMutationServerFn({
+      data: { type: "recordTransfer", data: { transactions: transferTransactions } },
+    }).catch(console.error);
   };
 
   const addWallet = (
@@ -960,40 +1019,43 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
 
   const contributeToGoal = (goalId: string, amountUsd: number, who = firstName(profile.name)) => {
     if (amountUsd <= 0) return;
+    const goalToUpdate = goals.find((g) => g.id === goalId);
+    if (!goalToUpdate) return;
+    const contributionUsd = Math.min(
+      amountUsd,
+      Math.max(0, goalToUpdate.targetUsd - goalToUpdate.savedUsd),
+    );
+    if (contributionUsd <= 0) return;
     const contribution = {
       id: makeId("contrib"),
       who,
       initials: initialsFor(who),
       date: "today",
-      amountUsd,
+      amountUsd: contributionUsd,
     };
     setGoals((prev) =>
       prev.map((goal) =>
         goal.id === goalId
           ? {
               ...goal,
-              savedUsd: Math.min(goal.targetUsd, goal.savedUsd + amountUsd),
+              savedUsd: Math.min(goal.targetUsd, goal.savedUsd + contributionUsd),
               history: [contribution, ...goal.history],
             }
           : goal,
       ),
     );
-    // Persist updated goal savings to DB in background
-    const goalToUpdate = goals.find((g) => g.id === goalId);
-    if (goalToUpdate) {
-      const updatedSaved = Math.min(goalToUpdate.targetUsd, goalToUpdate.savedUsd + amountUsd);
-      const updatedHistory = [contribution, ...goalToUpdate.history];
-      syncMutationServerFn({
-        data: {
-          type: "updateGoalSavings",
-          data: { id: goalId, savedUsd: updatedSaved, history: updatedHistory },
-        },
-      }).catch(console.error);
-    }
+    const updatedSaved = Math.min(goalToUpdate.targetUsd, goalToUpdate.savedUsd + contributionUsd);
+    const updatedHistory = [contribution, ...goalToUpdate.history];
+    syncMutationServerFn({
+      data: {
+        type: "updateGoalSavings",
+        data: { id: goalId, savedUsd: updatedSaved, history: updatedHistory },
+      },
+    }).catch(console.error);
     addTransaction({
-      name: `Goal contribution · ${goals.find((g) => g.id === goalId)?.title ?? "Goal"}`,
+      name: `Goal contribution · ${goalToUpdate.title}`,
       who: `${who} · today`,
-      usd: -amountUsd,
+      usd: -contributionUsd,
       category: "Goals",
       wallet: activeWallets[0]?.label ?? wallets[0]?.label ?? "Unassigned wallet",
       date: "today",
@@ -1003,30 +1065,41 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   const withdrawFromGoal = (goalId: string, amountUsd: number, wallet: string) => {
     if (amountUsd <= 0) return;
     const goal = goals.find((g) => g.id === goalId);
+    if (!goal) return;
+    const withdrawalUsd = Math.min(amountUsd, goal.savedUsd);
+    if (withdrawalUsd <= 0) return;
+    const withdrawal = {
+      id: makeId("withdraw"),
+      who: firstName(profile.name),
+      initials: profile.initials,
+      date: "today",
+      amountUsd: -withdrawalUsd,
+    };
     setGoals((prev) =>
       prev.map((g) =>
         g.id === goalId
           ? {
               ...g,
-              savedUsd: Math.max(0, g.savedUsd - amountUsd),
-              history: [
-                {
-                  id: makeId("withdraw"),
-                  who: firstName(profile.name),
-                  initials: profile.initials,
-                  date: "today",
-                  amountUsd: -amountUsd,
-                },
-                ...g.history,
-              ],
+              savedUsd: Math.max(0, g.savedUsd - withdrawalUsd),
+              history: [withdrawal, ...g.history],
             }
           : g,
       ),
     );
+    syncMutationServerFn({
+      data: {
+        type: "updateGoalSavings",
+        data: {
+          id: goalId,
+          savedUsd: Math.max(0, goal.savedUsd - withdrawalUsd),
+          history: [withdrawal, ...goal.history],
+        },
+      },
+    }).catch(console.error);
     addTransaction({
-      name: `Goal withdrawal · ${goal?.title ?? "Goal"}`,
+      name: `Goal withdrawal · ${goal.title}`,
       who: `${firstName(profile.name)} · today`,
-      usd: amountUsd,
+      usd: withdrawalUsd,
       category: "Goals",
       wallet,
       date: "today",
@@ -1120,9 +1193,11 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     const member = members.find((m) => m.id === memberId);
     if (!member || amountUsd <= 0) return;
     updateMember(memberId, { allowanceUsd: amountUsd, allowanceDay: day, allowanceOn: true });
+    const label = `Allowance · ${member.name.split(" ")[0]}`;
+    const existingAllowance = recurringIncome.find((item) => item.label === label);
     const newAllowance: ScheduleItem = {
-      id: makeId("allowance"),
-      label: `Allowance · ${member.name.split(" ")[0]}`,
+      id: existingAllowance?.id ?? makeId("allowance"),
+      label,
       every: `Weekly · ${day}`,
       amountUsd,
       color: "oklch(0.65 0.22 320)",
@@ -1130,9 +1205,8 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     };
     setRecurringIncome((prev) => [
       newAllowance,
-      ...prev.filter((item) => item.label !== `Allowance · ${member.name.split(" ")[0]}`),
+      ...prev.filter((item) => item.id !== newAllowance.id && item.label !== label),
     ]);
-    // Persist allowance schedule item to DB in background
     syncMutationServerFn({
       data: { type: "addScheduleItem", data: newAllowance },
     }).catch(console.error);
@@ -1153,7 +1227,9 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
       sub: "Connected bank",
       type: "connected",
       currency: currencies.personal,
-      members: [members.find((member) => member.email === profile.email)?.id ?? "me"],
+      members: [
+        currentMemberId ?? members.find((member) => member.email === profile.email)?.id ?? "me",
+      ],
       color: "oklch(0.45 0.18 250)",
       startingBalanceUsd: 0,
     };
@@ -1199,7 +1275,13 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   };
 
   const toggleNotificationPref = (key: string) => {
-    setNotificationPrefs((prev) => ({ ...prev, [key]: !prev[key] }));
+    setNotificationPrefs((prev) => {
+      const next = { ...prev, [key]: !prev[key] };
+      syncMutationServerFn({
+        data: { type: "setNotificationPrefs", data: { notificationPrefs: next } },
+      }).catch(console.error);
+      return next;
+    });
   };
 
   const addRecurringIncome = (item: Partial<ScheduleItem> = {}) => {
@@ -1231,11 +1313,20 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   };
 
   const setHistoryFilters = (filters: Partial<HistoryFilters>) => {
-    setHistoryFilterState((prev) => ({ ...prev, ...filters }));
+    setHistoryFilterState((prev) => {
+      const next = { ...prev, ...filters };
+      syncMutationServerFn({
+        data: { type: "setHistoryFilters", data: { historyFilters: next } },
+      }).catch(console.error);
+      return next;
+    });
   };
 
   const resetHistoryFilters = () => {
     setHistoryFilterState(defaultHistoryFilters);
+    syncMutationServerFn({
+      data: { type: "setHistoryFilters", data: { historyFilters: defaultHistoryFilters } },
+    }).catch(console.error);
   };
 
   const updateProfile = (updates: Partial<Profile>) => {
@@ -1275,10 +1366,17 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         personal: (data.currencies?.personal ?? "USD") as CurrencyCode,
         family: (data.currencies?.family ?? "UZS") as CurrencyCode,
       });
+      setReportPeriodState(normalizeReportPeriodInput(data.user.reportPeriod));
+      setNotificationPrefs((prev) => ({
+        ...prev,
+        ...asRecord(data.user.notificationPrefs),
+      }));
+      setHistoryFilterState(normalizeHistoryFiltersInput(data.user.historyFilters));
       setPasscodeState(data.user.passcode ?? "");
       setFaceIdEnabledState(data.user.faceIdEnabled);
 
       if (data.household) {
+        setBudgetModeState(normalizeBudgetModeInput(data.user.budgetMode));
         setHousehold({
           id: data.household.id,
           name: data.household.name,
@@ -1289,7 +1387,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         setCurrencyTarget("family");
       } else {
         setHousehold(null);
-        setBudgetMode("personal");
+        setBudgetModeState("personal");
         setCurrencyTarget("personal");
       }
 

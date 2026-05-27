@@ -13,7 +13,7 @@ import { PhoneFrame } from "./PhoneFrame";
 import { Money } from "./Money";
 import { useAppNavigation, type Transaction, type TxnKind } from "@/lib/navigation";
 
-const filters: TxnKind[] = ["All", "Expense", "Income", "Goals"];
+const filters: TxnKind[] = ["All", "Expense", "Income", "Goals", "Transfer"];
 
 function iconFor(txn: Transaction) {
   const text = `${txn.category} ${txn.name}`.toLowerCase();
@@ -47,6 +47,7 @@ export function TransactionHistoryScreen() {
       if (historyFilters.kind === "Expense" && txn.usd >= 0) return false;
       if (historyFilters.kind === "Income" && txn.usd <= 0) return false;
       if (historyFilters.kind === "Goals" && txn.category !== "Goals") return false;
+      if (historyFilters.kind === "Transfer" && txn.category !== "Transfer") return false;
       if (
         historyFilters.member !== "Anyone" &&
         !txn.who.toLowerCase().includes(historyFilters.member.toLowerCase())

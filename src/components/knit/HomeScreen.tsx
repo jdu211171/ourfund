@@ -35,6 +35,7 @@ export function HomeScreen() {
     subscriptions,
     recurringIncome,
     goals,
+    setSelectedGoalId,
     categories,
     categorySpentUsd,
     notifications,
@@ -180,7 +181,10 @@ export function HomeScreen() {
             {primaryGoal && (
               <button
                 type="button"
-                onClick={() => navigate("goal_detail")}
+                onClick={() => {
+                  setSelectedGoalId(primaryGoal.id);
+                  navigate("goal_detail");
+                }}
                 className="w-full rounded-2xl bg-white p-3 text-left"
               >
                 <div className="flex items-center gap-3">

@@ -38,6 +38,10 @@ export function FilterSortScreen() {
   };
 
   const resultCount = activeTransactions.filter((txn) => {
+    if (historyFilters.kind === "Expense" && txn.usd >= 0) return false;
+    if (historyFilters.kind === "Income" && txn.usd <= 0) return false;
+    if (historyFilters.kind === "Goals" && txn.category !== "Goals") return false;
+    if (historyFilters.kind === "Transfer" && txn.category !== "Transfer") return false;
     if (
       historyFilters.member !== "Anyone" &&
       !txn.who.toLowerCase().includes(historyFilters.member.toLowerCase())

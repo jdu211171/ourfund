@@ -10,19 +10,23 @@ datasource db {
 }
 
 model User {
-  id               String   @id @default(uuid())
-  email            String   @unique
-  passwordHash     String?
-  googleId         String?  @unique
-  name             String
-  phone            String?
-  pronouns         String?
-  initials         String
-  personalCurrency String   @default("USD")
-  passcode         String?
-  faceIdEnabled    Boolean  @default(true)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id                String   @id @default(uuid())
+  email             String   @unique
+  passwordHash      String?
+  googleId          String?  @unique
+  name              String
+  phone             String?
+  pronouns          String?
+  initials          String
+  personalCurrency  String   @default("USD")
+  budgetMode        String   @default("personal")
+  reportPeriod      String   @default("Month")
+  notificationPrefs Json     @default("{\"Category at 80%\":true,\"Category over budget\":true,\"Large transaction\":false,\"New member expense\":true,\"Transfer requests\":true,\"Goal contributions\":false,\"Daily digest\":true,\"Weekly report\":true,\"Bill reminders\":true}")
+  historyFilters    Json     @default("{\"kind\":\"All\",\"member\":\"Anyone\",\"categories\":[],\"sort\":\"Newest\",\"minUsd\":0,\"maxUsd\":5000}")
+  passcode          String?
+  faceIdEnabled     Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   householdMembers FamilyMember[]
   notifications    AppNotification[]

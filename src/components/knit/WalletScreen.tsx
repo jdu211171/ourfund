@@ -30,6 +30,7 @@ export function WalletScreen() {
     members,
     selectedMemberId,
     goals,
+    setSelectedGoalId,
     linkedBanks,
     subscriptions,
     recurringIncome,
@@ -302,7 +303,10 @@ export function WalletScreen() {
               <button
                 key={goal.id}
                 type="button"
-                onClick={() => navigate("goal_detail")}
+                onClick={() => {
+                  setSelectedGoalId(goal.id);
+                  navigate("goal_detail");
+                }}
                 className="flex w-full items-center gap-3 rounded-2xl bg-white px-3 py-3 text-left"
               >
                 <span className="grid h-10 w-10 place-items-center rounded-xl bg-[oklch(0.95_0.04_265)] text-[var(--primary)]">
