@@ -19,7 +19,9 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: npm install --include=optional --no-audit --no-fund
+        run: |
+          rm -f package-lock.json
+          npm install --include=optional --no-audit --no-fund
 
       - name: Ensure native binaries
         run: |
