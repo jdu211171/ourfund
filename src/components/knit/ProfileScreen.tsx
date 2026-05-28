@@ -13,6 +13,7 @@ import {
 import { PhoneFrame } from "./PhoneFrame";
 import { BottomNav } from "./BottomNav";
 import { useAppNavigation } from "@/lib/navigation";
+import { formatUsdAsCurrency } from "@/lib/currency";
 
 const items = [
   { Icon: Tag, label: "Categories", hint: "Budget limits", screen: "categories" as const },
@@ -32,6 +33,7 @@ export function ProfileScreen() {
     selectedMemberIds,
     setSelectedMemberIds,
     setBudgetMode,
+    currency,
   } = useAppNavigation();
 
   const toggleRemoval = (memberId: string) => {
@@ -129,7 +131,9 @@ export function ProfileScreen() {
                     <p className="text-[12px] font-bold text-foreground">{m.name}</p>
                     <p className="text-[10px] text-muted-foreground">
                       {m.role}
-                      {m.allowanceUsd ? ` · $${m.allowanceUsd} allowance` : ""}
+                      {m.allowanceUsd
+                        ? ` · ${formatUsdAsCurrency(m.allowanceUsd, currency)} allowance`
+                        : ""}
                     </p>
                   </div>
                 </button>

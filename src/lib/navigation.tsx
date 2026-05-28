@@ -20,6 +20,7 @@ import {
 import {
   getAppDataServerFn,
   logoutServerFn,
+  scanReceiptServerFn,
   syncMutationServerFn,
   validateInviteCodeServerFn,
 } from "./server-fns";
@@ -70,7 +71,10 @@ export type ScreenName =
   | "delete_confirm"
   | "filter_sort"
   | "receipt"
-  | "history_search";
+  | "history_search"
+  | "lend_borrow"
+  | "product_tracker"
+  | "scan_receipt";
 
 export type BudgetMode = "personal" | "family";
 export type ReportPeriod = "Week" | "Month" | "Year";
@@ -91,6 +95,8 @@ export type WalletType = "shared" | "private" | "connected";
 export type MemberRole = "Admin" | "Adult" | "Teen" | "Kid";
 export type NotificationTone = "success" | "danger" | "warn" | "primary";
 export type TxnKind = "All" | "Expense" | "Income" | "Goals" | "Transfer";
+export type LoanDirection = "lent" | "borrowed";
+export type LoanStatus = "pending" | "paid" | "overdue";
 
 export interface Transaction {
   id: string;
@@ -163,6 +169,57 @@ export interface ScheduleItem {
   type: "income" | "subscription";
 }
 
+export interface LoanEntry {
+  id: string;
+  counterpartyMemberId?: string | null;
+  counterpartyName: string;
+  note: string;
+  due: string;
+  amountUsd: number;
+  direction: LoanDirection;
+  status: LoanStatus;
+  createdAt: string;
+}
+
+export interface ProductEntry {
+  id: string;
+  name: string;
+  store: string;
+  category: string;
+  amountUsd: number;
+  quantity: number;
+  unitPriceUsd?: number | null;
+  purchasedAt: string;
+  source: "manual" | "receipt";
+  createdAt: string;
+}
+
+export interface ReceiptScanItem {
+  name: string;
+  category: string;
+  quantity: number;
+  unitPriceUsd: number;
+  totalUsd: number;
+  originalPrice?: number;
+  comparison?: {
+    previousStore: string;
+    previousPriceUsd: number;
+    deltaPct: number;
+    trend: "up" | "down" | "same";
+  } | null;
+}
+
+export interface ReceiptScan {
+  id: string;
+  storeName: string;
+  purchasedAt: string;
+  currency: CurrencyCode;
+  totalUsd: number;
+  items: ReceiptScanItem[];
+  rawText?: string;
+  createdAt: string;
+}
+
 export interface AppNotification {
   id: string;
   title: string;
@@ -232,6 +289,9 @@ export interface AppSeed {
   notificationPrefs: Record<string, boolean>;
   recurringIncome: ScheduleItem[];
   subscriptions: ScheduleItem[];
+  loanEntries: LoanEntry[];
+  trackedProducts: ProductEntry[];
+  receiptScans: ReceiptScan[];
   historyFilters: HistoryFilters;
   passcode: string;
   faceIdEnabled: boolean;
@@ -322,6 +382,14 @@ interface NavigationContextType {
   addRecurringIncome: (item?: Partial<ScheduleItem>) => void;
   subscriptions: ScheduleItem[];
   addSubscription: (item?: Partial<ScheduleItem>) => void;
+  loanEntries: LoanEntry[];
+  addLoanEntry: (entry: Omit<LoanEntry, "id" | "createdAt">) => LoanEntry;
+  updateLoanEntry: (id: string, updates: Partial<Omit<LoanEntry, "id" | "createdAt">>) => void;
+  trackedProducts: ProductEntry[];
+  addTrackedProduct: (product: Omit<ProductEntry, "id" | "createdAt">) => ProductEntry;
+  receiptScans: ReceiptScan[];
+  scanReceiptImage: (imageDataUrl: string) => Promise<ReceiptScan>;
+  saveReceiptScan: (scan: ReceiptScan) => void;
   historyFilters: HistoryFilters;
   setHistoryFilters: (filters: Partial<HistoryFilters>) => void;
   resetHistoryFilters: () => void;
@@ -455,6 +523,11 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     initialSeed.recurringIncome,
   );
   const [subscriptions, setSubscriptions] = useState<ScheduleItem[]>(initialSeed.subscriptions);
+  const [loanEntries, setLoanEntries] = useState<LoanEntry[]>(initialSeed.loanEntries);
+  const [trackedProducts, setTrackedProducts] = useState<ProductEntry[]>(
+    initialSeed.trackedProducts,
+  );
+  const [receiptScans, setReceiptScans] = useState<ReceiptScan[]>(initialSeed.receiptScans);
   const [historyFilters, setHistoryFilterState] = useState<HistoryFilters>(
     initialSeed.historyFilters,
   );
@@ -484,6 +557,9 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     setNotificationPrefs(seed.notificationPrefs);
     setRecurringIncome(seed.recurringIncome);
     setSubscriptions(seed.subscriptions);
+    setLoanEntries(seed.loanEntries);
+    setTrackedProducts(seed.trackedProducts);
+    setReceiptScans(seed.receiptScans);
     setHistoryFilterState(seed.historyFilters);
     setPasscodeState(seed.passcode);
     setFaceIdEnabledState(seed.faceIdEnabled);
@@ -529,6 +605,9 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
       notificationPrefs,
       recurringIncome,
       subscriptions,
+      loanEntries,
+      trackedProducts,
+      receiptScans,
       historyFilters,
       passcode,
       faceIdEnabled,
@@ -552,6 +631,9 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     notificationPrefs,
     recurringIncome,
     subscriptions,
+    loanEntries,
+    trackedProducts,
+    receiptScans,
     historyFilters,
     passcode,
     faceIdEnabled,
@@ -721,6 +803,9 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     setNotifications([]);
     setRecurringIncome([]);
     setSubscriptions([]);
+    setLoanEntries([]);
+    setTrackedProducts([]);
+    setReceiptScans([]);
     setSelectedTransactionId(null);
     setSelectedGoalId(null);
   };
@@ -1312,6 +1397,101 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     syncMutationServerFn({ data: { type: "addScheduleItem", data: newItem } }).catch(console.error);
   };
 
+  const addLoanEntry = (entry: Omit<LoanEntry, "id" | "createdAt">) => {
+    const newEntry: LoanEntry = {
+      ...entry,
+      id: makeId("loan"),
+      createdAt: "today",
+    };
+    setLoanEntries((prev) => [newEntry, ...prev]);
+    syncMutationServerFn({ data: { type: "addLoanEntry", data: newEntry } }).catch(console.error);
+    return newEntry;
+  };
+
+  const updateLoanEntry = (id: string, updates: Partial<Omit<LoanEntry, "id" | "createdAt">>) => {
+    setLoanEntries((prev) =>
+      prev.map((entry) => (entry.id === id ? { ...entry, ...updates } : entry)),
+    );
+    const current = loanEntries.find((entry) => entry.id === id);
+    if (current) {
+      syncMutationServerFn({
+        data: { type: "updateLoanEntry", data: { ...current, ...updates, id } },
+      }).catch(console.error);
+    }
+  };
+
+  const addTrackedProduct = (product: Omit<ProductEntry, "id" | "createdAt">) => {
+    const newProduct: ProductEntry = {
+      ...product,
+      id: makeId("product"),
+      createdAt: "today",
+    };
+    setTrackedProducts((prev) => [newProduct, ...prev]);
+    syncMutationServerFn({ data: { type: "addTrackedProduct", data: newProduct } }).catch(
+      console.error,
+    );
+    return newProduct;
+  };
+
+  const scanReceiptImage = async (imageDataUrl: string) => {
+    const result = (await scanReceiptServerFn({
+      data: { imageDataUrl, currency },
+    })) as ReceiptScan;
+    return {
+      ...result,
+      currency: (result.currency || currency) as CurrencyCode,
+      createdAt: result.createdAt || "today",
+      items: Array.isArray(result.items) ? result.items : [],
+    };
+  };
+
+  const saveReceiptScan = (scan: ReceiptScan) => {
+    const normalizedScan: ReceiptScan = {
+      ...scan,
+      id: scan.id || makeId("receipt"),
+      createdAt: scan.createdAt || "today",
+      items: Array.isArray(scan.items) ? scan.items : [],
+    };
+    const products: ProductEntry[] = normalizedScan.items.map((item) => ({
+      id: makeId("product"),
+      name: item.name,
+      store: normalizedScan.storeName,
+      category: item.category || "Groceries",
+      amountUsd: item.totalUsd,
+      quantity: item.quantity || 1,
+      unitPriceUsd: item.unitPriceUsd,
+      purchasedAt: normalizedScan.purchasedAt,
+      source: "receipt",
+      createdAt: "today",
+    }));
+    const walletLabel = activeWallets[0]?.label ?? wallets[0]?.label;
+    const transaction: Transaction | null =
+      walletLabel && normalizedScan.totalUsd > 0
+        ? {
+            id: makeId("txn"),
+            name: normalizedScan.storeName || "Receipt purchase",
+            who: `${firstName(profile.name)} · today`,
+            usd: -normalizedScan.totalUsd,
+            category: products[0]?.category ?? "Groceries",
+            wallet: walletLabel,
+            date: normalizedScan.purchasedAt || "today",
+          }
+        : null;
+
+    setReceiptScans((prev) => [
+      normalizedScan,
+      ...prev.filter((receipt) => receipt.id !== normalizedScan.id),
+    ]);
+    setTrackedProducts((prev) => [...products, ...prev]);
+    if (transaction) setTransactions((prev) => [transaction, ...prev]);
+    syncMutationServerFn({
+      data: {
+        type: "saveReceiptScan",
+        data: { receipt: normalizedScan, products, transaction },
+      },
+    }).catch(console.error);
+  };
+
   const setHistoryFilters = (filters: Partial<HistoryFilters>) => {
     setHistoryFilterState((prev) => {
       const next = { ...prev, ...filters };
@@ -1419,6 +1599,26 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
       setLinkedBanks(data.linkedBanks);
       setRecurringIncome(data.recurringIncome);
       setSubscriptions(data.subscriptions);
+      setLoanEntries(
+        (data.loanEntries ?? []).map((entry) => ({
+          ...entry,
+          direction: entry.direction as LoanDirection,
+          status: entry.status as LoanStatus,
+        })),
+      );
+      setTrackedProducts(
+        (data.trackedProducts ?? []).map((product) => ({
+          ...product,
+          source: product.source === "receipt" ? "receipt" : "manual",
+        })),
+      );
+      setReceiptScans(
+        (data.receiptScans ?? []).map((receipt) => ({
+          ...receipt,
+          currency: receipt.currency as CurrencyCode,
+          items: Array.isArray(receipt.items) ? receipt.items : [],
+        })),
+      );
       setNotifications(data.notifications as AppNotification[]);
     } catch (err) {
       console.error("Failed to sync data after login:", err);
@@ -1511,6 +1711,14 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         addRecurringIncome,
         subscriptions,
         addSubscription,
+        loanEntries,
+        addLoanEntry,
+        updateLoanEntry,
+        trackedProducts,
+        addTrackedProduct,
+        receiptScans,
+        scanReceiptImage,
+        saveReceiptScan,
         historyFilters,
         setHistoryFilters,
         resetHistoryFilters,

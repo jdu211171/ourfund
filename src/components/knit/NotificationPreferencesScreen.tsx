@@ -8,7 +8,7 @@ const groups: { title: string; items: [string, string, boolean][] }[] = [
     items: [
       ["Category at 80%", "When any category hits 80% of limit", true],
       ["Category over budget", "When a category exceeds 100%", true],
-      ["Large transaction", "Expenses above $200", false],
+      ["Large transaction", "Expenses above your alert threshold", false],
     ],
   },
   {

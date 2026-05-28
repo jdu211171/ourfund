@@ -40,13 +40,16 @@ model Household {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  members       FamilyMember[]
-  wallets       WalletAccount[]
-  categories    BudgetCategory[]
-  transactions  Transaction[]
-  goals         Goal[]
-  linkedBanks   LinkedBank[]
-  scheduleItems ScheduleItem[]
+  members         FamilyMember[]
+  wallets         WalletAccount[]
+  categories      BudgetCategory[]
+  transactions    Transaction[]
+  goals           Goal[]
+  linkedBanks     LinkedBank[]
+  scheduleItems   ScheduleItem[]
+  loanEntries     LoanEntry[]
+  trackedProducts TrackedProduct[]
+  receiptScans    ReceiptScan[]
 }
 
 model FamilyMember {
@@ -144,6 +147,51 @@ model ScheduleItem {
   amountUsd   Float
   color       String
   type        String // "income" | "subscription"
+  createdAt   DateTime @default(now())
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+}
+
+model LoanEntry {
+  id                   String   @id @default(uuid())
+  householdId          String
+  counterpartyMemberId String?
+  counterpartyName     String
+  note                 String
+  due                  String
+  amountUsd            Float
+  direction            String // "lent" | "borrowed"
+  status               String // "pending" | "paid" | "overdue"
+  createdAt            DateTime @default(now())
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+}
+
+model TrackedProduct {
+  id           String   @id @default(uuid())
+  householdId  String
+  name         String
+  store        String
+  category     String
+  amountUsd    Float
+  quantity     Float    @default(1)
+  unitPriceUsd Float?
+  purchasedAt  String
+  source       String   @default("manual")
+  createdAt    DateTime @default(now())
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+}
+
+model ReceiptScan {
+  id          String   @id @default(uuid())
+  householdId String
+  storeName   String
+  purchasedAt String
+  currency    String
+  totalUsd    Float
+  items       Json
+  rawText     String?
   createdAt   DateTime @default(now())
 
   household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)

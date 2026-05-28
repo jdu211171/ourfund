@@ -2,6 +2,7 @@ import { ArrowLeft, Upload, Camera, Share2 } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { useAppNavigation } from "@/lib/navigation";
 import { useState } from "react";
+import { Money } from "./Money";
 
 export function ReceiptScreen() {
   const { navigate, goBack, selectedTransactionId, transactions } = useAppNavigation();
@@ -80,11 +81,11 @@ export function ReceiptScreen() {
           <div className="space-y-2 text-[12px]">
             <div className="flex justify-between">
               <span className="text-muted-foreground">{txn.category}</span>
-              <span className="font-semibold text-foreground">${total.toFixed(2)}</span>
+              <Money usd={total} size="sm" />
             </div>
             <div className="mt-4 flex justify-between rounded-2xl bg-[var(--muted)] px-3 py-2.5 text-[13px]">
               <span className="font-bold text-foreground">Total</span>
-              <span className="font-extrabold text-foreground">${total.toFixed(2)}</span>
+              <Money usd={total} size="md" />
             </div>
           </div>
         </div>
@@ -97,7 +98,7 @@ export function ReceiptScreen() {
             <Upload className="h-4 w-4" strokeWidth={2.25} /> Replace
           </button>
           <button
-            onClick={() => setStatus("new scan attached")}
+            onClick={() => navigate("scan_receipt")}
             className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[oklch(0.18_0.04_265)] py-3 text-[13px] font-semibold text-white"
           >
             <Camera className="h-4 w-4" strokeWidth={2.25} /> Scan new

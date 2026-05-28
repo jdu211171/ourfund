@@ -2,6 +2,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import bcrypt from "bcryptjs";
 import { prisma } from "./db";
+import { currencyMeta, currencyValueToUsd } from "./currency";
 import {
   getSessionUser,
   createSessionCookie,
@@ -67,6 +68,60 @@ function normalizeHistoryFilters(value: unknown) {
       ? Number(filters.maxUsd)
       : defaultHistoryFilters.maxUsd,
   };
+}
+
+function makeServerId(prefix: string) {
+  return `${prefix}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+function normalizeProductName(value: string) {
+  return value
+    .toLowerCase()
+    .normalize("NFKC")
+    .replace(/[^\p{Letter}\p{Number}]+/gu, "");
+}
+
+function parseGeminiJson(text: string) {
+  const cleaned = text
+    .replace(/^```(?:json)?/i, "")
+    .replace(/```$/i, "")
+    .trim();
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    const start = cleaned.indexOf("{");
+    const end = cleaned.lastIndexOf("}");
+    if (start >= 0 && end > start) {
+      return JSON.parse(cleaned.slice(start, end + 1));
+    }
+    throw new Error("Gemini returned an unreadable receipt response");
+  }
+}
+
+function walletMembers(wallet: { members: any }) {
+  return Array.isArray(wallet.members) ? (wallet.members as string[]) : [];
+}
+
+function canUseWalletAsTransferSource(
+  wallet: { type: string; members: any },
+  memberId: string,
+  role: string,
+) {
+  const members = walletMembers(wallet);
+  const ownWallet = members.includes(memberId);
+  if (role === "Admin") return wallet.type !== "private" || ownWallet;
+  return ownWallet && wallet.type !== "shared";
+}
+
+function canUseWalletAsTransferTarget(wallet: { type: string }, role: string) {
+  if (role === "Admin") return true;
+  return wallet.type === "shared" || wallet.type === "private";
+}
+
+function normalizeCurrencyCode(value: unknown, fallback: string) {
+  const upper = String(value || fallback || "JPY").toUpperCase();
+  const normalized = upper === "YEN" ? "JPY" : upper;
+  return normalized in currencyMeta ? normalized : fallback in currencyMeta ? fallback : "JPY";
 }
 
 // ─── Auth Server Functions ──────────────────────────────────────────────────
@@ -176,6 +231,9 @@ export const getAppDataServerFn = createServerFn({ method: "GET" }).handler(asyn
   let linkedBanks: any[] = [];
   let recurringIncome: any[] = [];
   let subscriptions: any[] = [];
+  let loanEntries: any[] = [];
+  let trackedProducts: any[] = [];
+  let receiptScans: any[] = [];
 
   if (householdId) {
     household = member.household;
@@ -191,6 +249,18 @@ export const getAppDataServerFn = createServerFn({ method: "GET" }).handler(asyn
     const scheduleItems = await prisma.scheduleItem.findMany({ where: { householdId } });
     recurringIncome = scheduleItems.filter((i) => i.type === "income");
     subscriptions = scheduleItems.filter((i) => i.type === "subscription");
+    loanEntries = await prisma.loanEntry.findMany({
+      where: { householdId },
+      orderBy: { createdAt: "desc" },
+    });
+    trackedProducts = await prisma.trackedProduct.findMany({
+      where: { householdId },
+      orderBy: { createdAt: "desc" },
+    });
+    receiptScans = await prisma.receiptScan.findMany({
+      where: { householdId },
+      orderBy: { createdAt: "desc" },
+    });
   }
 
   const notifications = await prisma.appNotification.findMany({
@@ -302,6 +372,39 @@ export const getAppDataServerFn = createServerFn({ method: "GET" }).handler(asyn
       color: s.color,
       type: s.type,
     })),
+    loanEntries: loanEntries.map((entry) => ({
+      id: entry.id,
+      counterpartyMemberId: entry.counterpartyMemberId,
+      counterpartyName: entry.counterpartyName,
+      note: entry.note,
+      due: entry.due,
+      amountUsd: entry.amountUsd,
+      direction: entry.direction,
+      status: entry.status,
+      createdAt: entry.createdAt.toLocaleDateString(),
+    })),
+    trackedProducts: trackedProducts.map((product) => ({
+      id: product.id,
+      name: product.name,
+      store: product.store,
+      category: product.category,
+      amountUsd: product.amountUsd,
+      quantity: product.quantity,
+      unitPriceUsd: product.unitPriceUsd,
+      purchasedAt: product.purchasedAt,
+      source: product.source,
+      createdAt: product.createdAt.toLocaleDateString(),
+    })),
+    receiptScans: receiptScans.map((receipt) => ({
+      id: receipt.id,
+      storeName: receipt.storeName,
+      purchasedAt: receipt.purchasedAt,
+      currency: receipt.currency,
+      totalUsd: receipt.totalUsd,
+      items: receipt.items,
+      rawText: receipt.rawText || undefined,
+      createdAt: receipt.createdAt.toLocaleDateString(),
+    })),
     notifications: notifications.map((n) => ({
       id: n.id,
       title: n.title,
@@ -330,6 +433,127 @@ export const validateInviteCodeServerFn = createServerFn({ method: "POST" })
       role: "Adult",
       inviter: found.members.find((m) => m.role === "Admin")?.name || "Family Admin",
       familyCurrency: found.familyCurrency,
+    };
+  });
+
+export const scanReceiptServerFn = createServerFn({ method: "POST" })
+  .inputValidator((d: { imageDataUrl: string; currency: string }) => d)
+  .handler(async ({ data }) => {
+    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY;
+    if (!apiKey) {
+      throw new Error("Gemini API key is not configured");
+    }
+
+    const match = data.imageDataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
+    if (!match) {
+      throw new Error("Upload a valid receipt image");
+    }
+
+    const user = await getSessionUser();
+    const member = user?.householdMembers[0];
+    const householdId = member?.householdId || null;
+    const model = process.env.GEMINI_MODEL || "gemini-3.5-flash";
+    const currency = data.currency || "JPY";
+    const prompt = [
+      "Extract line-item product data from this receipt.",
+      "Japanese receipts are the primary target, so read Japanese product names carefully.",
+      "Ignore subtotal, tax, payment method, change, points, discounts without a product, and store metadata lines.",
+      "Return strict JSON only with this shape:",
+      '{"storeName":"string","purchasedAt":"date or receipt date text","currency":"JPY","items":[{"name":"string","category":"Groceries|Dining|Household|Electronics|Clothing|Health|Other","quantity":1,"unitPrice":100,"totalPrice":100}],"rawText":"short OCR text"}',
+      `Use ${currency} when the receipt currency is unclear.`,
+    ].join(" ");
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [{ text: prompt }, { inline_data: { mime_type: match[1], data: match[2] } }],
+            },
+          ],
+          generationConfig: { responseMimeType: "application/json" },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(`Gemini receipt scan failed: ${body.slice(0, 220)}`);
+    }
+
+    const payload = await response.json();
+    const text = payload?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text || typeof text !== "string") {
+      throw new Error("Gemini did not return receipt data");
+    }
+
+    const parsed = parseGeminiJson(text);
+    const receiptCurrency = normalizeCurrencyCode(parsed.currency, currency);
+    const trackedProducts = householdId
+      ? await prisma.trackedProduct.findMany({
+          where: { householdId },
+          orderBy: { createdAt: "desc" },
+        })
+      : [];
+
+    const items = (Array.isArray(parsed.items) ? parsed.items : [])
+      .map((item: any) => {
+        const quantity = Math.max(1, Number(item.quantity) || 1);
+        const totalPrice = Number(item.totalPrice ?? item.price ?? item.amount ?? 0);
+        const unitPrice = Number((item.unitPrice ?? totalPrice / quantity) || 0);
+        const totalUsd = currencyValueToUsd(totalPrice, receiptCurrency as any);
+        const unitPriceUsd = currencyValueToUsd(unitPrice, receiptCurrency as any);
+        const normalizedName = normalizeProductName(String(item.name || ""));
+        const previous = trackedProducts.find((product) => {
+          const previousName = normalizeProductName(product.name);
+          return (
+            normalizedName &&
+            (previousName === normalizedName ||
+              previousName.includes(normalizedName) ||
+              normalizedName.includes(previousName))
+          );
+        });
+        const previousPriceUsd =
+          previous?.unitPriceUsd ??
+          (previous ? previous.amountUsd / Math.max(previous.quantity, 1) : 0);
+        const deltaPct =
+          previousPriceUsd > 0 ? ((unitPriceUsd - previousPriceUsd) / previousPriceUsd) * 100 : 0;
+
+        return {
+          name: String(item.name || "Unknown item"),
+          category: String(item.category || "Groceries"),
+          quantity,
+          unitPriceUsd,
+          totalUsd,
+          originalPrice: totalPrice,
+          comparison: previous
+            ? {
+                previousStore: previous.store,
+                previousPriceUsd,
+                deltaPct,
+                trend: Math.abs(deltaPct) < 1 ? "same" : deltaPct > 0 ? "up" : "down",
+              }
+            : null,
+        };
+      })
+      .filter((item: any) => item.totalUsd > 0);
+
+    const totalUsd =
+      items.reduce((sum: number, item: any) => sum + item.totalUsd, 0) ||
+      currencyValueToUsd(Number(parsed.totalPrice ?? parsed.total ?? 0), receiptCurrency as any);
+
+    return {
+      id: makeServerId("receipt"),
+      storeName: String(parsed.storeName || parsed.store || "Unknown store"),
+      purchasedAt: String(parsed.purchasedAt || parsed.date || "today"),
+      currency: receiptCurrency,
+      totalUsd,
+      items,
+      rawText: typeof parsed.rawText === "string" ? parsed.rawText.slice(0, 4000) : undefined,
+      createdAt: "today",
     };
   });
 
@@ -607,10 +831,26 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
           new Set(transferTransactions.map((txn: any) => String(txn.wallet || ""))),
         ).filter(Boolean);
         if (walletLabels.length !== 2) throw new Error("Transfer requires two wallets");
-        const walletCount = await prisma.walletAccount.count({
+        const transferWallets = await prisma.walletAccount.findMany({
           where: { householdId, label: { in: walletLabels } },
         });
-        if (walletCount !== walletLabels.length) throw new Error("Forbidden");
+        if (transferWallets.length !== walletLabels.length) throw new Error("Forbidden");
+
+        const fromWalletLabel = String(
+          transferTransactions.find((txn: any) => Number(txn.usd) < 0)?.wallet || "",
+        );
+        const toWalletLabel = String(
+          transferTransactions.find((txn: any) => Number(txn.usd) > 0)?.wallet || "",
+        );
+        const fromWallet = transferWallets.find((wallet) => wallet.label === fromWalletLabel);
+        const toWallet = transferWallets.find((wallet) => wallet.label === toWalletLabel);
+        if (!fromWallet || !toWallet || fromWallet.id === toWallet.id) throw new Error("Forbidden");
+        if (
+          !canUseWalletAsTransferSource(fromWallet, member.id, member.role) ||
+          !canUseWalletAsTransferTarget(toWallet, member.role)
+        ) {
+          throw new Error("Forbidden");
+        }
 
         await prisma.transaction.createMany({
           data: transferTransactions.map((txn: any) => ({
@@ -866,6 +1106,138 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
         const item = await prisma.scheduleItem.findUnique({ where: { id: payload.id } });
         if (!item || item.householdId !== householdId) throw new Error("Forbidden");
         await prisma.scheduleItem.delete({ where: { id: payload.id } });
+        break;
+      }
+
+      // ── Lending, product tracking, and receipt scans ───────────────────────
+      case "addLoanEntry": {
+        if (!householdId) throw new Error("No household linked");
+        await prisma.loanEntry.create({
+          data: {
+            id: payload.id,
+            householdId,
+            counterpartyMemberId: payload.counterpartyMemberId || null,
+            counterpartyName: payload.counterpartyName,
+            note: payload.note,
+            due: payload.due,
+            amountUsd: Number(payload.amountUsd) || 0,
+            direction: payload.direction === "borrowed" ? "borrowed" : "lent",
+            status: ["paid", "overdue", "pending"].includes(payload.status)
+              ? payload.status
+              : "pending",
+          },
+        });
+        break;
+      }
+
+      case "updateLoanEntry": {
+        if (!householdId) throw new Error("No household linked");
+        const entry = await prisma.loanEntry.findUnique({ where: { id: payload.id } });
+        if (!entry || entry.householdId !== householdId) throw new Error("Forbidden");
+        await prisma.loanEntry.update({
+          where: { id: payload.id },
+          data: {
+            counterpartyMemberId: payload.counterpartyMemberId || null,
+            counterpartyName: payload.counterpartyName,
+            note: payload.note,
+            due: payload.due,
+            amountUsd: Number(payload.amountUsd) || 0,
+            direction: payload.direction === "borrowed" ? "borrowed" : "lent",
+            status: ["paid", "overdue", "pending"].includes(payload.status)
+              ? payload.status
+              : "pending",
+          },
+        });
+        break;
+      }
+
+      case "addTrackedProduct": {
+        if (!householdId) throw new Error("No household linked");
+        await prisma.trackedProduct.create({
+          data: {
+            id: payload.id,
+            householdId,
+            name: payload.name,
+            store: payload.store,
+            category: payload.category,
+            amountUsd: Number(payload.amountUsd) || 0,
+            quantity: Number(payload.quantity) || 1,
+            unitPriceUsd: payload.unitPriceUsd == null ? null : Number(payload.unitPriceUsd),
+            purchasedAt: payload.purchasedAt,
+            source: payload.source === "receipt" ? "receipt" : "manual",
+          },
+        });
+        break;
+      }
+
+      case "saveReceiptScan": {
+        if (!householdId) throw new Error("No household linked");
+        const receipt = payload.receipt;
+        const products = Array.isArray(payload.products) ? payload.products : [];
+        const transaction = payload.transaction;
+
+        await prisma.receiptScan.upsert({
+          where: { id: receipt.id },
+          update: {
+            storeName: receipt.storeName,
+            purchasedAt: receipt.purchasedAt,
+            currency: receipt.currency,
+            totalUsd: Number(receipt.totalUsd) || 0,
+            items: receipt.items || [],
+            rawText: receipt.rawText || null,
+          },
+          create: {
+            id: receipt.id,
+            householdId,
+            storeName: receipt.storeName,
+            purchasedAt: receipt.purchasedAt,
+            currency: receipt.currency,
+            totalUsd: Number(receipt.totalUsd) || 0,
+            items: receipt.items || [],
+            rawText: receipt.rawText || null,
+          },
+        });
+
+        if (products.length > 0) {
+          await prisma.trackedProduct.createMany({
+            data: products.map((product: any) => ({
+              id: product.id,
+              householdId,
+              name: product.name,
+              store: product.store,
+              category: product.category,
+              amountUsd: Number(product.amountUsd) || 0,
+              quantity: Number(product.quantity) || 1,
+              unitPriceUsd: product.unitPriceUsd == null ? null : Number(product.unitPriceUsd),
+              purchasedAt: product.purchasedAt,
+              source: product.source === "receipt" ? "receipt" : "manual",
+            })),
+            skipDuplicates: true,
+          });
+        }
+
+        if (transaction) {
+          const wallet = await prisma.walletAccount.findFirst({
+            where: { householdId, label: transaction.wallet },
+          });
+          if (wallet) {
+            await prisma.transaction.createMany({
+              data: [
+                {
+                  id: transaction.id,
+                  householdId,
+                  name: transaction.name,
+                  who: transaction.who,
+                  usd: Number(transaction.usd) || 0,
+                  category: transaction.category,
+                  wallet: transaction.wallet,
+                  date: transaction.date,
+                },
+              ],
+              skipDuplicates: true,
+            });
+          }
+        }
         break;
       }
 

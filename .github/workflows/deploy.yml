@@ -99,6 +99,8 @@ jobs:
              printf '%s\n' \
                'DATABASE_URL=${{ secrets.DATABASE_URL }}' \
                'GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}' \
+               'GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}' \
+               'GEMINI_MODEL=${{ secrets.GEMINI_MODEL }}' \
                'JWT_SECRET=${{ secrets.JWT_SECRET }}' \
                'PORT=3002' \
                'NODE_ENV=production' \

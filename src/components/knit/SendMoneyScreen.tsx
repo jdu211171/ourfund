@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ArrowLeft, ShoppingBag, Users, Delete } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { Money } from "./Money";
-import { currencyValueToUsd } from "@/lib/currency";
+import { currencyValueToUsd, formatUsdAsCurrency } from "@/lib/currency";
 import { useAppNavigation } from "@/lib/navigation";
 import { OptionSelect } from "./OptionSelect";
 
@@ -66,7 +66,7 @@ export function SendMoneyScreen() {
             options={categories.map((item) => ({
               value: item.id,
               label: item.label,
-              description: `$${item.limitUsd.toLocaleString()} monthly limit`,
+              description: `${formatUsdAsCurrency(item.limitUsd, currency)} monthly limit`,
             }))}
             onChange={setCategoryId}
             emptyLabel="No categories yet"

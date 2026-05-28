@@ -1,9 +1,10 @@
 import { Trophy, Share2, Sparkles } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { useAppNavigation } from "@/lib/navigation";
+import { formatUsdAsCurrency } from "@/lib/currency";
 
 export function GoalAchievedScreen() {
-  const { navigate, goals, selectedGoalId } = useAppNavigation();
+  const { navigate, currency, goals, selectedGoalId } = useAppNavigation();
   const goal = goals.find((g) => g.id === selectedGoalId) ?? goals[0];
   const confetti = Array.from({ length: 14 });
   const palette = [
@@ -73,7 +74,10 @@ export function GoalAchievedScreen() {
           fully funded!
         </h2>
         <p className="relative mt-2 text-center text-[12px] text-white/75 max-w-[240px]">
-          You saved <span className="font-bold text-white">${goal.targetUsd.toLocaleString()}</span>
+          You saved{" "}
+          <span className="font-bold text-white">
+            {formatUsdAsCurrency(goal.targetUsd, currency)}
+          </span>
           . Time to use the funds.
         </p>
 
@@ -84,10 +88,10 @@ export function GoalAchievedScreen() {
           </div>
           <div className="mt-1 flex items-center justify-between">
             <span className="font-display text-[18px] font-bold">
-              ${goal.targetUsd.toLocaleString()}
+              {formatUsdAsCurrency(goal.targetUsd, currency)}
             </span>
             <span className="font-display text-[18px] font-bold text-[oklch(0.85_0.2_150)]">
-              ${goal.savedUsd.toLocaleString()}
+              {formatUsdAsCurrency(goal.savedUsd, currency)}
             </span>
           </div>
           <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/15">

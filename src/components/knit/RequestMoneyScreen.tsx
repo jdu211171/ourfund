@@ -2,20 +2,29 @@ import { ArrowLeft, Plane, Check } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { useState } from "react";
 import { useAppNavigation } from "@/lib/navigation";
+import {
+  currencyAdornment,
+  currencyValueToUsd,
+  formatCurrencyValue,
+  formatUsdAsCurrency,
+  usdToCurrencyValue,
+} from "@/lib/currency";
 
-const presets = ["$1k", "$2.5k", "$5k", "$10k"];
+const presetUsd = [1000, 2500, 5000, 10000];
 
 export function RequestMoneyScreen() {
-  const { navigate, goBack, addGoal, members: familyMembers } = useAppNavigation();
+  const { navigate, goBack, currency, addGoal, members: familyMembers } = useAppNavigation();
   const [amount, setAmount] = useState("0");
   const [title, setTitle] = useState("");
   const [targetDate, setTargetDate] = useState("");
   const [contributors, setContributors] = useState(() => familyMembers.map((member) => member.id));
+  const targetUsd = currencyValueToUsd(parseFloat(amount || "0"), currency);
+  const { prefix, suffix } = currencyAdornment(currency);
 
   const createGoal = () => {
     const goal = addGoal({
       title: title.trim() || "New goal",
-      targetUsd: parseFloat(amount || "0"),
+      targetUsd,
       savedUsd: 0,
       targetDate: targetDate.trim() || "No deadline",
       icon: "plane",
@@ -57,7 +66,9 @@ export function RequestMoneyScreen() {
             placeholder="Goal Title"
           />
           <div className="mt-1 flex items-center justify-center gap-1">
-            <span className="text-[20px] font-bold text-muted-foreground">$</span>
+            {prefix && (
+              <span className="text-[20px] font-bold text-muted-foreground">{prefix}</span>
+            )}
             <input
               type="text"
               value={amount}
@@ -65,6 +76,9 @@ export function RequestMoneyScreen() {
               className="w-48 bg-transparent text-center text-[34px] font-extrabold tracking-tight text-foreground outline-none border-b border-transparent focus:border-[var(--primary)] transition-colors focus:ring-0"
               placeholder="0.00"
             />
+            {suffix && (
+              <span className="text-[14px] font-bold text-muted-foreground">{suffix}</span>
+            )}
           </div>
           <input
             type="text"
@@ -76,11 +90,11 @@ export function RequestMoneyScreen() {
         </div>
 
         <div className="mt-4 flex gap-2">
-          {presets.map((q) => {
-            const val = q === "$2.5k" ? "2500" : q.replace("$", "").replace("k", "000");
+          {presetUsd.map((usd) => {
+            const val = String(Math.round(usdToCurrencyValue(usd, currency)));
             return (
               <button
-                key={q}
+                key={usd}
                 onClick={() => setAmount(val)}
                 className={`flex-1 rounded-full py-2 text-[12px] font-semibold active:scale-95 transition-all cursor-pointer ${
                   amount === val
@@ -88,7 +102,7 @@ export function RequestMoneyScreen() {
                     : "bg-[var(--muted)] text-foreground hover:bg-slate-200"
                 }`}
               >
-                {q}
+                {formatCurrencyValue(Number(val), currency, { maximumFractionDigits: 0 })}
               </button>
             );
           })}
@@ -98,7 +112,7 @@ export function RequestMoneyScreen() {
           <div className="flex items-center justify-between text-[11px]">
             <span className="font-bold text-foreground">Progress</span>
             <span className="text-muted-foreground">
-              $0 of ${parseFloat(amount || "0").toLocaleString()}
+              {formatUsdAsCurrency(0, currency)} of {formatUsdAsCurrency(targetUsd, currency)}
             </span>
           </div>
           <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[var(--muted)]">
@@ -136,7 +150,7 @@ export function RequestMoneyScreen() {
                   <p className="text-[12px] font-bold text-foreground">{p.name}</p>
                   <p className="text-[10px] text-muted-foreground">
                     {p.role}
-                    {p.allowanceUsd ? ` · $${p.allowanceUsd}/wk` : ""}
+                    {p.allowanceUsd ? ` · ${formatUsdAsCurrency(p.allowanceUsd, currency)}/wk` : ""}
                   </p>
                 </div>
                 <span

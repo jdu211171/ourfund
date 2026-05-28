@@ -44,6 +44,9 @@ import { GoalAchievedScreen } from "@/components/knit/GoalAchievedScreen";
 import { RemoveMemberScreen } from "@/components/knit/RemoveMemberScreen";
 import { PlaidConnectingScreen } from "@/components/knit/PlaidConnectingScreen";
 import { PlaidSuccessScreen } from "@/components/knit/PlaidSuccessScreen";
+import { LendBorrowScreen } from "@/components/knit/LendBorrowScreen";
+import { ProductTrackerScreen } from "@/components/knit/ProductTrackerScreen";
+import { ScanReceiptScreen } from "@/components/knit/ScanReceiptScreen";
 
 import { useState } from "react";
 import { AppNavigationProvider, useAppNavigation } from "@/lib/navigation";
@@ -166,6 +169,12 @@ function AppRouter() {
       return <ReceiptScreen />;
     case "history_search":
       return <TransactionHistoryScreen />;
+    case "lend_borrow":
+      return <LendBorrowScreen />;
+    case "product_tracker":
+      return <ProductTrackerScreen />;
+    case "scan_receipt":
+      return <ScanReceiptScreen />;
     default:
       return <OnboardingScreen />;
   }
@@ -197,6 +206,9 @@ function Index() {
         { label: "Edit Expense", node: <EditTransactionScreen /> },
         { label: "Delete Confirm", node: <ConfirmDeleteScreen /> },
         { label: "Receipt", node: <ReceiptScreen /> },
+        { label: "Scan Receipt", node: <ScanReceiptScreen /> },
+        { label: "Product Tracker", node: <ProductTrackerScreen /> },
+        { label: "Lend & Borrow", node: <LendBorrowScreen /> },
         { label: "History & Search", node: <TransactionHistoryScreen /> },
         { label: "Filter & Sort", node: <FilterSortScreen /> },
       ],

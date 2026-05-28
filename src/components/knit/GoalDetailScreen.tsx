@@ -2,12 +2,15 @@ import { ArrowLeft, Plane, Plus, MoreHorizontal } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { useAppNavigation } from "@/lib/navigation";
 import { useState } from "react";
+import { currencyAdornment, currencyValueToUsd, formatUsdAsCurrency } from "@/lib/currency";
 
 export function GoalDetailScreen() {
-  const { navigate, goBack, goals, selectedGoalId, setSelectedGoalId, contributeToGoal } =
+  const { navigate, goBack, currency, goals, selectedGoalId, setSelectedGoalId, contributeToGoal } =
     useAppNavigation();
   const goal = goals.find((g) => g.id === selectedGoalId) ?? goals[0];
   const [contribution, setContribution] = useState("100");
+  const contributionUsd = currencyValueToUsd(parseFloat(contribution || "0"), currency);
+  const { prefix, suffix } = currencyAdornment(currency);
 
   if (!goal) {
     return (
@@ -76,9 +79,9 @@ export function GoalDetailScreen() {
             <div>
               <p className="text-[10px] uppercase tracking-widest text-white/60">{goal.title}</p>
               <p className="mt-1 text-[26px] font-extrabold tracking-tight">
-                ${goal.savedUsd.toLocaleString()}{" "}
+                {formatUsdAsCurrency(goal.savedUsd, currency)}{" "}
                 <span className="text-[14px] font-medium text-white/70">
-                  of ${goal.targetUsd.toLocaleString()}
+                  of {formatUsdAsCurrency(goal.targetUsd, currency)}
                 </span>
               </p>
             </div>
@@ -95,11 +98,11 @@ export function GoalDetailScreen() {
 
         <div className="mt-4 grid grid-cols-3 gap-2 text-center">
           {[
-            { l: "Monthly", v: `$${monthly.toLocaleString()}` },
-            { l: "Saved", v: `$${goal.savedUsd.toLocaleString()}` },
+            { l: "Monthly", v: formatUsdAsCurrency(monthly, currency) },
+            { l: "Saved", v: formatUsdAsCurrency(goal.savedUsd, currency) },
             {
               l: "Remaining",
-              v: `$${Math.max(0, goal.targetUsd - goal.savedUsd).toLocaleString()}`,
+              v: formatUsdAsCurrency(Math.max(0, goal.targetUsd - goal.savedUsd), currency),
             },
           ].map((s) => (
             <div key={s.l} className="rounded-2xl bg-white py-3 shadow-[var(--shadow-soft)]">
@@ -134,7 +137,7 @@ export function GoalDetailScreen() {
               <p
                 className={`text-[12px] font-bold ${h.amountUsd >= 0 ? "text-[var(--success)]" : "text-[var(--danger)]"}`}
               >
-                {h.amountUsd >= 0 ? "+" : "-"} ${Math.abs(h.amountUsd).toLocaleString()}
+                {formatUsdAsCurrency(h.amountUsd, currency, { signed: true })}
               </p>
             </div>
           ))}
@@ -145,21 +148,25 @@ export function GoalDetailScreen() {
             Add contribution
           </p>
           <div className="mt-1 flex items-center gap-2">
-            <span className="text-[14px] font-bold text-muted-foreground">$</span>
+            {prefix && (
+              <span className="text-[14px] font-bold text-muted-foreground">{prefix}</span>
+            )}
             <input
               value={contribution}
               onChange={(e) => setContribution(e.target.value.replace(/[^0-9.]/g, ""))}
               className="flex-1 bg-transparent text-[18px] font-extrabold text-foreground outline-none"
             />
+            {suffix && (
+              <span className="text-[11px] font-bold text-muted-foreground">{suffix}</span>
+            )}
           </div>
         </div>
 
         <button
           onClick={() => {
-            contributeToGoal(goal.id, parseFloat(contribution || "0"));
+            contributeToGoal(goal.id, contributionUsd);
             setSelectedGoalId(goal.id);
-            if (goal.savedUsd + parseFloat(contribution || "0") >= goal.targetUsd)
-              navigate("goal_achieved");
+            if (goal.savedUsd + contributionUsd >= goal.targetUsd) navigate("goal_achieved");
           }}
           className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-[var(--primary)] py-4 text-[15px] font-semibold text-white active:scale-95 transition-all cursor-pointer"
         >

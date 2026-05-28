@@ -1,9 +1,10 @@
 import { AlertTriangle } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { useAppNavigation } from "@/lib/navigation";
+import { formatUsdAsCurrency } from "@/lib/currency";
 
 export function ConfirmDeleteScreen() {
-  const { goBack, navigate, selectedTransactionId, transactions, deleteTransaction } =
+  const { goBack, navigate, currency, selectedTransactionId, transactions, deleteTransaction } =
     useAppNavigation();
 
   // Find transaction
@@ -41,7 +42,9 @@ export function ConfirmDeleteScreen() {
             <p className="mt-1 text-[12px] text-muted-foreground">
               This removes{" "}
               <span className="font-semibold text-foreground">
-                {txn ? `${txn.name} · $${Math.abs(txn.usd)}` : "this transaction"}
+                {txn
+                  ? `${txn.name} · ${formatUsdAsCurrency(Math.abs(txn.usd), currency)}`
+                  : "this transaction"}
               </span>{" "}
               from the budget ledger. This cannot be undone.
             </p>

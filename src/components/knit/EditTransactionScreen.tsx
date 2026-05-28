@@ -3,8 +3,8 @@ import { ArrowLeft, ArrowDownLeft, Trash2 } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { useAppNavigation } from "@/lib/navigation";
 import {
+  currencyAdornment,
   currencyInputLabel,
-  currencyMeta,
   currencyValueToUsd,
   usdToCurrencyValue,
 } from "@/lib/currency";
@@ -39,8 +39,7 @@ export function EditTransactionScreen() {
       category,
     ]),
   ].filter(Boolean);
-  const amountPrefix = currencyMeta[currency].symbol || currency;
-  const amountSuffix = currency === "JPY" ? currencyMeta[currency].suffix?.trim() : "";
+  const { prefix: amountPrefix, suffix: amountSuffix } = currencyAdornment(currency);
 
   if (!txn) {
     return (
@@ -120,7 +119,7 @@ export function EditTransactionScreen() {
             />
           </div>
           <div className="mt-3 flex items-center justify-center gap-1">
-            {currency !== "JPY" && (
+            {amountPrefix && (
               <span className="text-[20px] font-bold text-muted-foreground">{amountPrefix}</span>
             )}
             <input
@@ -128,7 +127,7 @@ export function EditTransactionScreen() {
               onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
               className="w-40 bg-transparent text-center text-[34px] font-extrabold tracking-tight text-foreground outline-none border-b border-transparent focus:border-[var(--primary)]"
             />
-            {currency === "JPY" && amountSuffix && (
+            {amountSuffix && (
               <span className="text-[20px] font-bold text-muted-foreground">{amountSuffix}</span>
             )}
           </div>

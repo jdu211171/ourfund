@@ -1,6 +1,7 @@
 import { Check, CheckCircle2 } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { useAppNavigation } from "@/lib/navigation";
+import { Money } from "./Money";
 
 export function PlaidSuccessScreen() {
   const { navigate, selectedBankName, linkedBanks } = useAppNavigation();
@@ -49,9 +50,7 @@ export function PlaidSuccessScreen() {
                   <Check className="h-3.5 w-3.5 text-[oklch(0.5_0.2_150)]" strokeWidth={2.5} />
                   <p className="text-[12px] font-semibold text-foreground">{a.name}</p>
                 </div>
-                <p className="text-[12px] font-bold text-foreground tabular-nums">
-                  ${a.balanceUsd.toLocaleString()}
-                </p>
+                <Money usd={a.balanceUsd} size="sm" />
               </div>
             ))}
             {accounts.length === 0 && (

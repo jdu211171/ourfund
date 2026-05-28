@@ -2,15 +2,18 @@ import { ArrowLeft, Plus, Calendar } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { useState } from "react";
 import { useAppNavigation } from "@/lib/navigation";
+import { currencyAdornment, currencyValueToUsd, formatUsdAsCurrency } from "@/lib/currency";
 
 const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export function AllowanceScreen() {
-  const { navigate, goBack, members, updateMember, scheduleAllowance } = useAppNavigation();
+  const { navigate, goBack, currency, members, updateMember, scheduleAllowance } =
+    useAppNavigation();
   const kids = members.filter((m) => m.role === "Teen" || m.role === "Kid");
   const [selectedKidId, setSelectedKidId] = useState(kids[0]?.id ?? "");
   const [newAmount, setNewAmount] = useState("15");
   const [selectedDayIdx, setSelectedDayIdx] = useState(6);
+  const { prefix, suffix } = currencyAdornment(currency);
 
   const toggleKidAllowance = (idx: number) => {
     const kid = kids[idx];
@@ -69,7 +72,7 @@ export function AllowanceScreen() {
                 </div>
                 <div className="text-right">
                   <p className="text-[13px] font-extrabold text-foreground">
-                    ${k.allowanceUsd ?? 0}
+                    {formatUsdAsCurrency(k.allowanceUsd ?? 0, currency)}
                   </p>
                   <p
                     className={`text-[10px] font-semibold transition-colors ${k.allowanceOn ? "text-[var(--success)]" : "text-muted-foreground"}`}
@@ -109,7 +112,9 @@ export function AllowanceScreen() {
             ))}
           </div>
           <div className="mt-3 flex items-end gap-2">
-            <span className="pb-1 text-[18px] font-bold text-muted-foreground">$</span>
+            {prefix && (
+              <span className="pb-1 text-[18px] font-bold text-muted-foreground">{prefix}</span>
+            )}
             <input
               type="text"
               value={newAmount}
@@ -117,6 +122,9 @@ export function AllowanceScreen() {
               className="w-20 bg-transparent text-[28px] font-extrabold tracking-tight text-foreground outline-none border-none p-0 focus:ring-0"
               placeholder="0"
             />
+            {suffix && (
+              <span className="pb-1 text-[12px] font-bold text-muted-foreground">{suffix}</span>
+            )}
             <span className="ml-auto inline-flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
               <Calendar className="h-3 w-3" /> per week
             </span>
@@ -146,7 +154,11 @@ export function AllowanceScreen() {
             }
             const targetKidId = selectedKidId || kids[0]?.id;
             if (targetKidId)
-              scheduleAllowance(targetKidId, parseFloat(newAmount || "0"), days[selectedDayIdx]);
+              scheduleAllowance(
+                targetKidId,
+                currencyValueToUsd(parseFloat(newAmount || "0"), currency),
+                days[selectedDayIdx],
+              );
             navigate("family");
           }}
           className="mt-auto w-full rounded-full bg-[oklch(0.18_0.04_265)] py-4 text-[15px] font-semibold text-white active:scale-95 transition-all cursor-pointer"

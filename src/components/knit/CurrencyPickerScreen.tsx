@@ -4,7 +4,7 @@ import { useAppNavigation, type BudgetMode, type CurrencyCode } from "@/lib/navi
 import { useState } from "react";
 
 const popular = [
-  ["JPY", "Japanese Yen", "円"],
+  ["JPY", "Japanese Yen", "¥"],
   ["UZS", "Uzbek So'm", "so'm"],
   ["USD", "US Dollar", "$"],
   ["EUR", "Euro", "€"],

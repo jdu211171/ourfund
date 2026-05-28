@@ -1,23 +1,71 @@
 import { ArrowLeft, ArrowDown, Users, Lock } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAppNavigation } from "@/lib/navigation";
 import { OptionSelect } from "./OptionSelect";
+import {
+  currencyAdornment,
+  currencyValueToUsd,
+  formatCurrencyValue,
+  formatUsdAsCurrency,
+} from "@/lib/currency";
 
-const presets = ["$50", "$100", "$250", "$500"];
+const presets = [50, 100, 250, 500];
 
 export function TransferFundsScreen() {
-  const { navigate, goBack, activeWallets, walletBalanceUsd, recordTransfer } = useAppNavigation();
+  const {
+    navigate,
+    goBack,
+    currency,
+    wallets,
+    members,
+    currentMemberId,
+    walletBalanceUsd,
+    recordTransfer,
+  } = useAppNavigation();
   const [amount, setAmount] = useState("0");
   const [note, setNote] = useState("");
-  const [fromId, setFromId] = useState(activeWallets[0]?.id ?? "");
-  const [toId, setToId] = useState(activeWallets[1]?.id ?? activeWallets[0]?.id ?? "");
-  const fromWallet = activeWallets.find((wallet) => wallet.id === fromId) ?? activeWallets[0];
-  const toWallet =
-    activeWallets.find((wallet) => wallet.id === toId) ?? activeWallets[1] ?? activeWallets[0];
-  const canTransfer = Boolean(
-    activeWallets.length >= 2 && fromWallet && toWallet && fromWallet.id !== toWallet.id,
+  const currentMember = members.find((member) => member.id === currentMemberId);
+  const isAdmin = currentMember?.role === "Admin";
+  const fromWallets = useMemo(
+    () =>
+      wallets.filter((wallet) => {
+        const ownWallet = currentMemberId ? wallet.members.includes(currentMemberId) : false;
+        if (isAdmin) return wallet.type !== "private" || ownWallet;
+        return ownWallet && wallet.type !== "shared";
+      }),
+    [currentMemberId, isAdmin, wallets],
   );
+  const toWallets = useMemo(
+    () =>
+      wallets.filter((wallet) => {
+        if (isAdmin) return true;
+        return wallet.type === "shared" || wallet.type === "private";
+      }),
+    [isAdmin, wallets],
+  );
+  const [fromId, setFromId] = useState(fromWallets[0]?.id ?? "");
+  const [toId, setToId] = useState(toWallets.find((wallet) => wallet.id !== fromId)?.id ?? "");
+  const fromWallet = fromWallets.find((wallet) => wallet.id === fromId) ?? fromWallets[0];
+  const toWallet =
+    toWallets.find((wallet) => wallet.id === toId && wallet.id !== fromWallet?.id) ??
+    toWallets.find((wallet) => wallet.id !== fromWallet?.id);
+  const amountUsd = currencyValueToUsd(parseFloat(amount || "0"), currency);
+  const { prefix, suffix } = currencyAdornment(currency);
+  const hasTransferPair = Boolean(fromWallet && toWallet && fromWallet.id !== toWallet.id);
+  const canTransfer = hasTransferPair && amountUsd > 0;
+
+  useEffect(() => {
+    if (!fromWallets.some((wallet) => wallet.id === fromId)) {
+      setFromId(fromWallets[0]?.id ?? "");
+    }
+  }, [fromId, fromWallets]);
+
+  useEffect(() => {
+    if (!toWallet || toWallet.id === fromWallet?.id) {
+      setToId(toWallets.find((wallet) => wallet.id !== fromWallet?.id)?.id ?? "");
+    }
+  }, [fromWallet?.id, toWallet, toWallets]);
 
   return (
     <PhoneFrame>
@@ -37,7 +85,9 @@ export function TransferFundsScreen() {
         <div className="mt-8 text-center">
           <p className="text-[11px] uppercase tracking-widest text-muted-foreground">Amount</p>
           <div className="mt-1 flex items-center justify-center gap-1">
-            <span className="text-[24px] font-bold text-muted-foreground">$</span>
+            {prefix && (
+              <span className="text-[24px] font-bold text-muted-foreground">{prefix}</span>
+            )}
             <input
               type="text"
               value={amount}
@@ -45,6 +95,9 @@ export function TransferFundsScreen() {
               className="w-40 bg-transparent text-center text-[40px] font-extrabold tracking-tight text-foreground outline-none border-b border-transparent focus:border-[var(--primary)] transition-colors focus:ring-0"
               placeholder="0"
             />
+            {suffix && (
+              <span className="text-[18px] font-bold text-muted-foreground">{suffix}</span>
+            )}
           </div>
         </div>
 
@@ -52,10 +105,10 @@ export function TransferFundsScreen() {
           <OptionSelect
             label="From"
             value={fromWallet?.id ?? ""}
-            options={activeWallets.map((wallet) => ({
+            options={fromWallets.map((wallet) => ({
               value: wallet.id,
               label: wallet.label,
-              description: `Balance · $${walletBalanceUsd(wallet.label).toLocaleString()}`,
+              description: `Balance · ${formatUsdAsCurrency(walletBalanceUsd(wallet.label), currency)}`,
               disabled: wallet.id === toWallet?.id,
             }))}
             onChange={setFromId}
@@ -70,7 +123,7 @@ export function TransferFundsScreen() {
           <OptionSelect
             label="To"
             value={toWallet?.id ?? ""}
-            options={activeWallets.map((wallet) => ({
+            options={toWallets.map((wallet) => ({
               value: wallet.id,
               label: wallet.label,
               description: wallet.sub,
@@ -83,11 +136,11 @@ export function TransferFundsScreen() {
         </div>
 
         <div className="mt-5 flex gap-2">
-          {presets.map((q) => {
-            const val = q.replace("$", "");
+          {presets.map((value) => {
+            const val = String(value);
             return (
               <button
-                key={q}
+                key={value}
                 onClick={() => setAmount(val)}
                 className={`flex-1 rounded-full py-2 text-[12px] font-semibold active:scale-95 transition-all cursor-pointer ${
                   amount === val
@@ -95,7 +148,7 @@ export function TransferFundsScreen() {
                     : "bg-[var(--muted)] text-foreground hover:bg-slate-200"
                 }`}
               >
-                {q}
+                {formatCurrencyValue(value, currency, { maximumFractionDigits: 0 })}
               </button>
             );
           })}
@@ -113,16 +166,17 @@ export function TransferFundsScreen() {
 
         <button
           onClick={() => {
-            if (!canTransfer || !fromWallet || !toWallet) {
+            if (!hasTransferPair || !fromWallet || !toWallet) {
               navigate("new_wallet");
               return;
             }
-            recordTransfer(parseFloat(amount || "0"), fromWallet.label, toWallet.label, note);
+            if (!canTransfer) return;
+            recordTransfer(amountUsd, fromWallet.label, toWallet.label, note);
             navigate("home");
           }}
           className="mt-auto w-full rounded-full bg-[oklch(0.18_0.04_265)] py-4 text-[15px] font-semibold text-white active:scale-95 transition-all cursor-pointer"
         >
-          {canTransfer ? "Transfer funds" : "Create another wallet"}
+          {hasTransferPair ? "Transfer funds" : "Create another wallet"}
         </button>
       </div>
     </PhoneFrame>

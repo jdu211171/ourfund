@@ -3,14 +3,17 @@ import { PhoneFrame } from "./PhoneFrame";
 import { useState } from "react";
 import { useAppNavigation } from "@/lib/navigation";
 import { OptionSelect } from "./OptionSelect";
+import { currencyAdornment, currencyValueToUsd, formatUsdAsCurrency } from "@/lib/currency";
 
 export function GoalWithdrawScreen() {
-  const { navigate, goBack, goals, selectedGoalId, activeWallets, withdrawFromGoal } =
+  const { navigate, goBack, currency, goals, selectedGoalId, activeWallets, withdrawFromGoal } =
     useAppNavigation();
   const goal = goals.find((g) => g.id === selectedGoalId) ?? goals[0];
   const [amount, setAmount] = useState("0");
   const [selectedWalletId, setSelectedWalletId] = useState(activeWallets[0]?.id ?? "");
   const wallet = activeWallets.find((item) => item.id === selectedWalletId) ?? activeWallets[0];
+  const amountUsd = currencyValueToUsd(parseFloat(amount || "0"), currency);
+  const { prefix, suffix } = currencyAdornment(currency);
 
   if (!goal) {
     return (
@@ -68,7 +71,8 @@ export function GoalWithdrawScreen() {
           <div className="flex-1 leading-tight">
             <p className="text-[12px] font-bold text-foreground">{goal.title}</p>
             <p className="text-[10px] text-muted-foreground">
-              Saved ${goal.savedUsd.toLocaleString()} of ${goal.targetUsd.toLocaleString()}
+              Saved {formatUsdAsCurrency(goal.savedUsd, currency)} of{" "}
+              {formatUsdAsCurrency(goal.targetUsd, currency)}
             </p>
           </div>
         </div>
@@ -78,7 +82,9 @@ export function GoalWithdrawScreen() {
             Amount to withdraw
           </p>
           <div className="mt-2 flex items-center justify-center gap-1">
-            <span className="text-[20px] font-bold text-muted-foreground">$</span>
+            {prefix && (
+              <span className="text-[20px] font-bold text-muted-foreground">{prefix}</span>
+            )}
             <input
               type="text"
               value={amount}
@@ -86,10 +92,12 @@ export function GoalWithdrawScreen() {
               className="w-40 bg-transparent text-center text-[44px] font-extrabold tracking-tight text-foreground outline-none border-b border-transparent focus:border-[var(--primary)] transition-colors focus:ring-0"
               placeholder="0"
             />
+            {suffix && (
+              <span className="text-[14px] font-bold text-muted-foreground">{suffix}</span>
+            )}
           </div>
           <p className="text-[11px] text-muted-foreground">
-            Remaining after: $
-            {Math.max(0, goal.savedUsd - (parseFloat(amount) || 0)).toLocaleString()}
+            Remaining after: {formatUsdAsCurrency(Math.max(0, goal.savedUsd - amountUsd), currency)}
           </p>
         </div>
 
@@ -121,7 +129,7 @@ export function GoalWithdrawScreen() {
               navigate("new_wallet");
               return;
             }
-            withdrawFromGoal(goal.id, parseFloat(amount || "0"), wallet.label);
+            withdrawFromGoal(goal.id, amountUsd, wallet.label);
             navigate("goal_detail");
           }}
           className="mt-auto w-full rounded-full bg-[oklch(0.18_0.04_265)] py-4 text-[15px] font-semibold text-white active:scale-95 transition-all cursor-pointer"

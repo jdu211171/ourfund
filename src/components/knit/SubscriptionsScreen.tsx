@@ -1,11 +1,13 @@
 import { ArrowLeft, Plus, Tv, Wifi, Zap, Music, Home } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { useAppNavigation } from "@/lib/navigation";
+import { Money } from "./Money";
+import { formatUsdAsCurrency } from "@/lib/currency";
 
 const icons = [Home, Zap, Wifi, Tv, Music];
 
 export function SubscriptionsScreen() {
-  const { goBack, addSubscription, subscriptions } = useAppNavigation();
+  const { goBack, currency, addSubscription, subscriptions } = useAppNavigation();
   const total = subscriptions.reduce((sum, item) => sum + item.amountUsd, 0);
 
   return (
@@ -37,7 +39,7 @@ export function SubscriptionsScreen() {
         >
           <p className="text-[10px] uppercase tracking-widest text-white/60">Monthly recurring</p>
           <p className="mt-1 text-[28px] font-extrabold tracking-tight">
-            ${total.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+            {formatUsdAsCurrency(total, currency)}
           </p>
           <p className="text-[11px] text-white/70">Across {subscriptions.length} subscriptions</p>
         </div>
@@ -66,9 +68,7 @@ export function SubscriptionsScreen() {
                     {s.every}
                   </p>
                 </div>
-                <p className="text-[12px] font-bold text-foreground">
-                  ${s.amountUsd.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                </p>
+                <Money usd={s.amountUsd} size="sm" />
               </div>
             );
           })}

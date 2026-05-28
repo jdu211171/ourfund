@@ -3,6 +3,7 @@ import { PhoneFrame } from "./PhoneFrame";
 import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
 import { useAppNavigation } from "@/lib/navigation";
 import { Money } from "./Money";
+import { formatUsdAsCurrency } from "@/lib/currency";
 
 export function AnalyticsScreen() {
   const {
@@ -10,6 +11,7 @@ export function AnalyticsScreen() {
     goBack,
     activeTransactions,
     categories,
+    currency,
     categorySpentUsd,
     incomeUsd,
     spentUsd,
@@ -102,7 +104,7 @@ export function AnalyticsScreen() {
                 <span className="h-2 w-2 rounded-full" style={{ background: d.color }} />
                 <span className="text-muted-foreground">{d.name}</span>
                 <span className="ml-auto font-bold text-foreground">
-                  ${Math.round(d.value).toLocaleString()}
+                  {formatUsdAsCurrency(d.value, currency, { maximumFractionDigits: 0 })}
                 </span>
               </div>
             ))}
@@ -156,10 +158,15 @@ export function AnalyticsScreen() {
 
         <div className="mt-3 grid grid-cols-3 gap-2 text-center">
           {[
-            { l: "Saved", v: `$${Math.round(savedUsd).toLocaleString()}` },
+            {
+              l: "Saved",
+              v: formatUsdAsCurrency(savedUsd, currency, { maximumFractionDigits: 0 }),
+            },
             {
               l: "Avg txn",
-              v: `$${Math.round(spentUsd / Math.max(expenses.length, 1)).toLocaleString()}`,
+              v: formatUsdAsCurrency(spentUsd / Math.max(expenses.length, 1), currency, {
+                maximumFractionDigits: 0,
+              }),
             },
             { l: "Entries", v: `${activeTransactions.length}` },
           ].map((s) => (

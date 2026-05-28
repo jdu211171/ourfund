@@ -3,30 +3,46 @@ import { PhoneFrame } from "./PhoneFrame";
 import { useEffect, useState } from "react";
 import { useAppNavigation } from "@/lib/navigation";
 import { categoryColorOptions, categoryIconMap, categoryIconOptions } from "./categoryOptions";
+import {
+  currencyAdornment,
+  currencyValueToUsd,
+  formatUsdAsCurrency,
+  usdToCurrencyValue,
+} from "@/lib/currency";
 
 export function CategoryEditorScreen() {
-  const { navigate, goBack, categories, updateCategory, deleteCategory, categorySpentUsd } =
-    useAppNavigation();
+  const {
+    navigate,
+    goBack,
+    currency,
+    categories,
+    updateCategory,
+    deleteCategory,
+    categorySpentUsd,
+  } = useAppNavigation();
   const [selectedId, setSelectedId] = useState(categories[1]?.id ?? categories[0]?.id ?? "");
   const selected = categories.find((c) => c.id === selectedId) ?? categories[0];
   const [draftLabel, setDraftLabel] = useState(selected?.label ?? "");
-  const [draftLimit, setDraftLimit] = useState(String(selected?.limitUsd ?? 0));
+  const [draftLimit, setDraftLimit] = useState(
+    String(Math.round(usdToCurrencyValue(selected?.limitUsd ?? 0, currency))),
+  );
   const [draftIcon, setDraftIcon] = useState(selected?.icon ?? categoryIconOptions[0].key);
   const [draftColor, setDraftColor] = useState(selected?.color ?? categoryColorOptions[0]);
   const SelectedIcon = categoryIconMap[draftIcon] ?? ShoppingBag;
+  const { prefix, suffix } = currencyAdornment(currency);
 
   useEffect(() => {
     setDraftLabel(selected?.label ?? "");
-    setDraftLimit(String(selected?.limitUsd ?? 0));
+    setDraftLimit(String(Math.round(usdToCurrencyValue(selected?.limitUsd ?? 0, currency))));
     setDraftIcon(selected?.icon ?? categoryIconOptions[0].key);
     setDraftColor(selected?.color ?? categoryColorOptions[0]);
-  }, [selected]);
+  }, [currency, selected]);
 
   const saveSelected = () => {
     if (!selected) return;
     updateCategory(selected.id, {
       label: draftLabel.trim() || "Category",
-      limitUsd: parseFloat(draftLimit || "0"),
+      limitUsd: currencyValueToUsd(parseFloat(draftLimit || "0"), currency),
       icon: draftIcon,
       color: draftColor,
     });
@@ -88,13 +104,18 @@ export function CategoryEditorScreen() {
           </div>
 
           <div className="mt-3 flex items-center gap-2 rounded-2xl bg-[var(--muted)] px-3 py-2">
-            <span className="text-[16px] font-bold text-muted-foreground">$</span>
+            {prefix && (
+              <span className="text-[16px] font-bold text-muted-foreground">{prefix}</span>
+            )}
             <input
               type="text"
               value={draftLimit}
               onChange={(event) => setDraftLimit(event.target.value.replace(/[^0-9.]/g, ""))}
               className="w-24 bg-transparent text-[20px] font-extrabold tracking-tight text-foreground outline-none"
             />
+            {suffix && (
+              <span className="text-[11px] font-bold text-muted-foreground">{suffix}</span>
+            )}
             <span className="ml-auto text-[11px] font-semibold text-muted-foreground">
               per month
             </span>
@@ -187,7 +208,8 @@ export function CategoryEditorScreen() {
                   <div className="flex-1 leading-tight">
                     <p className="text-[12px] font-bold text-foreground">{c.label}</p>
                     <p className="text-[10px] text-muted-foreground">
-                      ${spent.toLocaleString()} of ${c.limitUsd.toLocaleString()}
+                      {formatUsdAsCurrency(spent, currency)} of{" "}
+                      {formatUsdAsCurrency(c.limitUsd, currency)}
                     </p>
                   </div>
                   <p className="text-[11px] font-bold text-muted-foreground">{pct}%</p>

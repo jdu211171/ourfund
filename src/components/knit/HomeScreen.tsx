@@ -8,6 +8,7 @@ import {
   Clock,
   Plus,
   Receipt,
+  ShoppingBag,
   Target,
   TrendingUp,
 } from "lucide-react";
@@ -77,6 +78,11 @@ export function HomeScreen() {
     { label: "Transfer", Icon: ArrowRightLeft, screen: "transfer" },
     { label: "Goal", Icon: Target, screen: "new_goal" },
   ] as const;
+  const toolActions = [
+    { label: "Scan", Icon: Receipt, screen: "scan_receipt" },
+    { label: "Products", Icon: ShoppingBag, screen: "product_tracker" },
+    { label: "Lending", Icon: ArrowDownLeft, screen: "lend_borrow" },
+  ] as const;
 
   return (
     <PhoneFrame className="z-10">
@@ -121,6 +127,22 @@ export function HomeScreen() {
                 <Icon className="h-4 w-4" strokeWidth={2.35} />
               </span>
               <span className="text-[10px] font-bold text-foreground">{label}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-2 grid grid-cols-3 gap-2">
+          {toolActions.map(({ label, Icon, screen }) => (
+            <button
+              key={label}
+              type="button"
+              onClick={() => navigate(screen)}
+              className="flex items-center gap-2 rounded-2xl bg-white px-3 py-2.5 text-left"
+            >
+              <span className="grid h-8 w-8 place-items-center rounded-xl bg-[oklch(0.95_0.04_265)] text-[var(--primary)]">
+                <Icon className="h-4 w-4" strokeWidth={2.35} />
+              </span>
+              <span className="truncate text-[10px] font-bold text-foreground">{label}</span>
             </button>
           ))}
         </div>

@@ -3,9 +3,10 @@ import { PhoneFrame } from "./PhoneFrame";
 import { useState } from "react";
 import { useAppNavigation } from "@/lib/navigation";
 import { categoryColorOptions, categoryIconOptions } from "./categoryOptions";
+import { currencyAdornment, currencyValueToUsd } from "@/lib/currency";
 
 export function AddCategoryScreen() {
-  const { navigate, goBack, addCategory } = useAppNavigation();
+  const { navigate, goBack, currency, addCategory } = useAppNavigation();
   const [title, setTitle] = useState("");
   const [selectedIconIdx, setSelectedIconIdx] = useState(0);
   const [selectedColorIdx, setSelectedColorIdx] = useState(0);
@@ -14,6 +15,7 @@ export function AddCategoryScreen() {
   const selectedIcon = categoryIconOptions[selectedIconIdx] ?? categoryIconOptions[0];
   const ActiveIcon = selectedIcon.Icon;
   const selectedColor = categoryColorOptions[selectedColorIdx] ?? categoryColorOptions[0];
+  const { prefix, suffix } = currencyAdornment(currency);
 
   return (
     <PhoneFrame>
@@ -88,7 +90,9 @@ export function AddCategoryScreen() {
         </p>
         <div className="mt-2 rounded-3xl bg-white p-4 shadow-[var(--shadow-soft)] focus-within:ring-2 focus-within:ring-[var(--primary)] transition-all">
           <div className="flex items-end gap-2">
-            <span className="pb-1 text-[18px] font-bold text-muted-foreground">$</span>
+            {prefix && (
+              <span className="pb-1 text-[18px] font-bold text-muted-foreground">{prefix}</span>
+            )}
             <input
               type="text"
               value={limit}
@@ -96,6 +100,9 @@ export function AddCategoryScreen() {
               className="w-24 bg-transparent text-[28px] font-extrabold tracking-tight text-foreground outline-none p-0 border-none focus:ring-0"
               placeholder="0"
             />
+            {suffix && (
+              <span className="pb-1 text-[12px] font-bold text-muted-foreground">{suffix}</span>
+            )}
             <span className="ml-auto text-[11px] font-semibold text-muted-foreground">
               per month
             </span>
@@ -106,7 +113,7 @@ export function AddCategoryScreen() {
           onClick={() => {
             addCategory({
               label: title.trim() || "New category",
-              limitUsd: parseFloat(limit || "0"),
+              limitUsd: currencyValueToUsd(parseFloat(limit || "0"), currency),
               color: selectedColor,
               icon: selectedIcon.key,
             });

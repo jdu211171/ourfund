@@ -1,9 +1,10 @@
 import { ArrowLeft, Briefcase, Gift, Wallet, Plus } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { useAppNavigation } from "@/lib/navigation";
+import { formatUsdAsCurrency } from "@/lib/currency";
 
 export function RecurringIncomeScreen() {
-  const { goBack, addRecurringIncome, recurringIncome } = useAppNavigation();
+  const { goBack, currency, addRecurringIncome, recurringIncome } = useAppNavigation();
   const total = recurringIncome.reduce((sum, item) => sum + item.amountUsd, 0);
 
   return (
@@ -29,7 +30,9 @@ export function RecurringIncomeScreen() {
 
         <div className="mt-5 rounded-3xl bg-[var(--primary)] p-4 text-white shadow-[var(--shadow-tile)]">
           <p className="text-[11px] uppercase tracking-widest opacity-80">Expected this month</p>
-          <p className="mt-1 font-display text-[28px] tracking-tight">${total.toLocaleString()}</p>
+          <p className="mt-1 font-display text-[28px] tracking-tight">
+            {formatUsdAsCurrency(total, currency)}
+          </p>
           <p className="text-[11px] opacity-80">From {recurringIncome.length} scheduled deposits</p>
         </div>
 
@@ -56,7 +59,7 @@ export function RecurringIncomeScreen() {
                   <p className="text-[10px] text-muted-foreground">{it.every}</p>
                 </div>
                 <p className="text-[12px] font-extrabold text-[var(--success)]">
-                  +${it.amountUsd.toLocaleString()}
+                  {formatUsdAsCurrency(it.amountUsd, currency, { signed: true })}
                 </p>
               </div>
             );
