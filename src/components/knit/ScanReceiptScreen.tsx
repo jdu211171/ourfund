@@ -13,6 +13,7 @@ import { useRef, useState } from "react";
 import { useAppNavigation, type ReceiptScan } from "@/lib/navigation";
 import { PhoneFrame } from "./PhoneFrame";
 import { Money } from "./Money";
+import { compressImage } from "@/lib/image-compress";
 
 export function ScanReceiptScreen() {
   const { navigate, goBack, scanReceiptImage, saveReceiptScan } = useAppNavigation();
@@ -26,24 +27,16 @@ export function ScanReceiptScreen() {
     if (!file) return;
     setError("");
     setLoading(true);
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const dataUrl = String(reader.result || "");
-      setPreview(dataUrl);
-      try {
-        const result = await scanReceiptImage(dataUrl);
-        setScan(result);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Receipt scan failed");
-      } finally {
-        setLoading(false);
-      }
-    };
-    reader.onerror = () => {
+    try {
+      const compressedDataUrl = await compressImage(file);
+      setPreview(compressedDataUrl);
+      const result = await scanReceiptImage(compressedDataUrl);
+      setScan(result);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Receipt scan failed");
+    } finally {
       setLoading(false);
-      setError("Could not read receipt image");
-    };
-    reader.readAsDataURL(file);
+    }
   };
 
   const detectedCount = scan?.items.length ?? 0;
