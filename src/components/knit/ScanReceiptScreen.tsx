@@ -268,6 +268,27 @@ export function ScanReceiptScreen() {
                   </div>
                 );
               })}
+
+              <button
+                type="button"
+                onClick={() => {
+                  const defaultCategory = categories[0]?.label ?? "Groceries";
+                  const newItem = {
+                    name: "",
+                    category: defaultCategory,
+                    quantity: 1,
+                    unitPriceUsd: 0,
+                    totalUsd: 0,
+                  };
+                  setScan({
+                    ...scan,
+                    items: [...scan.items, newItem],
+                  });
+                }}
+                className="mt-1.5 flex items-center justify-center gap-1.5 w-full rounded-xl border border-dashed border-muted-foreground/25 py-2 text-[11px] font-bold text-muted-foreground hover:bg-white/50 cursor-pointer"
+              >
+                + Add item
+              </button>
             </div>
 
             <div className="mt-3 flex items-center justify-between rounded-2xl bg-[var(--muted)] px-4 py-2.5">
