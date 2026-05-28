@@ -308,9 +308,12 @@ export function ScanReceiptScreen() {
             <ImageIcon className="h-3.5 w-3.5" strokeWidth={2.5} /> Upload
           </button>
           <button
-            disabled={!scan || loading}
+            disabled={loading}
             onClick={() => {
-              if (!scan) return;
+              if (!scan) {
+                inputRef.current?.click();
+                return;
+              }
               saveReceiptScan(scan);
               navigate("product_tracker");
             }}

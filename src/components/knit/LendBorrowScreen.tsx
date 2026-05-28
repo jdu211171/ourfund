@@ -1,6 +1,6 @@
-import { ArrowDownLeft, ArrowLeft, ArrowUpRight, Check, Plus, UserRound } from "lucide-react";
+import { ArrowDownLeft, ArrowLeft, ArrowUpRight, Check, Plus, UserRound, Users } from "lucide-react";
 import { useMemo, useState } from "react";
-import { currencyAdornment, currencyValueToUsd } from "@/lib/currency";
+import { currencyAdornment, currencyValueToUsd, usdToCurrencyValue } from "@/lib/currency";
 import { useAppNavigation, type LoanDirection, type LoanEntry } from "@/lib/navigation";
 import { PhoneFrame } from "./PhoneFrame";
 import { Money } from "./Money";
@@ -9,8 +9,32 @@ import { OptionSelect } from "./OptionSelect";
 const tabs = ["All", "Lent", "Borrowed"] as const;
 
 export function LendBorrowScreen() {
-  const { goBack, loanEntries, members, currentMemberId, currency, addLoanEntry, updateLoanEntry } =
-    useAppNavigation();
+  const {
+    goBack,
+    loanEntries,
+    members,
+    currentMemberId,
+    currency,
+    addLoanEntry,
+    updateLoanEntry,
+    activeWallets,
+    addTransaction,
+    profile,
+    wallets,
+    household,
+  } = useAppNavigation();
+
+  const [walletId, setWalletId] = useState("");
+  if (!walletId && activeWallets.length > 0) {
+    setWalletId(activeWallets[0].id);
+  }
+
+  const [paymentLoan, setPaymentLoan] = useState<LoanEntry | null>(null);
+  const [payAmount, setPayAmount] = useState("");
+  const [payWalletId, setPayWalletId] = useState("");
+  if (!payWalletId && activeWallets.length > 0) {
+    setPayWalletId(activeWallets[0].id);
+  }
   const otherMembers = members.filter((member) => member.id !== currentMemberId);
   const [tab, setTab] = useState<(typeof tabs)[number]>("All");
   const [showForm, setShowForm] = useState(false);
@@ -41,18 +65,124 @@ export function LendBorrowScreen() {
 
   const saveLoan = () => {
     if (amountUsd <= 0) return;
+    const wallet = activeWallets.find((w) => w.id === walletId) ?? activeWallets[0];
+    const walletLabel = wallet?.label ?? "Cash";
+    const cpName = selectedMember?.name ?? (counterpartyName.trim() || "Family member");
+
     addLoanEntry({
       counterpartyMemberId: selectedMember?.id ?? null,
-      counterpartyName: selectedMember?.name ?? (counterpartyName.trim() || "Family member"),
+      counterpartyName: cpName,
       note: note.trim() || (direction === "lent" ? "Money lent" : "Money borrowed"),
       due: due.trim() || "No due date",
       amountUsd,
       direction,
       status: "pending",
     });
+
+    // 1. Transaction for the current member:
+    addTransaction({
+      name: direction === "lent"
+        ? `Lent to ${cpName}`
+        : `Borrowed from ${cpName}`,
+      who: `${profile?.name || "Me"} · today`,
+      usd: direction === "lent" ? -amountUsd : amountUsd,
+      category: "Lend/Borrow",
+      wallet: walletLabel,
+      date: "today",
+    });
+
+    // 2. If counterparty is a household member, create the corresponding transaction for them:
+    if (selectedMember) {
+      const counterpartyWallet = wallets.find(w => w.members.includes(selectedMember.id)) || wallets[0];
+      addTransaction({
+        name: direction === "lent"
+          ? `Borrowed from ${profile?.name || "Me"}`
+          : `Lent to ${profile?.name || "Me"}`,
+        who: `${selectedMember.name} · today`,
+        usd: direction === "lent" ? amountUsd : -amountUsd,
+        category: "Lend/Borrow",
+        wallet: counterpartyWallet.label,
+        date: "today",
+      });
+    }
+
     setAmount("0");
     setNote("");
     setShowForm(false);
+  };
+
+  const savePayment = () => {
+    if (!paymentLoan) return;
+    const payUsd = currencyValueToUsd(parseFloat(payAmount || "0"), currency);
+    if (payUsd <= 0) return;
+
+    const wallet = activeWallets.find((w) => w.id === payWalletId) ?? activeWallets[0];
+    const walletLabel = wallet?.label ?? "Cash";
+
+    const remainingUsd = Math.max(0, paymentLoan.amountUsd - payUsd);
+    const updatedStatus = remainingUsd <= 0.01 ? "paid" : paymentLoan.status;
+
+    // Update the loan entry status and remaining amount
+    updateLoanEntry(paymentLoan.id, {
+      amountUsd: remainingUsd,
+      status: updatedStatus,
+    });
+
+    // Record transactions for repayment
+    if (paymentLoan.direction === "lent") {
+      // Current member receives payment
+      addTransaction({
+        name: `Repayment from ${paymentLoan.counterpartyName}`,
+        who: `${profile?.name || "Me"} · today`,
+        usd: payUsd,
+        category: "Lend/Borrow",
+        wallet: walletLabel,
+        date: "today",
+      });
+
+      // If counterparty is a household member, record their pay outflow
+      if (paymentLoan.counterpartyMemberId) {
+        const counterpartyWallet =
+          wallets.find((w) => w.members.includes(paymentLoan.counterpartyMemberId!)) || wallets[0];
+        const counterpartyMember = members.find((m) => m.id === paymentLoan.counterpartyMemberId);
+        addTransaction({
+          name: `Repay to ${profile?.name || "Me"}`,
+          who: `${counterpartyMember?.name || "Family member"} · today`,
+          usd: -payUsd,
+          category: "Lend/Borrow",
+          wallet: counterpartyWallet.label,
+          date: "today",
+        });
+      }
+    } else {
+      // Current member pays back borrowed money
+      addTransaction({
+        name: `Repay to ${paymentLoan.counterpartyName}`,
+        who: `${profile?.name || "Me"} · today`,
+        usd: -payUsd,
+        category: "Lend/Borrow",
+        wallet: walletLabel,
+        date: "today",
+      });
+
+      // If counterparty is a household member, record their repayment inflow
+      if (paymentLoan.counterpartyMemberId) {
+        const counterpartyWallet =
+          wallets.find((w) => w.members.includes(paymentLoan.counterpartyMemberId!)) || wallets[0];
+        const counterpartyMember = members.find((m) => m.id === paymentLoan.counterpartyMemberId);
+        addTransaction({
+          name: `Repayment from ${profile?.name || "Me"}`,
+          who: `${counterpartyMember?.name || "Family member"} · today`,
+          usd: payUsd,
+          category: "Lend/Borrow",
+          wallet: counterpartyWallet.label,
+          date: "today",
+        });
+      }
+    }
+
+    setPaymentLoan(null);
+    setPayAmount("");
   };
 
   return (
@@ -97,6 +227,64 @@ export function LendBorrowScreen() {
           ))}
         </div>
 
+        {paymentLoan && (
+          <div className="mt-3 rounded-3xl bg-white p-4 shadow-[var(--shadow-soft)] border border-[var(--primary)]/10 animate-in fade-in slide-in-from-bottom-3 duration-200">
+            <h3 className="text-[13px] font-bold text-foreground">Record Repayment</h3>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              For {paymentLoan.direction === "lent" ? "loan to" : "loan from"}{" "}
+              <strong>{paymentLoan.counterpartyName}</strong> ({paymentLoan.note})
+            </p>
+
+            <div className="mt-3">
+              <OptionSelect
+                label="Wallet to use"
+                value={payWalletId}
+                options={activeWallets.map((item) => ({
+                  value: item.id,
+                  label: item.label,
+                  description: item.sub,
+                }))}
+                onChange={setPayWalletId}
+                emptyLabel="Create a wallet first"
+                icon={<Users className="h-5 w-5" strokeWidth={2.25} />}
+              />
+            </div>
+
+            <div className="mt-3 flex items-center gap-1 rounded-2xl bg-[var(--muted)] px-3 py-2.5">
+              {prefix && (
+                <span className="text-[13px] font-bold text-muted-foreground">{prefix}</span>
+              )}
+              <input
+                value={payAmount}
+                onChange={(event) => setPayAmount(event.target.value.replace(/[^0-9.]/g, ""))}
+                className="min-w-0 flex-1 bg-transparent text-[16px] font-extrabold outline-none"
+                placeholder="0"
+              />
+              {suffix && (
+                <span className="text-[11px] font-bold text-muted-foreground">{suffix}</span>
+              )}
+            </div>
+
+            <div className="mt-3 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setPaymentLoan(null)}
+                className="flex-1 rounded-full bg-[var(--muted)] py-2 text-[12px] font-semibold text-foreground cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={savePayment}
+                disabled={parseFloat(payAmount || "0") <= 0}
+                className="flex-1 rounded-full bg-[var(--primary)] py-2 text-[12px] font-semibold text-white disabled:opacity-50 cursor-pointer"
+              >
+                Record
+              </button>
+            </div>
+          </div>
+        )}
+
         {showForm && (
           <div className="mt-3 rounded-3xl bg-white p-4 shadow-[var(--shadow-soft)]">
             <div className="grid grid-cols-2 gap-2">
@@ -135,6 +323,20 @@ export function LendBorrowScreen() {
                   placeholder="Person name"
                 />
               )}
+            </div>
+            <div className="mt-3">
+              <OptionSelect
+                label="Wallet to use"
+                value={walletId}
+                options={activeWallets.map((item) => ({
+                  value: item.id,
+                  label: item.label,
+                  description: item.sub,
+                }))}
+                onChange={setWalletId}
+                emptyLabel="Create a wallet first"
+                icon={<Users className="h-5 w-5" strokeWidth={2.25} />}
+              />
             </div>
             <div className="mt-3 grid grid-cols-[1fr_1.1fr] gap-2">
               <div className="flex items-center gap-1 rounded-2xl bg-[var(--muted)] px-3 py-2.5">
@@ -181,7 +383,13 @@ export function LendBorrowScreen() {
               title="You lent"
               rows={lent}
               direction="in"
-              onMarkPaid={(id) => updateLoanEntry(id, { status: "paid" })}
+              onMarkPaid={(id) => {
+                const row = loanEntries.find(entry => entry.id === id);
+                if (row) {
+                  setPaymentLoan(row);
+                  setPayAmount(Math.round(usdToCurrencyValue(row.amountUsd, currency)).toString());
+                }
+              }}
             />
           )}
           {(tab === "All" || tab === "Borrowed") && (
@@ -189,7 +397,13 @@ export function LendBorrowScreen() {
               title="You borrowed"
               rows={borrowed}
               direction="out"
-              onMarkPaid={(id) => updateLoanEntry(id, { status: "paid" })}
+              onMarkPaid={(id) => {
+                const row = loanEntries.find(entry => entry.id === id);
+                if (row) {
+                  setPaymentLoan(row);
+                  setPayAmount(Math.round(usdToCurrencyValue(row.amountUsd, currency)).toString());
+                }
+              }}
             />
           )}
           {filteredEntries.length === 0 && (
@@ -286,9 +500,9 @@ function Group({
                 <button
                   type="button"
                   onClick={() => onMarkPaid(row.id)}
-                  className="mt-1 text-[9px] font-bold uppercase tracking-wider text-[var(--primary)]"
+                  className="mt-1 text-[9px] font-bold uppercase tracking-wider text-[var(--primary)] cursor-pointer"
                 >
-                  Mark paid
+                  Record payment
                 </button>
               )}
             </div>
