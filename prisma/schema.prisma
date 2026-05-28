@@ -160,6 +160,7 @@ model LoanEntry {
   note                 String
   due                  String
   amountUsd            Float
+  paidAmountUsd        Float    @default(0)
   direction            String // "lent" | "borrowed"
   status               String // "pending" | "paid" | "overdue"
   createdAt            DateTime @default(now())

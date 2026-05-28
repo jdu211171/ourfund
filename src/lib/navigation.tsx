@@ -176,6 +176,7 @@ export interface LoanEntry {
   note: string;
   due: string;
   amountUsd: number;
+  paidAmountUsd: number;
   direction: LoanDirection;
   status: LoanStatus;
   createdAt: string;
@@ -383,7 +384,7 @@ interface NavigationContextType {
   subscriptions: ScheduleItem[];
   addSubscription: (item?: Partial<ScheduleItem>) => void;
   loanEntries: LoanEntry[];
-  addLoanEntry: (entry: Omit<LoanEntry, "id" | "createdAt">) => LoanEntry;
+  addLoanEntry: (entry: Omit<LoanEntry, "id" | "createdAt" | "paidAmountUsd"> & { paidAmountUsd?: number }) => LoanEntry;
   updateLoanEntry: (id: string, updates: Partial<Omit<LoanEntry, "id" | "createdAt">>) => void;
   trackedProducts: ProductEntry[];
   addTrackedProduct: (product: Omit<ProductEntry, "id" | "createdAt">) => ProductEntry;
@@ -1397,9 +1398,10 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     syncMutationServerFn({ data: { type: "addScheduleItem", data: newItem } }).catch(console.error);
   };
 
-  const addLoanEntry = (entry: Omit<LoanEntry, "id" | "createdAt">) => {
+  const addLoanEntry = (entry: Omit<LoanEntry, "id" | "createdAt" | "paidAmountUsd"> & { paidAmountUsd?: number }) => {
     const newEntry: LoanEntry = {
       ...entry,
+      paidAmountUsd: entry.paidAmountUsd ?? 0,
       id: makeId("loan"),
       createdAt: "today",
     };
@@ -1634,6 +1636,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
       setLoanEntries(
         (data.loanEntries ?? []).map((entry) => ({
           ...entry,
+          paidAmountUsd: entry.paidAmountUsd ?? 0,
           direction: entry.direction as LoanDirection,
           status: entry.status as LoanStatus,
         })),

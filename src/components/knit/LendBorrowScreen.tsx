@@ -58,10 +58,10 @@ export function LendBorrowScreen() {
   const borrowed = filteredEntries.filter((entry) => entry.direction === "borrowed");
   const lentTotal = loanEntries
     .filter((entry) => entry.direction === "lent" && entry.status !== "paid")
-    .reduce((sum, entry) => sum + entry.amountUsd, 0);
+    .reduce((sum, entry) => sum + (entry.amountUsd - entry.paidAmountUsd), 0);
   const owedTotal = loanEntries
     .filter((entry) => entry.direction === "borrowed" && entry.status !== "paid")
-    .reduce((sum, entry) => sum + entry.amountUsd, 0);
+    .reduce((sum, entry) => sum + (entry.amountUsd - entry.paidAmountUsd), 0);
 
   const saveLoan = () => {
     if (amountUsd <= 0) return;
@@ -119,12 +119,13 @@ export function LendBorrowScreen() {
     const wallet = activeWallets.find((w) => w.id === payWalletId) ?? activeWallets[0];
     const walletLabel = wallet?.label ?? "Cash";
 
-    const remainingUsd = Math.max(0, paymentLoan.amountUsd - payUsd);
+    const newPaidUsd = Math.min(paymentLoan.amountUsd, paymentLoan.paidAmountUsd + payUsd);
+    const remainingUsd = Math.max(0, paymentLoan.amountUsd - newPaidUsd);
     const updatedStatus = remainingUsd <= 0.01 ? "paid" : paymentLoan.status;
 
-    // Update the loan entry status and remaining amount
+    // Update the loan entry status and paid amount (keeping original amountUsd unchanged!)
     updateLoanEntry(paymentLoan.id, {
-      amountUsd: remainingUsd,
+      paidAmountUsd: newPaidUsd,
       status: updatedStatus,
     });
 
@@ -387,7 +388,8 @@ export function LendBorrowScreen() {
                 const row = loanEntries.find(entry => entry.id === id);
                 if (row) {
                   setPaymentLoan(row);
-                  setPayAmount(Math.round(usdToCurrencyValue(row.amountUsd, currency)).toString());
+                  const remaining = row.amountUsd - row.paidAmountUsd;
+                  setPayAmount(Math.round(usdToCurrencyValue(remaining, currency)).toString());
                 }
               }}
             />
@@ -401,7 +403,8 @@ export function LendBorrowScreen() {
                 const row = loanEntries.find(entry => entry.id === id);
                 if (row) {
                   setPaymentLoan(row);
-                  setPayAmount(Math.round(usdToCurrencyValue(row.amountUsd, currency)).toString());
+                  const remaining = row.amountUsd - row.paidAmountUsd;
+                  setPayAmount(Math.round(usdToCurrencyValue(remaining, currency)).toString());
                 }
               }}
             />
@@ -468,6 +471,8 @@ function Group({
   onMarkPaid: (id: string) => void;
 }) {
   if (rows.length === 0) return null;
+  const { currency } = useAppNavigation();
+  const { prefix, suffix } = currencyAdornment(currency);
 
   return (
     <div>
@@ -475,48 +480,57 @@ function Group({
         {title}
       </p>
       <div className="mt-2 space-y-2">
-        {rows.map((row) => (
-          <div
-            key={row.id}
-            className="flex items-center gap-3 rounded-2xl bg-white px-3 py-2.5 shadow-[var(--shadow-soft)]"
-          >
+        {rows.map((row) => {
+          const displayUsd = row.status === "paid" ? row.amountUsd : (row.amountUsd - row.paidAmountUsd);
+          
+          return (
             <div
-              className="grid h-9 w-9 place-items-center rounded-xl text-[11px] font-bold"
-              style={{
-                background: direction === "in" ? "oklch(0.96 0.04 145)" : "oklch(0.96 0.05 25)",
-                color: direction === "in" ? "var(--success)" : "var(--danger)",
-              }}
+              key={row.id}
+              className="flex items-center gap-3 rounded-2xl bg-white px-3 py-2.5 shadow-[var(--shadow-soft)] animate-in fade-in duration-200"
             >
-              {row.counterpartyName.slice(0, 1)}
+              <div
+                className="grid h-9 w-9 place-items-center rounded-xl text-[11px] font-bold"
+                style={{
+                  background: direction === "in" ? "oklch(0.96 0.04 145)" : "oklch(0.96 0.05 25)",
+                  color: direction === "in" ? "var(--success)" : "var(--danger)",
+                }}
+              >
+                {row.counterpartyName.slice(0, 1)}
+              </div>
+              <div className="min-w-0 flex-1 leading-tight">
+                <p className="truncate text-[12px] font-bold text-foreground">
+                  {row.counterpartyName}
+                </p>
+                <p className="truncate text-[10px] text-muted-foreground">
+                  {row.note} · {row.due}
+                  {row.status !== "paid" && row.paidAmountUsd > 0 && (
+                    <span className="font-semibold text-emerald-600">
+                      {` · ${prefix}${Math.round(usdToCurrencyValue(row.paidAmountUsd, currency))}${suffix} paid`}
+                    </span>
+                  )}
+                </p>
+                {row.status !== "paid" && (
+                  <button
+                    type="button"
+                    onClick={() => onMarkPaid(row.id)}
+                    className="mt-1 text-[9px] font-bold uppercase tracking-wider text-[var(--primary)] cursor-pointer"
+                  >
+                    Record payment
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-col items-end gap-1">
+                <Money
+                  usd={displayUsd}
+                  size="sm"
+                  tone={direction === "in" ? "success" : "danger"}
+                  signed
+                />
+                <StatusPill status={row.status} />
+              </div>
             </div>
-            <div className="min-w-0 flex-1 leading-tight">
-              <p className="truncate text-[12px] font-bold text-foreground">
-                {row.counterpartyName}
-              </p>
-              <p className="truncate text-[10px] text-muted-foreground">
-                {row.note} · {row.due}
-              </p>
-              {row.status !== "paid" && (
-                <button
-                  type="button"
-                  onClick={() => onMarkPaid(row.id)}
-                  className="mt-1 text-[9px] font-bold uppercase tracking-wider text-[var(--primary)] cursor-pointer"
-                >
-                  Record payment
-                </button>
-              )}
-            </div>
-            <div className="flex flex-col items-end gap-1">
-              <Money
-                usd={row.amountUsd}
-                size="sm"
-                tone={direction === "in" ? "success" : "danger"}
-                signed
-              />
-              <StatusPill status={row.status} />
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

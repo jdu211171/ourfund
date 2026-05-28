@@ -1126,6 +1126,7 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
             note: payload.note,
             due: payload.due,
             amountUsd: Number(payload.amountUsd) || 0,
+            paidAmountUsd: Number(payload.paidAmountUsd) || 0,
             direction: payload.direction === "borrowed" ? "borrowed" : "lent",
             status: ["paid", "overdue", "pending"].includes(payload.status)
               ? payload.status
@@ -1146,7 +1147,8 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
             counterpartyName: payload.counterpartyName,
             note: payload.note,
             due: payload.due,
-            amountUsd: Number(payload.amountUsd) || 0,
+            amountUsd: payload.amountUsd !== undefined ? Number(payload.amountUsd) : undefined,
+            paidAmountUsd: payload.paidAmountUsd !== undefined ? Number(payload.paidAmountUsd) : undefined,
             direction: payload.direction === "borrowed" ? "borrowed" : "lent",
             status: ["paid", "overdue", "pending"].includes(payload.status)
               ? payload.status
