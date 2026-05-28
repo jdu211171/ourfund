@@ -437,7 +437,7 @@ export const validateInviteCodeServerFn = createServerFn({ method: "POST" })
   });
 
 export const scanReceiptServerFn = createServerFn({ method: "POST" })
-  .inputValidator((d: { imageDataUrl: string; currency: string }) => d)
+  .inputValidator((d: { imageDataUrl: string; currency: string; categories?: string[] }) => d)
   .handler(async ({ data }) => {
     const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY;
     if (!apiKey) {
@@ -454,12 +454,17 @@ export const scanReceiptServerFn = createServerFn({ method: "POST" })
     const householdId = member?.householdId || null;
     const model = process.env.GEMINI_MODEL || "gemini-3.5-flash";
     const currency = data.currency || "JPY";
+    const categoriesList = data.categories && data.categories.length > 0
+      ? data.categories.join(", ")
+      : "Groceries, Dining, Household, Electronics, Clothing, Health, Other";
     const prompt = [
       "Extract line-item product data from this receipt.",
       "Japanese receipts are the primary target, so read Japanese product names carefully.",
+      "Each item's price (unitPrice and totalPrice) MUST include tax. If the receipt lists prices excluding tax (such as on Japanese receipts marked with '外8' or '外10'), calculate the tax-inclusive price for each item (i.e. multiply by 1.08 or 1.10 respectively and round to the nearest integer) and return that calculated value. The sum of the item totalPrice values must equal the final total price including tax (合計) listed on the receipt.",
       "Ignore subtotal, tax, payment method, change, points, discounts without a product, and store metadata lines.",
       "Return strict JSON only with this shape:",
-      '{"storeName":"string","purchasedAt":"date or receipt date text","currency":"JPY","items":[{"name":"string","category":"Groceries|Dining|Household|Electronics|Clothing|Health|Other","quantity":1,"unitPrice":100,"totalPrice":100}],"rawText":"short OCR text"}',
+      `{"storeName":"string","purchasedAt":"date or receipt date text","currency":"JPY","items":[{"name":"string","category":"string","quantity":1,"unitPrice":100,"totalPrice":100}],"rawText":"short OCR text"}`,
+      `Assign each item a category. Prioritize matching one of these existing categories if it fits: ${categoriesList}. If none fit well, suggest a new, appropriate category name (e.g. 'Snacks', 'Beverages', etc.).`,
       `Use ${currency} when the receipt currency is unclear.`,
     ].join(" ");
 

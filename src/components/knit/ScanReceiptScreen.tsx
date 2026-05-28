@@ -14,9 +14,10 @@ import { useAppNavigation, type ReceiptScan } from "@/lib/navigation";
 import { PhoneFrame } from "./PhoneFrame";
 import { Money } from "./Money";
 import { compressImage } from "@/lib/image-compress";
+import { usdToCurrencyValue, currencyValueToUsd } from "@/lib/currency";
 
 export function ScanReceiptScreen() {
-  const { navigate, goBack, scanReceiptImage, saveReceiptScan } = useAppNavigation();
+  const { navigate, goBack, scanReceiptImage, saveReceiptScan, categories } = useAppNavigation();
   const inputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState("");
   const [scan, setScan] = useState<ReceiptScan | null>(null);
@@ -79,7 +80,7 @@ export function ScanReceiptScreen() {
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="mt-5 relative aspect-[4/5] overflow-hidden rounded-3xl bg-[oklch(0.18_0.04_265)] text-left"
+          className="mt-5 relative aspect-[4/5] overflow-hidden rounded-3xl bg-[oklch(0.18_0.04_265)] text-left shrink-0"
         >
           {preview ? (
             <img src={preview} alt="" className="absolute inset-0 h-full w-full object-cover" />
@@ -129,54 +130,144 @@ export function ScanReceiptScreen() {
 
         {scan && (
           <>
-            <div className="mt-4 rounded-2xl bg-white p-3.5 shadow-[var(--shadow-soft)]">
-              <div className="flex items-center gap-2 text-[12px]">
-                <Store className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={2.25} />
-                <span className="font-bold text-foreground">{scan.storeName}</span>
+            <div className="mt-4 rounded-2xl bg-white p-3.5 shadow-[var(--shadow-soft)] space-y-2">
+              <div className="flex items-center gap-2 text-[12px] w-full">
+                <Store className="h-3.5 w-3.5 text-muted-foreground shrink-0" strokeWidth={2.25} />
+                <input
+                  type="text"
+                  value={scan.storeName}
+                  onChange={(e) => setScan({ ...scan, storeName: e.target.value })}
+                  className="flex-1 bg-transparent font-bold text-foreground border-b border-dashed border-muted-foreground/30 focus:border-[var(--primary)] focus:outline-none py-0.5 text-[12px]"
+                  placeholder="Store name"
+                />
               </div>
-              <div className="mt-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
-                <span className="inline-flex items-center gap-1.5">
-                  <Calendar className="h-3 w-3" strokeWidth={2.25} /> {scan.purchasedAt}
+              <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                <span className="inline-flex items-center gap-1.5 flex-1 mr-4">
+                  <Calendar className="h-3 w-3 shrink-0" strokeWidth={2.25} />
+                  <input
+                    type="text"
+                    value={scan.purchasedAt}
+                    onChange={(e) => setScan({ ...scan, purchasedAt: e.target.value })}
+                    className="flex-1 bg-transparent text-muted-foreground border-b border-dashed border-muted-foreground/30 focus:border-[var(--primary)] focus:outline-none py-0.5"
+                    placeholder="Date"
+                  />
                 </span>
-                <span className="inline-flex items-center gap-1.5">
+                <span className="inline-flex items-center gap-1.5 shrink-0">
                   <Tag className="h-3 w-3" strokeWidth={2.25} /> {scan.currency}
                 </span>
               </div>
             </div>
 
-            <div className="mt-3 flex-1 space-y-1.5 overflow-y-auto pr-1">
-              {scan.items.map((item) => (
-                <div
-                  key={`${item.name}-${item.totalUsd}`}
-                  className="flex items-center gap-2.5 rounded-xl bg-white px-3 py-2 shadow-[var(--shadow-soft)]"
-                >
-                  <div className="grid h-6 w-6 place-items-center rounded-full bg-[var(--success)]/15 text-[var(--success)]">
-                    <Check className="h-3 w-3" strokeWidth={3} />
-                  </div>
-                  <div className="min-w-0 flex-1 leading-tight">
-                    <p className="truncate text-[11.5px] font-bold text-foreground">{item.name}</p>
-                    <p className="text-[9.5px] text-muted-foreground">
-                      {item.category} · x{item.quantity}
-                    </p>
-                    {item.comparison && (
-                      <p
-                        className="mt-0.5 text-[9px] font-semibold"
-                        style={{
-                          color:
-                            item.comparison.trend === "up" ? "var(--danger)" : "var(--success)",
+            <div className="mt-3 space-y-1.5 pr-1">
+              {scan.items.map((item, index) => {
+                const currencySymbol = scan.currency === "JPY" ? "¥" : "$";
+                const localValue = Math.round(usdToCurrencyValue(item.totalUsd, scan.currency));
+
+                return (
+                  <div
+                    key={index}
+                    className="flex items-start gap-2.5 rounded-xl bg-white px-3 py-2 shadow-[var(--shadow-soft)]"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newItems = scan.items.filter((_, i) => i !== index);
+                        setScan({
+                          ...scan,
+                          items: newItems,
+                          totalUsd: newItems.reduce((sum, it) => sum + it.totalUsd, 0),
+                        });
+                      }}
+                      className="grid h-5 w-5 place-items-center rounded-full bg-[var(--danger)]/10 text-[var(--danger)] mt-0.5 cursor-pointer shrink-0 hover:bg-[var(--danger)]/20 text-[11px] font-bold"
+                      title="Remove item"
+                    >
+                      ×
+                    </button>
+
+                    <div className="min-w-0 flex-1 leading-normal space-y-1">
+                      <input
+                        type="text"
+                        value={item.name}
+                        onChange={(e) => {
+                          const newItems = [...scan.items];
+                          newItems[index] = { ...item, name: e.target.value };
+                          setScan({ ...scan, items: newItems });
                         }}
-                      >
-                        {item.comparison.trend === "same"
-                          ? "Same as last"
-                          : `${item.comparison.deltaPct > 0 ? "+" : ""}${Math.round(
-                              item.comparison.deltaPct,
-                            )}% vs ${item.comparison.previousStore}`}
-                      </p>
-                    )}
+                        className="w-full bg-transparent font-bold text-foreground border-b border-dashed border-muted-foreground/20 focus:border-[var(--primary)] focus:outline-none text-[11.5px] py-0.5"
+                        placeholder="Item name"
+                      />
+
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={item.category}
+                          onChange={(e) => {
+                            const newItems = [...scan.items];
+                            newItems[index] = { ...item, category: e.target.value };
+                            setScan({ ...scan, items: newItems });
+                          }}
+                          className="bg-transparent text-muted-foreground text-[9.5px] border-b border-dashed border-muted-foreground/20 focus:border-[var(--primary)] focus:outline-none py-0.5 cursor-pointer max-w-[100px] truncate"
+                        >
+                          {categories.every((c) => c.label !== item.category) && (
+                            <option value={item.category}>{item.category} (New)</option>
+                          )}
+                          {categories.map((c) => (
+                            <option key={c.id} value={c.label}>
+                              {c.label}
+                            </option>
+                          ))}
+                        </select>
+
+                        <span className="text-[9.5px] text-muted-foreground">·</span>
+
+                        <span className="inline-flex items-center text-[9.5px] text-muted-foreground">
+                          x
+                          <input
+                            type="number"
+                            value={item.quantity}
+                            min={1}
+                            onChange={(e) => {
+                              const qty = Math.max(1, parseInt(e.target.value) || 1);
+                              const newItems = [...scan.items];
+                              newItems[index] = {
+                                ...item,
+                                quantity: qty,
+                                unitPriceUsd: item.totalUsd / qty,
+                              };
+                              setScan({ ...scan, items: newItems });
+                            }}
+                            className="w-6 bg-transparent text-muted-foreground border-b border-dashed border-muted-foreground/20 focus:border-[var(--primary)] focus:outline-none text-center"
+                          />
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-0.5 shrink-0 pt-0.5">
+                      <span className="text-[11.5px] font-bold text-foreground">{currencySymbol}</span>
+                      <input
+                        type="number"
+                        value={localValue}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value) || 0;
+                          const newItems = [...scan.items];
+                          const newTotalUsd = currencyValueToUsd(val, scan.currency);
+                          newItems[index] = {
+                            ...item,
+                            totalUsd: newTotalUsd,
+                            unitPriceUsd: newTotalUsd / Math.max(item.quantity, 1),
+                            originalPrice: val,
+                          };
+                          setScan({
+                            ...scan,
+                            items: newItems,
+                            totalUsd: newItems.reduce((sum, it) => sum + it.totalUsd, 0),
+                          });
+                        }}
+                        className="w-16 bg-transparent text-right font-bold text-foreground border-b border-dashed border-muted-foreground/20 focus:border-[var(--primary)] focus:outline-none text-[11.5px] py-0.5"
+                      />
+                    </div>
                   </div>
-                  <Money usd={item.totalUsd} size="sm" />
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="mt-3 flex items-center justify-between rounded-2xl bg-[var(--muted)] px-4 py-2.5">

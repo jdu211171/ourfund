@@ -1434,8 +1434,9 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   };
 
   const scanReceiptImage = async (imageDataUrl: string) => {
+    const existingCategories = categories.map((c) => c.label);
     const result = (await scanReceiptServerFn({
-      data: { imageDataUrl, currency },
+      data: { imageDataUrl, currency, categories: existingCategories },
     })) as ReceiptScan;
     return {
       ...result,
@@ -1452,6 +1453,37 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
       createdAt: scan.createdAt || "today",
       items: Array.isArray(scan.items) ? scan.items : [],
     };
+
+    // Auto-create category if it does not exist
+    const existingLabels = new Set(categories.map((c) => c.label));
+    const categoriesToCreate = new Set<string>();
+    normalizedScan.items.forEach((item) => {
+      const catName = item.category || "Groceries";
+      if (!existingLabels.has(catName)) {
+        categoriesToCreate.add(catName);
+      }
+    });
+
+    const colors = [
+      "oklch(0.65 0.25 140)", // Green
+      "oklch(0.60 0.20 20)",  // Coral/Red
+      "oklch(0.55 0.24 265)", // Purple
+      "oklch(0.70 0.15 80)",  // Orange
+      "oklch(0.60 0.15 200)", // Blue
+      "oklch(0.65 0.20 300)", // Magenta
+    ];
+    let colorIdx = 0;
+
+    categoriesToCreate.forEach((catName) => {
+      addCategory({
+        label: catName,
+        limitUsd: 100,
+        color: colors[colorIdx % colors.length],
+        icon: "Tag",
+      });
+      colorIdx++;
+    });
+
     const products: ProductEntry[] = normalizedScan.items.map((item) => ({
       id: makeId("product"),
       name: item.name,
