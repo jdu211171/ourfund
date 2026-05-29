@@ -138,8 +138,8 @@ export const loginWithEmailServerFn = createServerFn({ method: "POST" })
     if (!match) {
       throw new Error("Invalid email or password");
     }
-    createSessionCookie(user.id);
-    return { success: true };
+    const sessionToken = createSessionCookie(user.id);
+    return { success: true, sessionToken };
   });
 
 export const signUpWithEmailServerFn = createServerFn({ method: "POST" })
@@ -168,8 +168,8 @@ export const signUpWithEmailServerFn = createServerFn({ method: "POST" })
         initials,
       },
     });
-    createSessionCookie(user.id);
-    return { success: true };
+    const sessionToken = createSessionCookie(user.id);
+    return { success: true, sessionToken };
   });
 
 export const loginWithGoogleServerFn = createServerFn({ method: "POST" })
@@ -206,8 +206,8 @@ export const loginWithGoogleServerFn = createServerFn({ method: "POST" })
       });
     }
 
-    createSessionCookie(user.id);
-    return { success: true };
+    const sessionToken = createSessionCookie(user.id);
+    return { success: true, sessionToken };
   });
 
 export const logoutServerFn = createServerFn({ method: "POST" }).handler(async () => {

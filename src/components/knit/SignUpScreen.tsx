@@ -3,6 +3,7 @@ import { PhoneFrame } from "./PhoneFrame";
 import { useAppNavigation } from "@/lib/navigation";
 import { useEffect, useState } from "react";
 import { signUpWithEmailServerFn } from "@/lib/server-fns";
+import { storeSessionToken } from "@/lib/session-token";
 
 function errorMessage(err: unknown, fallback: string) {
   return err instanceof Error ? err.message : fallback;
@@ -36,7 +37,10 @@ export function SignUpScreen() {
     setError("");
     setLoading(true);
     try {
-      await signUpWithEmailServerFn({ data: { email, name, passwordHash: password } });
+      const session = await signUpWithEmailServerFn({
+        data: { email, name, passwordHash: password },
+      });
+      storeSessionToken(session.sessionToken);
       const restored = await syncDataAfterLogin();
       if (!restored) {
         throw new Error("Account created, but the session could not be restored.");

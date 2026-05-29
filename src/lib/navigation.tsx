@@ -24,6 +24,7 @@ import {
   syncMutationServerFn,
   validateInviteCodeServerFn,
 } from "./server-fns";
+import { clearStoredSessionToken } from "./session-token";
 
 export type ScreenName =
   | "onboarding"
@@ -575,6 +576,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     } catch {
       // Local-only sessions can still be cleared client-side.
     }
+    clearStoredSessionToken();
     clearPersistedAppSeed();
     applySeed(getEmptySeed());
     setIsAuthenticated(false);

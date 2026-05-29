@@ -61,6 +61,7 @@ export function createSessionCookie(userId: string) {
     path: "/",
     maxAge,
   });
+  return token;
 }
 
 export function clearSessionCookie() {
@@ -71,8 +72,16 @@ export function clearSessionCookie() {
   });
 }
 
+function getBearerToken() {
+  const authorization = getRequestHeader("authorization");
+  if (!authorization) return null;
+
+  const [scheme, token] = authorization.split(/\s+/, 2);
+  return scheme?.toLowerCase() === "bearer" && token ? token : null;
+}
+
 export async function getSessionUser() {
-  const token = getCookie(COOKIE_NAME);
+  const token = getCookie(COOKIE_NAME) ?? getBearerToken();
 
   if (!token) return null;
 
