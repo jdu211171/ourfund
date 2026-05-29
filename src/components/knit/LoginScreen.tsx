@@ -3,7 +3,6 @@ import { PhoneFrame } from "./PhoneFrame";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useAppNavigation } from "@/lib/navigation";
 import { loginWithEmailServerFn, loginWithGoogleServerFn } from "@/lib/server-fns";
-import { storeSessionToken } from "@/lib/session-token";
 
 const GOOGLE_CLIENT_ID = "648158368972-tl49o2fco00r73tor6c4es4kqs9ash9m.apps.googleusercontent.com";
 const GSI_SRC = "https://accounts.google.com/gsi/client";
@@ -78,8 +77,7 @@ export function LoginScreen() {
     setError("");
     setLoading(true);
     try {
-      const session = await loginWithEmailServerFn({ data: { email, passwordHash: password } });
-      storeSessionToken(session.sessionToken);
+      await loginWithEmailServerFn({ data: { email, passwordHash: password } });
       const restored = await syncDataAfterLogin();
       if (!restored) {
         throw new Error("Sign-in completed, but the session could not be restored.");
@@ -97,10 +95,7 @@ export function LoginScreen() {
       setError("");
       setLoading(true);
       try {
-        const session = await loginWithGoogleServerFn({
-          data: { credential: response.credential },
-        });
-        storeSessionToken(session.sessionToken);
+        await loginWithGoogleServerFn({ data: { credential: response.credential } });
         const restored = await syncDataAfterLogin();
         if (!restored) {
           throw new Error("Sign-in completed, but the session could not be restored.");
@@ -221,13 +216,6 @@ export function LoginScreen() {
 
         <div className="flex flex-col items-center gap-2">
           <div ref={googleBtnRef} className="flex justify-center" />
-
-          <button
-            onClick={() => navigate("home")}
-            className="w-full rounded-full bg-white py-3.5 text-[13px] font-semibold text-foreground shadow-[var(--shadow-soft)]"
-          >
-            Continue as Guest
-          </button>
         </div>
 
         <p className="mt-auto text-center text-[12px] text-muted-foreground">

@@ -1,16 +1,27 @@
 import { OAuth2Client } from "google-auth-library";
-import jwt from "jsonwebtoken";
-import { deleteCookie, getCookie, getRequestHeader, setCookie } from "@tanstack/react-start/server";
+import {
+  clearSession as clearStartSession,
+  deleteCookie,
+  getRequestHeader,
+  getSession,
+  updateSession,
+} from "@tanstack/react-start/server";
+import type { SessionConfig } from "@tanstack/react-start/server";
 import { prisma } from "./db";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
-const JWT_SECRET = process.env.JWT_SECRET || "ourfund-default-secret-key-12345";
-const COOKIE_NAME = "ourfund_session";
+const SESSION_NAME = "ourfund_app_session";
+const LEGACY_COOKIE_NAME = "ourfund_session";
+const SESSION_SECRET =
+  process.env.SESSION_SECRET ||
+  process.env.JWT_SECRET ||
+  "ourfund-default-session-secret-key-123456";
+const SESSION_MAX_AGE = 90 * 24 * 60 * 60; // 90 days in seconds
 
 const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
 
 export interface SessionData {
-  userId: string;
+  userId?: string;
 }
 
 function isLocalHost(host: string) {
@@ -29,6 +40,20 @@ function shouldUseSecureCookie() {
   if (isLocalHost(host)) return false;
 
   return process.env.NODE_ENV === "production";
+}
+
+function getSessionConfig(): SessionConfig {
+  return {
+    name: SESSION_NAME,
+    password: SESSION_SECRET,
+    maxAge: SESSION_MAX_AGE,
+    cookie: {
+      httpOnly: true,
+      secure: shouldUseSecureCookie(),
+      sameSite: "lax",
+      path: "/",
+    },
+  };
 }
 
 export async function verifyGoogleToken(idToken: string) {
@@ -51,46 +76,33 @@ export async function verifyGoogleToken(idToken: string) {
   };
 }
 
-export function createSessionCookie(userId: string) {
-  const token = jwt.sign({ userId }, JWT_SECRET, { expiresIn: "90d" });
-  const maxAge = 90 * 24 * 60 * 60; // 90 days in seconds
-  setCookie(COOKIE_NAME, token, {
-    httpOnly: true,
-    secure: shouldUseSecureCookie(),
-    sameSite: "lax",
-    path: "/",
-    maxAge,
-  });
-  return token;
-}
-
-export function clearSessionCookie() {
-  deleteCookie(COOKIE_NAME, {
+export async function createSession(userId: string) {
+  await updateSession<SessionData>(getSessionConfig(), { userId });
+  deleteCookie(LEGACY_COOKIE_NAME, {
     path: "/",
     secure: shouldUseSecureCookie(),
     sameSite: "lax",
   });
 }
 
-function getBearerToken() {
-  const authorization = getRequestHeader("authorization");
-  if (!authorization) return null;
-
-  const [scheme, token] = authorization.split(/\s+/, 2);
-  return scheme?.toLowerCase() === "bearer" && token ? token : null;
+export async function clearSession() {
+  await clearStartSession(getSessionConfig());
+  deleteCookie(LEGACY_COOKIE_NAME, {
+    path: "/",
+    secure: shouldUseSecureCookie(),
+    sameSite: "lax",
+  });
 }
 
 export async function getSessionUser() {
-  const token = getCookie(COOKIE_NAME) ?? getBearerToken();
+  const session = await getSession<SessionData>(getSessionConfig());
+  const userId = session.data.userId;
 
-  if (!token) return null;
+  if (!userId) return null;
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as SessionData;
-    if (!decoded || !decoded.userId) return null;
-
     const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
+      where: { id: userId },
       include: {
         householdMembers: {
           include: {
@@ -101,7 +113,7 @@ export async function getSessionUser() {
     });
     return user;
   } catch (error) {
-    console.error("JWT Session verification failed:", error);
+    console.error("Session user lookup failed:", error);
     return null;
   }
 }
