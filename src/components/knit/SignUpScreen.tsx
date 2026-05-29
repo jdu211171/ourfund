@@ -37,7 +37,10 @@ export function SignUpScreen() {
     setLoading(true);
     try {
       await signUpWithEmailServerFn({ data: { email, name, passwordHash: password } });
-      await syncDataAfterLogin();
+      const restored = await syncDataAfterLogin();
+      if (!restored) {
+        throw new Error("Account created, but the session could not be restored.");
+      }
       if (householdMode === "new") {
         await createHousehold({ name, email, householdName });
         navigate("home");

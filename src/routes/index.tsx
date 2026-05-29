@@ -47,6 +47,7 @@ import { PlaidSuccessScreen } from "@/components/knit/PlaidSuccessScreen";
 import { LendBorrowScreen } from "@/components/knit/LendBorrowScreen";
 import { ProductTrackerScreen } from "@/components/knit/ProductTrackerScreen";
 import { ScanReceiptScreen } from "@/components/knit/ScanReceiptScreen";
+import { PhoneFrame } from "@/components/knit/PhoneFrame";
 
 import { useState } from "react";
 import { AppNavigationProvider, useAppNavigation } from "@/lib/navigation";
@@ -74,7 +75,11 @@ function IndexWrapper() {
 }
 
 function AppRouter() {
-  const { currentScreen } = useAppNavigation();
+  const { currentScreen, isAuthReady } = useAppNavigation();
+
+  if (!isAuthReady) {
+    return <AuthLoadingScreen />;
+  }
 
   switch (currentScreen) {
     case "onboarding":
@@ -178,6 +183,19 @@ function AppRouter() {
     default:
       return <OnboardingScreen />;
   }
+}
+
+function AuthLoadingScreen() {
+  return (
+    <PhoneFrame>
+      <div className="flex h-full flex-col items-center justify-center bg-[var(--phone-bg)] px-7">
+        <h2 className="font-display text-[32px] leading-none tracking-tight text-foreground">
+          Nest<span className="text-[var(--primary)]">.</span>
+        </h2>
+        <div className="mt-6 h-8 w-8 animate-spin rounded-full border-2 border-[var(--muted)] border-t-[var(--primary)]" />
+      </div>
+    </PhoneFrame>
+  );
 }
 
 function Index() {

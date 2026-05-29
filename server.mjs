@@ -10,6 +10,17 @@ const { default: server } = await import(serverEntryPath);
 
 const port = Number(process.env.PORT) || 3002;
 
+function getSetCookieHeaders(headers) {
+  if (typeof headers.getSetCookie === "function") {
+    return headers.getSetCookie();
+  }
+
+  const value = headers.get("set-cookie");
+  if (!value) return [];
+
+  return value.split(/,(?=\s*[^;,]+=)/g);
+}
+
 createServer(async (req, res) => {
   try {
     const url = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
@@ -34,7 +45,7 @@ createServer(async (req, res) => {
       }
     });
 
-    const setCookies = response.headers.getSetCookie?.() ?? [];
+    const setCookies = getSetCookieHeaders(response.headers);
     if (setCookies.length > 0) {
       res.setHeader("set-cookie", setCookies);
     }

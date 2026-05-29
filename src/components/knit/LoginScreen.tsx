@@ -78,7 +78,10 @@ export function LoginScreen() {
     setLoading(true);
     try {
       await loginWithEmailServerFn({ data: { email, passwordHash: password } });
-      await syncDataAfterLogin();
+      const restored = await syncDataAfterLogin();
+      if (!restored) {
+        throw new Error("Sign-in completed, but the session could not be restored.");
+      }
       navigate(pendingInvite ? "confirm_invite" : "home");
     } catch (err: unknown) {
       setError(errorMessage(err, "Invalid credentials"));
@@ -93,7 +96,10 @@ export function LoginScreen() {
       setLoading(true);
       try {
         await loginWithGoogleServerFn({ data: { credential: response.credential } });
-        await syncDataAfterLogin();
+        const restored = await syncDataAfterLogin();
+        if (!restored) {
+          throw new Error("Sign-in completed, but the session could not be restored.");
+        }
         navigate(pendingInvite ? "confirm_invite" : "home");
       } catch (err: unknown) {
         setError(errorMessage(err, "Google sign-in failed"));

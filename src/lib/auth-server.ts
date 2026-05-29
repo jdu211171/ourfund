@@ -1,6 +1,6 @@
 import { OAuth2Client } from "google-auth-library";
 import jwt from "jsonwebtoken";
-import { getRequestHeader, setResponseHeader } from "@tanstack/react-start/server";
+import { deleteCookie, getCookie, getRequestHeader, setCookie } from "@tanstack/react-start/server";
 import { prisma } from "./db";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
@@ -13,14 +13,22 @@ export interface SessionData {
   userId: string;
 }
 
-export function parseCookies(cookieHeader: string | null | undefined): Record<string, string> {
-  if (!cookieHeader) return {};
-  return Object.fromEntries(
-    cookieHeader.split(";").map((c) => {
-      const parts = c.split("=");
-      return [parts[0].trim(), parts.slice(1).join("=").trim()];
-    }),
-  );
+function isLocalHost(host: string) {
+  return /^(localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/i.test(host);
+}
+
+function shouldUseSecureCookie() {
+  const override = process.env.COOKIE_SECURE?.trim().toLowerCase();
+  if (override === "true") return true;
+  if (override === "false") return false;
+
+  const forwardedProto = getRequestHeader("x-forwarded-proto")?.split(",")[0]?.trim();
+  const host = getRequestHeader("host") ?? "";
+
+  if (forwardedProto === "https") return true;
+  if (isLocalHost(host)) return false;
+
+  return process.env.NODE_ENV === "production";
 }
 
 export async function verifyGoogleToken(idToken: string) {
@@ -46,21 +54,25 @@ export async function verifyGoogleToken(idToken: string) {
 export function createSessionCookie(userId: string) {
   const token = jwt.sign({ userId }, JWT_SECRET, { expiresIn: "90d" });
   const maxAge = 90 * 24 * 60 * 60; // 90 days in seconds
-  const secureFlag = process.env.NODE_ENV === "production" ? "; Secure" : "";
-  const cookieValue = `${COOKIE_NAME}=${token}; HttpOnly${secureFlag}; SameSite=Lax; Path=/; Max-Age=${maxAge}`;
-  setResponseHeader("Set-Cookie", cookieValue);
+  setCookie(COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: shouldUseSecureCookie(),
+    sameSite: "lax",
+    path: "/",
+    maxAge,
+  });
 }
 
 export function clearSessionCookie() {
-  const secureFlag = process.env.NODE_ENV === "production" ? "; Secure" : "";
-  const cookieValue = `${COOKIE_NAME}=; HttpOnly${secureFlag}; SameSite=Lax; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
-  setResponseHeader("Set-Cookie", cookieValue);
+  deleteCookie(COOKIE_NAME, {
+    path: "/",
+    secure: shouldUseSecureCookie(),
+    sameSite: "lax",
+  });
 }
 
 export async function getSessionUser() {
-  const cookieHeader = getRequestHeader("Cookie");
-  const cookies = parseCookies(cookieHeader);
-  const token = cookies[COOKIE_NAME];
+  const token = getCookie(COOKIE_NAME);
 
   if (!token) return null;
 

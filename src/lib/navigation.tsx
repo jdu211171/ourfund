@@ -304,6 +304,7 @@ interface NavigationContextType {
   navigate: (screen: ScreenName) => void;
   goBack: () => void;
   isAuthenticated: boolean;
+  isAuthReady: boolean;
   signupHouseholdMode: "new" | "join";
   setSignupHouseholdMode: (mode: "new" | "join") => void;
   logout: () => Promise<void>;
@@ -322,7 +323,7 @@ interface NavigationContextType {
   }) => Promise<Household>;
   validateInviteCode: (code: string) => Promise<HouseholdInvite | null>;
   acceptInvite: () => Promise<void>;
-  syncDataAfterLogin: () => Promise<void>;
+  syncDataAfterLogin: () => Promise<boolean>;
   currency: CurrencyCode;
   setCurrency: (currency: CurrencyCode) => void;
   currencies: CurrencySettings;
@@ -496,6 +497,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   const [currentScreen, setCurrentScreen] = useState<ScreenName>("onboarding");
   const [history, setHistory] = useState<ScreenName[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthReady, setIsAuthReady] = useState(false);
   const [signupHouseholdMode, setSignupHouseholdMode] = useState<"new" | "join">("new");
   const [budgetMode, setBudgetModeState] = useState<BudgetMode>(initialSeed.budgetMode);
   const [reportPeriod, setReportPeriodState] = useState<ReportPeriod>(initialSeed.reportPeriod);
@@ -576,6 +578,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     clearPersistedAppSeed();
     applySeed(getEmptySeed());
     setIsAuthenticated(false);
+    setIsAuthReady(true);
     setPendingInvite(null);
     setSignupHouseholdMode("new");
     setHistory([]);
@@ -1570,11 +1573,13 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
       const data = await getAppDataServerFn();
       if (!data || !data.isAuthenticated) {
         setIsAuthenticated(false);
-        return;
+        return false;
       }
 
       setIsAuthenticated(true);
-      setCurrentScreen((screen) => (screen === "onboarding" ? "home" : screen));
+      setCurrentScreen((screen) =>
+        screen === "onboarding" || screen === "login" || screen === "signup" ? "home" : screen,
+      );
 
       setProfile({
         name: data.user.name,
@@ -1663,8 +1668,13 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         })),
       );
       setNotifications(data.notifications as AppNotification[]);
+      return true;
     } catch (err) {
       console.error("Failed to sync data after login:", err);
+      setIsAuthenticated(false);
+      return false;
+    } finally {
+      setIsAuthReady(true);
     }
   }, []);
 
@@ -1681,6 +1691,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         navigate,
         goBack,
         isAuthenticated,
+        isAuthReady,
         signupHouseholdMode,
         setSignupHouseholdMode,
         logout,
