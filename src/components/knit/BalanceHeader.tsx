@@ -111,7 +111,7 @@ function Cell({
   if (interactive) {
     return (
       <button
-        onClick={() => navigate(label === "Expense" ? "add_expense" : "add_income")}
+        onClick={() => navigate(label === "Expense" ? "scan_receipt" : "add_income")}
         className="flex flex-col gap-1.5 rounded-2xl bg-[var(--muted)]/55 p-3 text-left transition-colors hover:bg-[var(--muted)]"
         type="button"
       >

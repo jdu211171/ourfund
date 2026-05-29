@@ -323,6 +323,13 @@ export function ScanReceiptScreen() {
             {scan ? `Save ${detectedCount} items` : "Scan receipt"}
           </button>
         </div>
+        <button
+          type="button"
+          onClick={() => navigate("add_expense")}
+          className="mt-2 w-full rounded-full bg-white py-2.5 text-[12px] font-semibold text-[var(--primary)]"
+        >
+          Enter manually
+        </button>
       </div>
     </PhoneFrame>
   );

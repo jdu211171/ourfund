@@ -1,15 +1,10 @@
 import {
   AlertTriangle,
   ArrowDownLeft,
-  ArrowRightLeft,
   Bell,
-  Briefcase,
   CheckCircle2,
   Clock,
   Plus,
-  Receipt,
-  ShoppingBag,
-  Target,
   TrendingUp,
 } from "lucide-react";
 import { useEffect } from "react";
@@ -84,17 +79,6 @@ export function HomeScreen() {
     .slice(0, 2);
   const recentTransactions = activeTransactions.slice(0, 3);
 
-  const quickActions = [
-    { label: "Expense", Icon: Receipt, screen: "add_expense" },
-    { label: "Income", Icon: Briefcase, screen: "add_income" },
-    { label: "Transfer", Icon: ArrowRightLeft, screen: "transfer" },
-    { label: "Goal", Icon: Target, screen: "new_goal" },
-  ] as const;
-  const toolActions = [
-    { label: "Scan", Icon: Receipt, screen: "scan_receipt" },
-    { label: "Products", Icon: ShoppingBag, screen: "product_tracker" },
-    { label: "Lending", Icon: ArrowDownLeft, screen: "lend_borrow" },
-  ] as const;
 
   return (
     <PhoneFrame className="z-10">
@@ -125,38 +109,6 @@ export function HomeScreen() {
             spentUsd={spentUsd}
             interactive
           />
-        </div>
-
-        <div className="mt-4 grid grid-cols-4 gap-2">
-          {quickActions.map(({ label, Icon, screen }) => (
-            <button
-              key={label}
-              type="button"
-              onClick={() => navigate(screen)}
-              className="flex flex-col items-center gap-2 rounded-2xl bg-white px-2 py-3 text-center"
-            >
-              <span className="grid h-9 w-9 place-items-center rounded-xl bg-[oklch(0.95_0.04_265)] text-[var(--primary)]">
-                <Icon className="h-4 w-4" strokeWidth={2.35} />
-              </span>
-              <span className="text-[10px] font-bold text-foreground">{label}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="mt-2 grid grid-cols-3 gap-2">
-          {toolActions.map(({ label, Icon, screen }) => (
-            <button
-              key={label}
-              type="button"
-              onClick={() => navigate(screen)}
-              className="flex flex-col items-center gap-2 rounded-2xl bg-white px-2 py-3 text-center"
-            >
-              <span className="grid h-9 w-9 place-items-center rounded-xl bg-[oklch(0.95_0.04_265)] text-[var(--primary)]">
-                <Icon className="h-4 w-4" strokeWidth={2.35} />
-              </span>
-              <span className="text-[10px] font-bold text-foreground">{label}</span>
-            </button>
-          ))}
         </div>
 
         <div className="mt-5 flex items-center justify-between">

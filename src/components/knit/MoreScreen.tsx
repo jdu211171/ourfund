@@ -40,6 +40,7 @@ import todoText from "../../../TODO.md?raw";
 type TodoItem = {
   section: string;
   label: string;
+  status: "coming" | "testing";
 };
 
 type TodoGroup = {
@@ -48,6 +49,7 @@ type TodoGroup = {
 };
 
 const DEFAULT_SECTION = "Other";
+const STATUS_TESTING = /(\[testing\]|\(testing\)|\btesting\b)/i;
 
 function parseTodo(text: string) {
   const items: TodoItem[] = [];
@@ -59,9 +61,22 @@ function parseTodo(text: string) {
       section = trimmed.replace(/^##\s+/, "").trim() || DEFAULT_SECTION;
       return;
     }
+
+    const quickActions = [
+      { label: "Expense", Icon: Receipt, screen: "scan_receipt" as const },
+      { label: "Income", Icon: Briefcase, screen: "add_income" as const },
+      { label: "Transfer", Icon: ArrowRightLeft, screen: "transfer" as const },
+      { label: "Goal", Icon: Target, screen: "new_goal" as const },
+      { label: "Scan", Icon: ScanLine, screen: "scan_receipt" as const },
+      { label: "Products", Icon: ShoppingBag, screen: "product_tracker" as const },
+      { label: "Lending", Icon: HandCoins, screen: "lend_borrow" as const },
+    ] as const;
     const match = trimmed.match(/^- \[ \] (.+)$/);
     if (match) {
-      items.push({ section, label: match[1].trim() });
+      const rawLabel = match[1].trim();
+      const status: TodoItem["status"] = STATUS_TESTING.test(rawLabel) ? "testing" : "coming";
+      const label = rawLabel.replace(STATUS_TESTING, "").replace(/\s{2,}/g, " ").trim();
+      items.push({ section, label, status });
     }
   });
 
@@ -181,6 +196,27 @@ export function MoreScreen() {
         </header>
 
         <div className="mt-5 space-y-5">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+              Quick actions
+            </p>
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              {quickActions.map(({ label, Icon, screen }) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => navigate(screen)}
+                  className="flex flex-col items-center gap-2 rounded-2xl bg-white px-2 py-3 text-center"
+                >
+                  <span className="grid h-9 w-9 place-items-center rounded-xl bg-[oklch(0.95_0.04_265)] text-[var(--primary)]">
+                    <Icon className="h-4 w-4" strokeWidth={2.2} />
+                  </span>
+                  <span className="text-[10px] font-bold text-foreground">{label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {groups.map((group) => (
             <div key={group.section}>
               <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
@@ -190,22 +226,36 @@ export function MoreScreen() {
                 {group.items.map((item) => {
                   const Icon = iconForLabel(item.label);
                   const screen = screenForLabel(item.label);
+                  const resolvedStatus: TodoItem["status"] =
+                    item.status === "testing" ? "testing" : screen ? "testing" : "coming";
+                  const isTesting = resolvedStatus === "testing";
+                  const isComing = resolvedStatus === "coming";
+                  const canNavigate = Boolean(screen) && isTesting;
+                  const badgeClass = isTesting
+                    ? "bg-[oklch(0.92_0.08_95)] text-[oklch(0.62_0.16_90)]"
+                    : "bg-[oklch(0.92_0.08_25)] text-[oklch(0.6_0.22_25)]";
+                  const statusLabel = isTesting ? "Testing" : "Coming";
                   return (
                     <button
                       key={`${group.section}-${item.label}`}
                       type="button"
                       onClick={() => {
-                        if (screen) navigate(screen);
+                        if (canNavigate && screen) navigate(screen);
                       }}
-                      aria-disabled={!screen}
-                      className={`flex flex-col items-center gap-2 rounded-2xl bg-white px-2 py-3 text-center ${
-                        screen ? "cursor-pointer" : "cursor-default opacity-75"
+                      aria-disabled={!canNavigate}
+                      className={`relative flex flex-col items-center gap-2 rounded-2xl bg-white px-2 py-3 text-center ${
+                        canNavigate ? "cursor-pointer" : "cursor-default"
                       }`}
                     >
-                      <span className="grid h-9 w-9 place-items-center rounded-xl bg-[oklch(0.95_0.04_265)] text-[var(--primary)]">
-                        <Icon className="h-4 w-4" strokeWidth={2.2} />
+                      <span className={`absolute right-2 top-2 rounded-full px-1.5 py-0.5 text-[8px] font-bold ${badgeClass}`}>
+                        {statusLabel}
                       </span>
-                      <span className="text-[10px] font-bold text-foreground">{item.label}</span>
+                      <div className="flex flex-col items-center gap-2 blur-[0.8px] opacity-70">
+                        <span className="grid h-9 w-9 place-items-center rounded-xl bg-[oklch(0.95_0.04_265)] text-[var(--primary)]">
+                          <Icon className="h-4 w-4" strokeWidth={2.2} />
+                        </span>
+                        <span className="text-[10px] font-bold text-foreground">{item.label}</span>
+                      </div>
                     </button>
                   );
                 })}
