@@ -154,7 +154,15 @@ export interface Goal {
   icon: string;
   color: string;
   contributors: string[];
-  history: { id: string; who: string; initials: string; date: string; amountUsd: number, transactionId?: string }[];
+  history: {
+    id: string;
+    who: string;
+    initials: string;
+    date: string;
+    amountUsd: number;
+    transactionId?: string;
+    memberId?: string;
+  }[];
 }
 
 export interface LinkedBank {
@@ -392,7 +400,9 @@ interface NavigationContextType {
   subscriptions: ScheduleItem[];
   addSubscription: (item?: Partial<ScheduleItem>) => void;
   loanEntries: LoanEntry[];
-  addLoanEntry: (entry: Omit<LoanEntry, "id" | "createdAt" | "paidAmountUsd"> & { paidAmountUsd?: number }) => LoanEntry;
+  addLoanEntry: (
+    entry: Omit<LoanEntry, "id" | "createdAt" | "paidAmountUsd"> & { paidAmountUsd?: number },
+  ) => LoanEntry;
   updateLoanEntry: (id: string, updates: Partial<Omit<LoanEntry, "id" | "createdAt">>) => void;
   deleteLoanEntries: (ids: string[]) => void;
   trackedProducts: ProductEntry[];
@@ -1020,18 +1030,17 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   const deleteTransaction = (id: string) => {
     setTransactions((prev) => prev.filter((t) => t.id !== id));
     setSelectedTransactionId(null);
-    // Persist to DB in background
-    // Cascade delete into goal history records
-    setGoals((prevGoals) => 
+    setGoals((prevGoals) =>
       prevGoals.map((goal) => {
-        const match = goal.history.find((h) => h.transactionId === id);
-        if(!match) return goal;
+        const matches = goal.history.filter((entry) => entry.transactionId === id);
+        if (matches.length === 0) return goal;
+        const amountUsd = matches.reduce((sum, entry) => sum + entry.amountUsd, 0);
         return {
           ...goal,
-          savedUsd: Math.max(0, goal.savedUsd - match.amountUsd),
-          history: goal.history.filter((h) => h.transactionId !== id),
+          savedUsd: Math.max(0, goal.savedUsd - amountUsd),
+          history: goal.history.filter((entry) => entry.transactionId !== id),
         };
-      })
+      }),
     );
     syncMutationServerFn({ data: { type: "deleteTransaction", data: { id } } }).catch(
       console.error,
@@ -1154,18 +1163,6 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   const contributeToGoal = (goalId: string, amountUsd: number, who = firstName(profile.name)) => {
     if (amountUsd <= 0) return;
     const contributorName = who || profile.name || "You";
-    const sharedTxnId = makeId("txn");
-    const linkedTxn = {
-      id: sharedTxnId,
-      name: `Goal Contribution: ${goals.find((g) => g.id === goalId)?.title || "Savings"}`,
-      who: contributorName,
-      usd: -amountUsd,
-      category: "Goals",
-      wallet: activeWallets[0]?.label || "Private Wallet",
-      date: formatISODate(new Date()),
-    };
-    setTransactions((prev) => [linkedTxn, ...prev]);
-
     const goalToUpdate = goals.find((g) => g.id === goalId);
     if (!goalToUpdate) return;
     const contributionUsd = Math.min(
@@ -1173,50 +1170,41 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
       Math.max(0, goalToUpdate.targetUsd - goalToUpdate.savedUsd),
     );
     if (contributionUsd <= 0) return;
+    const transaction = addTransaction({
+      name: `Goal Contribution: ${goalToUpdate.title}`,
+      who: contributorName,
+      usd: -contributionUsd,
+      category: "Goals",
+      wallet: activeWallets[0]?.label || "Private Wallet",
+      date: formatISODate(new Date()),
+    });
     const contribution = {
-      id: makeId("contrib"),
-      who,
-      initials: initialsFor(who),
-      date: "today",
+      id: transaction.id,
+      who: contributorName,
+      initials: initialsFor(contributorName),
+      date: "Just now",
       amountUsd: contributionUsd,
+      transactionId: transaction.id,
+      memberId: currentMemberId ?? undefined,
     };
+    const updatedSaved = Math.min(goalToUpdate.targetUsd, goalToUpdate.savedUsd + contributionUsd);
+    const updatedHistory = [contribution, ...goalToUpdate.history];
     setGoals((prev) =>
       prev.map((g) => {
         if (g.id !== goalId) return g;
         return {
-        ...g,
-        savedUsd: g.savedUsd + amountUsd,
-        history: [
-          {
-            id: makeId("contrib"),
-            who: contributorName,
-            initials: initialsFor(contributorName),
-            date: "Just now",
-            amountUsd,
-            transactionId: sharedTxnId,
-          },
-          ...g.history,
-         ],
+          ...g,
+          savedUsd: updatedSaved,
+          history: updatedHistory,
         };
       }),
-     );
-  syncMutationServerFn({ data: { type: "addTransaction", data: linkedTxn } }).catch(console.error);;
-    const updatedSaved = Math.min(goalToUpdate.targetUsd, goalToUpdate.savedUsd + contributionUsd);
-    const updatedHistory = [contribution, ...goalToUpdate.history];
+    );
     syncMutationServerFn({
       data: {
         type: "updateGoalSavings",
         data: { id: goalId, savedUsd: updatedSaved, history: updatedHistory },
       },
     }).catch(console.error);
-    addTransaction({
-      name: `Goal contribution · ${goalToUpdate.title}`,
-      who: `${who} · today`,
-      usd: -contributionUsd,
-      category: "Goals",
-      wallet: activeWallets[0]?.label ?? wallets[0]?.label ?? "Unassigned wallet",
-      date: "today",
-    });
   };
 
   const withdrawFromGoal = (goalId: string, amountUsd: number, wallet: string) => {
@@ -1267,9 +1255,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     const cleanEmail = email?.trim().toLowerCase();
     const emailName = cleanEmail?.split("@")[0] ?? "";
     const formattedName = emailName
-      ? emailName
-          .replace(/[._-]+/g, " ")
-          .replace(/\b\w/g, (char) => char.toUpperCase())
+      ? emailName.replace(/[._-]+/g, " ").replace(/\b\w/g, (char) => char.toUpperCase())
       : `Invited ${role}`;
     const newMember: FamilyMember = {
       id: makeId("member"),
@@ -1490,7 +1476,9 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     syncMutationServerFn({ data: { type: "addScheduleItem", data: newItem } }).catch(console.error);
   };
 
-  const addLoanEntry = (entry: Omit<LoanEntry, "id" | "createdAt" | "paidAmountUsd"> & { paidAmountUsd?: number }) => {
+  const addLoanEntry = (
+    entry: Omit<LoanEntry, "id" | "createdAt" | "paidAmountUsd"> & { paidAmountUsd?: number },
+  ) => {
     const newEntry: LoanEntry = {
       ...entry,
       paidAmountUsd: entry.paidAmountUsd ?? 0,
@@ -1517,7 +1505,9 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   const deleteLoanEntries = (ids: string[]) => {
     setLoanEntries((prev) => prev.filter((entry) => !ids.includes(entry.id)));
     ids.forEach((id) =>
-      syncMutationServerFn({ data: { type: "deleteLoanEntry", data: { id } } }).catch(console.error),
+      syncMutationServerFn({ data: { type: "deleteLoanEntry", data: { id } } }).catch(
+        console.error,
+      ),
     );
   };
 
@@ -1567,9 +1557,9 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
 
     const colors = [
       "oklch(0.65 0.25 140)", // Green
-      "oklch(0.60 0.20 20)",  // Coral/Red
+      "oklch(0.60 0.20 20)", // Coral/Red
       "oklch(0.55 0.24 265)", // Purple
-      "oklch(0.70 0.15 80)",  // Orange
+      "oklch(0.70 0.15 80)", // Orange
       "oklch(0.60 0.15 200)", // Blue
       "oklch(0.65 0.20 300)", // Magenta
     ];

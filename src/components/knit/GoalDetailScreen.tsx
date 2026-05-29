@@ -1,4 +1,4 @@
-import { ArrowLeft, MoreHorizontal, Pencil, Plus } from "lucide-react";
+import { ArrowLeft, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { useAppNavigation } from "@/lib/navigation";
 import { useState } from "react";
@@ -6,12 +6,33 @@ import { currencyAdornment, currencyValueToUsd, formatUsdAsCurrency } from "@/li
 import { GoalIcon, normalizeGoalIconName } from "./goalIconOptions";
 
 export function GoalDetailScreen() {
-  const { navigate, goBack, currency, goals, selectedGoalId, setSelectedGoalId, contributeToGoal } =
-    useAppNavigation();
+  const {
+    navigate,
+    goBack,
+    currency,
+    goals,
+    members,
+    currentMemberId,
+    selectedGoalId,
+    setSelectedGoalId,
+    contributeToGoal,
+    deleteTransaction,
+  } = useAppNavigation();
   const goal = goals.find((g) => g.id === selectedGoalId) ?? goals[0];
   const [contribution, setContribution] = useState("100");
+  const [selectedContributionId, setSelectedContributionId] = useState<string | null>(null);
   const contributionUsd = currencyValueToUsd(parseFloat(contribution || "0"), currency);
   const { prefix, suffix } = currencyAdornment(currency);
+  const currentMember = members.find((member) => member.id === currentMemberId);
+  const currentMemberFirstName = currentMember?.name.split(" ")[0]?.trim().toLowerCase() ?? "";
+
+  const canDeleteContribution = (entry: (typeof goal.history)[number]) => {
+    if (!entry.transactionId) return false;
+    if (entry.memberId) return entry.memberId === currentMemberId;
+    if (!currentMemberFirstName) return false;
+    return entry.who.trim().toLowerCase() === currentMemberFirstName;
+  };
+  const selectedContribution = goal.history.find((entry) => entry.id === selectedContributionId);
 
   if (!goal) {
     return (
@@ -129,9 +150,13 @@ export function GoalDetailScreen() {
 
         <div className="mt-2 flex-1 space-y-2 overflow-hidden">
           {goal.history.map((h) => (
-            <div
+            <button
               key={h.id}
-              className="flex items-center gap-3 rounded-2xl bg-white px-3 py-2 shadow-[var(--shadow-soft)]"
+              type="button"
+              onClick={() => setSelectedContributionId(h.id)}
+              className={`flex w-full items-center gap-3 rounded-2xl bg-white px-3 py-2 text-left shadow-[var(--shadow-soft)] ${
+                selectedContributionId === h.id ? "ring-2 ring-[var(--primary)]" : ""
+              }`}
             >
               <div
                 className="grid h-9 w-9 place-items-center rounded-full text-white text-[11px] font-bold"
@@ -150,9 +175,23 @@ export function GoalDetailScreen() {
               >
                 {formatUsdAsCurrency(h.amountUsd, currency, { signed: true })}
               </p>
-            </div>
+            </button>
           ))}
         </div>
+
+        {selectedContribution && canDeleteContribution(selectedContribution) ? (
+          <button
+            onClick={() => {
+              if (!selectedContribution?.transactionId) return;
+              deleteTransaction(selectedContribution.transactionId);
+              setSelectedContributionId(null);
+            }}
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-[var(--danger)] py-4 text-[15px] font-semibold text-white active:scale-95 transition-all cursor-pointer"
+          >
+            <Trash2 className="h-4 w-4" strokeWidth={2.5} />
+            Delete selected contribution
+          </button>
+        ) : null}
 
         <div className="mt-3 rounded-2xl bg-white px-4 py-3 shadow-[var(--shadow-soft)]">
           <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
