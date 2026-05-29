@@ -349,6 +349,7 @@ interface NavigationContextType {
   addTransaction: (txn: Omit<Transaction, "id">) => Transaction;
   updateTransaction: (id: string, txn: Partial<Transaction>) => void;
   deleteTransaction: (id: string) => void;
+  deleteContributionFromGoal: (goalId: string, contributionId: string) => void;
   recordTransfer: (amountUsd: number, fromWallet: string, toWallet: string, note: string) => void;
   balanceUsd: number;
   incomeUsd: number;
@@ -1045,6 +1046,42 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     syncMutationServerFn({ data: { type: "deleteTransaction", data: { id } } }).catch(
       console.error,
     );
+  };
+
+  const deleteContributionFromGoal = (goalId: string, contributionId: string) => {
+    const goal = goals.find((g) => g.id === goalId);
+    if (!goal) return;
+    
+    const contribution = goal.history.find((h) => h.id === contributionId);
+    if (!contribution) return;
+    
+    // If the contribution has a transactionId, delete the transaction too
+    if (contribution.transactionId) {
+      deleteTransaction(contribution.transactionId);
+    } else {
+      // Otherwise just remove it from goal history
+      const amountUsd = contribution.amountUsd;
+      setGoals((prev) =>
+        prev.map((g) => {
+          if (g.id !== goalId) return g;
+          return {
+            ...g,
+            savedUsd: Math.max(0, g.savedUsd - amountUsd),
+            history: g.history.filter((h) => h.id !== contributionId),
+          };
+        }),
+      );
+      syncMutationServerFn({
+        data: {
+          type: "updateGoalSavings",
+          data: {
+            id: goalId,
+            savedUsd: Math.max(0, goal.savedUsd - amountUsd),
+            history: goal.history.filter((h) => h.id !== contributionId),
+          },
+        },
+      }).catch(console.error);
+    }
   };
 
   const recordTransfer = (
@@ -1796,6 +1833,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         addTransaction,
         updateTransaction,
         deleteTransaction,
+        deleteContributionFromGoal,
         recordTransfer,
         balanceUsd,
         incomeUsd,

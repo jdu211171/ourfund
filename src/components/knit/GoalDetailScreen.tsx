@@ -1,4 +1,4 @@
-import { ArrowLeft, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, MoreHorizontal, Pencil, Plus, Trash2, CheckCircle2 } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { useAppNavigation } from "@/lib/navigation";
 import { useState } from "react";
@@ -16,7 +16,7 @@ export function GoalDetailScreen() {
     selectedGoalId,
     setSelectedGoalId,
     contributeToGoal,
-    deleteTransaction,
+    deleteContributionFromGoal,
   } = useAppNavigation();
   const goal = goals.find((g) => g.id === selectedGoalId) ?? goals[0];
   const [contribution, setContribution] = useState("100");
@@ -160,14 +160,22 @@ export function GoalDetailScreen() {
                   : "hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]"
               }`}
             >
-              <div
-                className="grid h-9 w-9 place-items-center rounded-full text-white text-[11px] font-bold"
-                style={{
-                  background: "linear-gradient(135deg, oklch(0.65 0.22 265), oklch(0.45 0.24 265))",
-                }}
-              >
-                {h.initials}
-              </div>
+            <div
+              className={`grid h-9 w-9 place-items-center rounded-full text-white text-[11px] font-bold ${
+                selectedContributionId === h.id
+                  ? "bg-[var(--primary)]"
+                  : ""
+              }`}
+              style={selectedContributionId !== h.id ? {
+                background: "linear-gradient(135deg, oklch(0.65 0.22 265), oklch(0.45 0.24 265))",
+              } : undefined}
+            >
+              {selectedContributionId === h.id ? (
+                <CheckCircle2 className="h-5 w-5" strokeWidth={2.5} />
+              ) : (
+                h.initials
+              )}
+            </div>
               <div className="flex-1 leading-tight">
                 <p className="text-[12px] font-bold text-foreground">{h.who}</p>
                 <p className="text-[10px] text-muted-foreground">{h.date}</p>
@@ -184,11 +192,8 @@ export function GoalDetailScreen() {
         {canDeleteSelectedContribution ? (
           <button
             onClick={() => {
-              if (!selectedContribution?.transactionId) {
-                setSelectedContributionId(null);
-                return;
-              }
-              deleteTransaction(selectedContribution.transactionId);
+              if (!selectedContribution) return;
+              deleteContributionFromGoal(goal.id, selectedContribution.id);
               setSelectedContributionId(null);
             }}
             className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-[var(--danger)] py-4 text-[15px] font-semibold text-white active:scale-95 transition-all cursor-pointer"
