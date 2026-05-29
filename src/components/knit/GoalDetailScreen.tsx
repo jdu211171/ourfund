@@ -27,12 +27,12 @@ export function GoalDetailScreen() {
   const currentMemberFirstName = currentMember?.name.split(" ")[0]?.trim().toLowerCase() ?? "";
 
   const canDeleteContribution = (entry: (typeof goal.history)[number]) => {
-    if (!entry.transactionId) return false;
     if (entry.memberId) return entry.memberId === currentMemberId;
     if (!currentMemberFirstName) return false;
     return entry.who.trim().toLowerCase() === currentMemberFirstName;
   };
   const selectedContribution = goal.history.find((entry) => entry.id === selectedContributionId);
+  const canDeleteSelectedContribution = selectedContribution && canDeleteContribution(selectedContribution);
 
   if (!goal) {
     return (
@@ -154,8 +154,10 @@ export function GoalDetailScreen() {
               key={h.id}
               type="button"
               onClick={() => setSelectedContributionId(h.id)}
-              className={`flex w-full items-center gap-3 rounded-2xl bg-white px-3 py-2 text-left shadow-[var(--shadow-soft)] ${
-                selectedContributionId === h.id ? "ring-2 ring-[var(--primary)]" : ""
+              className={`flex w-full items-center gap-3 rounded-2xl bg-white px-3 py-2 text-left shadow-[var(--shadow-soft)] cursor-pointer transition-all ${
+                selectedContributionId === h.id
+                  ? "ring-2 ring-[var(--primary)]"
+                  : "hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]"
               }`}
             >
               <div
@@ -179,10 +181,13 @@ export function GoalDetailScreen() {
           ))}
         </div>
 
-        {selectedContribution && canDeleteContribution(selectedContribution) ? (
+        {canDeleteSelectedContribution ? (
           <button
             onClick={() => {
-              if (!selectedContribution?.transactionId) return;
+              if (!selectedContribution?.transactionId) {
+                setSelectedContributionId(null);
+                return;
+              }
               deleteTransaction(selectedContribution.transactionId);
               setSelectedContributionId(null);
             }}
