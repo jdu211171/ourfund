@@ -51,6 +51,16 @@ type TodoGroup = {
 const DEFAULT_SECTION = "Other";
 const STATUS_TESTING = /(\[testing\]|\(testing\)|\btesting\b)/i;
 
+const quickActions = [
+  { label: "Expense", Icon: Receipt, screen: "scan_receipt" as const },
+  { label: "Income", Icon: Briefcase, screen: "add_income" as const },
+  { label: "Transfer", Icon: ArrowRightLeft, screen: "transfer" as const },
+  { label: "Goal", Icon: Target, screen: "new_goal" as const },
+  { label: "Scan", Icon: ScanLine, screen: "scan_receipt" as const },
+  { label: "Products", Icon: ShoppingBag, screen: "product_tracker" as const },
+  { label: "Lending", Icon: HandCoins, screen: "lend_borrow" as const },
+] as const;
+
 function parseTodo(text: string) {
   const items: TodoItem[] = [];
   let section = DEFAULT_SECTION;
@@ -61,16 +71,6 @@ function parseTodo(text: string) {
       section = trimmed.replace(/^##\s+/, "").trim() || DEFAULT_SECTION;
       return;
     }
-
-    const quickActions = [
-      { label: "Expense", Icon: Receipt, screen: "scan_receipt" as const },
-      { label: "Income", Icon: Briefcase, screen: "add_income" as const },
-      { label: "Transfer", Icon: ArrowRightLeft, screen: "transfer" as const },
-      { label: "Goal", Icon: Target, screen: "new_goal" as const },
-      { label: "Scan", Icon: ScanLine, screen: "scan_receipt" as const },
-      { label: "Products", Icon: ShoppingBag, screen: "product_tracker" as const },
-      { label: "Lending", Icon: HandCoins, screen: "lend_borrow" as const },
-    ] as const;
     const match = trimmed.match(/^- \[ \] (.+)$/);
     if (match) {
       const rawLabel = match[1].trim();
