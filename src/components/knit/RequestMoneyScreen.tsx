@@ -1,6 +1,6 @@
 import { ArrowLeft, Check } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAppNavigation } from "@/lib/navigation";
 import {
   currencyAdornment,
@@ -26,6 +26,8 @@ export function RequestMoneyScreen() {
   const [contributors, setContributors] = useState(() => familyMembers.map((member) => member.id));
   const [iconQuery, setIconQuery] = useState("");
   const [selectedIconName, setSelectedIconName] = useState(defaultGoalIconName);
+  const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
+  const [visibleIcons, setVisibleIcons] = useState(120);
   const targetUsd = currencyValueToUsd(parseFloat(amount || "0"), currency);
   const { prefix, suffix } = currencyAdornment(currency);
   const normalizedIconName = normalizeGoalIconName(selectedIconName);
@@ -37,6 +39,11 @@ export function RequestMoneyScreen() {
         option.label.toLowerCase().includes(query) ||
         option.key.toLowerCase().includes(query),
     );
+  }, [iconQuery]);
+  const visibleIconOptions = filteredIcons.slice(0, visibleIcons);
+
+  useEffect(() => {
+    setVisibleIcons(120);
   }, [iconQuery]);
 
   const createGoal = () => {
@@ -68,14 +75,20 @@ export function RequestMoneyScreen() {
         </header>
 
         <div className="mt-6 flex flex-col items-center">
-          <div
-            className="grid h-14 w-14 place-items-center rounded-2xl text-white shadow-[var(--shadow-tile)]"
+          <button
+            type="button"
+            onClick={() => setIsIconPickerOpen(true)}
+            className="grid h-14 w-14 place-items-center rounded-2xl text-white shadow-[var(--shadow-tile)] transition-transform hover:scale-[1.02]"
             style={{
               background: "linear-gradient(135deg, oklch(0.65 0.22 265), oklch(0.45 0.24 265))",
             }}
+            aria-label="Change goal icon"
           >
             <GoalIcon name={normalizedIconName} className="h-6 w-6" strokeWidth={2.25} />
-          </div>
+          </button>
+          <p className="mt-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+            Tap icon to change
+          </p>
           <input
             type="text"
             value={title}
@@ -99,39 +112,6 @@ export function RequestMoneyScreen() {
             )}
           </div>
 
-          <p className="mt-5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-            Icon
-          </p>
-          <div className="mt-2 rounded-2xl bg-white px-3 py-2 shadow-[var(--shadow-soft)]">
-            <input
-              value={iconQuery}
-              onChange={(e) => setIconQuery(e.target.value)}
-              className="w-full bg-transparent text-[12px] font-semibold text-foreground outline-none"
-              placeholder="Search icons"
-            />
-          </div>
-          <div className="mt-2 max-h-40 overflow-y-auto pr-1">
-            <div className="grid grid-cols-5 gap-2">
-              {filteredIcons.map(({ key }) => (
-                <button
-                  key={key}
-                  onClick={() => setSelectedIconName(key)}
-                  className={`grid h-12 place-items-center rounded-2xl transition-all cursor-pointer ${
-                    normalizeGoalIconName(selectedIconName) === key
-                      ? "bg-[var(--primary)] text-white shadow-md scale-105"
-                      : "bg-white text-foreground shadow-[var(--shadow-soft)] hover:bg-slate-50 active:scale-95"
-                  }`}
-                >
-                  <GoalIcon name={key} className="h-4 w-4" strokeWidth={2.25} />
-                </button>
-              ))}
-            </div>
-            {filteredIcons.length === 0 && (
-              <p className="mt-2 text-center text-[11px] text-muted-foreground">
-                No icons found.
-              </p>
-            )}
-          </div>
           <input
             type="text"
             value={targetDate}
@@ -176,7 +156,7 @@ export function RequestMoneyScreen() {
           Contributing
         </p>
 
-        <div className="mt-2 flex-1 space-y-2 overflow-hidden">
+        <div className="mt-2 space-y-2">
           {familyMembers.map((p) => {
             const selected = contributors.includes(p.id);
             return (
@@ -224,6 +204,61 @@ export function RequestMoneyScreen() {
           Create goal
         </button>
       </div>
+      {isIconPickerOpen && (
+        <div className="absolute inset-0 z-20 flex flex-col bg-[var(--canvas)]">
+          <div className="flex items-center justify-between px-6 pt-8">
+            <h3 className="text-[16px] font-bold text-foreground">Choose icon</h3>
+            <button
+              type="button"
+              onClick={() => setIsIconPickerOpen(false)}
+              className="text-[12px] font-semibold text-[var(--primary)]"
+            >
+              Done
+            </button>
+          </div>
+          <div className="px-6 pt-3">
+            <div className="rounded-2xl bg-white px-3 py-2 shadow-[var(--shadow-soft)]">
+              <input
+                value={iconQuery}
+                onChange={(e) => setIconQuery(e.target.value)}
+                className="w-full bg-transparent text-[12px] font-semibold text-foreground outline-none"
+                placeholder="Search icons"
+              />
+            </div>
+          </div>
+          <div className="mt-4 flex-1 overflow-y-auto px-6 pb-8">
+            <div className="grid grid-cols-4 gap-3">
+              {visibleIconOptions.map(({ key }) => (
+                <button
+                  key={key}
+                  onClick={() => setSelectedIconName(key)}
+                  className={`grid h-14 place-items-center rounded-2xl transition-all cursor-pointer ${
+                    normalizeGoalIconName(selectedIconName) === key
+                      ? "bg-[var(--primary)] text-white shadow-md scale-105"
+                      : "bg-white text-foreground shadow-[var(--shadow-soft)] hover:bg-slate-50 active:scale-95"
+                  }`}
+                >
+                  <GoalIcon name={key} className="h-5 w-5" strokeWidth={2.25} />
+                </button>
+              ))}
+            </div>
+            {filteredIcons.length === 0 && (
+              <p className="mt-3 text-center text-[11px] text-muted-foreground">
+                No icons found.
+              </p>
+            )}
+            {filteredIcons.length > visibleIcons && (
+              <button
+                type="button"
+                onClick={() => setVisibleIcons((prev) => prev + 120)}
+                className="mx-auto mt-4 block rounded-full bg-white px-4 py-2 text-[12px] font-semibold text-foreground shadow-[var(--shadow-soft)]"
+              >
+                Load more
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </PhoneFrame>
   );
 }
