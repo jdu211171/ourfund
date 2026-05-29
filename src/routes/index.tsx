@@ -49,6 +49,7 @@ import { LendBorrowScreen } from "@/components/knit/LendBorrowScreen";
 import { ProductTrackerScreen } from "@/components/knit/ProductTrackerScreen";
 import { ScanReceiptScreen } from "@/components/knit/ScanReceiptScreen";
 import { ResetPasswordScreen } from "@/components/knit/ResetPasswordScreen";
+import { MoreScreen } from "@/components/knit/MoreScreen";
 import { PhoneFrame } from "@/components/knit/PhoneFrame";
 
 import { useState } from "react";
@@ -100,6 +101,8 @@ function AppRouter() {
       return <ConfirmInviteScreen />;
     case "home":
       return <HomeScreen />;
+    case "more":
+      return <MoreScreen />;
     case "wallet":
       return <WalletScreen />;
     case "new_wallet":

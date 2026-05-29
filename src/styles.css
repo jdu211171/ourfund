@@ -154,11 +154,23 @@
     border-color: var(--color-border);
   }
 
+  html,
   body {
-    background-color: var(--canvas);
+    height: 100%;
+    margin: 0;
+  }
+
+  body {
+    background-color: var(--phone-bg);
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+  }
+}
+
+@media (min-width: 640px) {
+  body {
+    background-color: var(--canvas);
   }
 }
 

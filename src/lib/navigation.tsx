@@ -35,6 +35,7 @@ export type ScreenName =
   | "join_family_error"
   | "confirm_invite"
   | "home"
+  | "more"
   | "wallet"
   | "new_wallet"
   | "connect_bank"

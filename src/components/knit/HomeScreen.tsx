@@ -149,12 +149,12 @@ export function HomeScreen() {
               key={label}
               type="button"
               onClick={() => navigate(screen)}
-              className="flex items-center gap-2 rounded-2xl bg-white px-3 py-2.5 text-left"
+              className="flex flex-col items-center gap-2 rounded-2xl bg-white px-2 py-3 text-center"
             >
-              <span className="grid h-8 w-8 place-items-center rounded-xl bg-[oklch(0.95_0.04_265)] text-[var(--primary)]">
+              <span className="grid h-9 w-9 place-items-center rounded-xl bg-[oklch(0.95_0.04_265)] text-[var(--primary)]">
                 <Icon className="h-4 w-4" strokeWidth={2.35} />
               </span>
-              <span className="truncate text-[10px] font-bold text-foreground">{label}</span>
+              <span className="text-[10px] font-bold text-foreground">{label}</span>
             </button>
           ))}
         </div>

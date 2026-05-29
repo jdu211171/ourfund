@@ -1,7 +1,7 @@
-import { Home, Wallet, Activity, User } from "lucide-react";
+import { Home, Wallet, Activity, User, MoreHorizontal } from "lucide-react";
 import { useAppNavigation } from "@/lib/navigation";
 
-type NavKey = "home" | "wallet" | "activity" | "user";
+type NavKey = "home" | "wallet" | "activity" | "user" | "more";
 
 export function BottomNav({ active }: { active?: NavKey }) {
   const { navigate } = useAppNavigation();
@@ -29,6 +29,9 @@ export function BottomNav({ active }: { active?: NavKey }) {
         </button>
         <button className={cls("user")} aria-label="Profile" onClick={() => navigate("family")}>
           <User className="h-5 w-5" strokeWidth={2.25} />
+        </button>
+        <button className={cls("more")} aria-label="More" onClick={() => navigate("more")}>
+          <MoreHorizontal className="h-5 w-5" strokeWidth={2.25} />
         </button>
       </nav>
     </div>
