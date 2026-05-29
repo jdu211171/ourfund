@@ -18,6 +18,7 @@ import { BottomNav } from "./BottomNav";
 import { BalanceHeader } from "./BalanceHeader";
 import { Money } from "./Money";
 import { useAppNavigation } from "@/lib/navigation";
+import { goalIconMap, normalizeGoalIconKey } from "./goalIconOptions";
 
 export function HomeScreen() {
   const {
@@ -211,7 +212,11 @@ export function HomeScreen() {
               >
                 <div className="flex items-center gap-3">
                   <span className="grid h-10 w-10 place-items-center rounded-xl bg-[oklch(0.95_0.04_265)] text-[var(--primary)]">
-                    <Target className="h-4 w-4" strokeWidth={2.25} />
+                    {(() => {
+                      const GoalIcon =
+                        goalIconMap[normalizeGoalIconKey(primaryGoal.icon)] ?? Target;
+                      return <GoalIcon className="h-4 w-4" strokeWidth={2.25} />;
+                    })()}
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[12px] font-bold text-foreground">

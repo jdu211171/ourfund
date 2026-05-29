@@ -45,6 +45,7 @@ export type ScreenName =
   | "recurring_income"
   | "new_goal"
   | "goal_detail"
+  | "edit_goal"
   | "goal_withdraw"
   | "goal_achieved"
   | "reports_week"
@@ -360,6 +361,7 @@ interface NavigationContextType {
   selectedGoalId: string | null;
   setSelectedGoalId: (id: string | null) => void;
   addGoal: (goal: Omit<Goal, "id" | "savedUsd" | "history"> & { savedUsd?: number }) => Goal;
+  updateGoal: (goalId: string, updates: Partial<Omit<Goal, "id" | "history" | "savedUsd">>) => void;
   contributeToGoal: (goalId: string, amountUsd: number, who?: string) => void;
   withdrawFromGoal: (goalId: string, amountUsd: number, wallet: string) => void;
   members: FamilyMember[];
@@ -1121,6 +1123,16 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     return newGoal;
   };
 
+  const updateGoal = (
+    goalId: string,
+    updates: Partial<Omit<Goal, "id" | "history" | "savedUsd">>,
+  ) => {
+    setGoals((prev) => prev.map((goal) => (goal.id === goalId ? { ...goal, ...updates } : goal)));
+    syncMutationServerFn({
+      data: { type: "updateGoal", data: { id: goalId, ...updates } },
+    }).catch(console.error);
+  };
+
   const contributeToGoal = (goalId: string, amountUsd: number, who = firstName(profile.name)) => {
     if (amountUsd <= 0) return;
     const goalToUpdate = goals.find((g) => g.id === goalId);
@@ -1759,6 +1771,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         selectedGoalId,
         setSelectedGoalId,
         addGoal,
+        updateGoal,
         contributeToGoal,
         withdrawFromGoal,
         members,

@@ -17,6 +17,7 @@ import { BudgetModeToggle } from "./BudgetModeToggle";
 import { Money } from "./Money";
 import { useAppNavigation } from "@/lib/navigation";
 import { categoryIconMap } from "./categoryOptions";
+import { goalIconMap, normalizeGoalIconKey } from "./goalIconOptions";
 
 export function WalletScreen() {
   const {
@@ -299,6 +300,7 @@ export function WalletScreen() {
               100,
               Math.round((goal.savedUsd / Math.max(goal.targetUsd, 1)) * 100),
             );
+            const GoalIcon = goalIconMap[normalizeGoalIconKey(goal.icon)] ?? Target;
             return (
               <button
                 key={goal.id}
@@ -310,7 +312,7 @@ export function WalletScreen() {
                 className="flex w-full items-center gap-3 rounded-2xl bg-white px-3 py-3 text-left"
               >
                 <span className="grid h-10 w-10 place-items-center rounded-xl bg-[oklch(0.95_0.04_265)] text-[var(--primary)]">
-                  <Target className="h-4 w-4" strokeWidth={2.25} />
+                  <GoalIcon className="h-4 w-4" strokeWidth={2.25} />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[12px] font-bold text-foreground">

@@ -1176,6 +1176,25 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
         break;
       }
 
+      case "updateGoal": {
+        if (!householdId) throw new Error("No household linked");
+        const goal = await prisma.goal.findUnique({ where: { id: payload.id } });
+        if (!goal || goal.householdId !== householdId) throw new Error("Forbidden");
+        const updates: Record<string, unknown> = {};
+        if (typeof payload.title === "string") updates.title = payload.title;
+        if (typeof payload.targetUsd === "number") updates.targetUsd = payload.targetUsd;
+        if (typeof payload.targetDate === "string") updates.targetDate = payload.targetDate;
+        if (typeof payload.icon === "string") updates.icon = payload.icon;
+        if (typeof payload.color === "string") updates.color = payload.color;
+        if (Array.isArray(payload.contributors)) updates.contributors = payload.contributors;
+        if (Object.keys(updates).length === 0) break;
+        await prisma.goal.update({
+          where: { id: payload.id },
+          data: updates,
+        });
+        break;
+      }
+
       case "updateGoalSavings": {
         if (!householdId) throw new Error("No household linked");
         // Authorization: verify this goal belongs to the user's household

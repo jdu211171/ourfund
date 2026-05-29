@@ -15,6 +15,7 @@ import { SubscriptionsScreen } from "@/components/knit/SubscriptionsScreen";
 import { CreateWalletScreen } from "@/components/knit/CreateWalletScreen";
 import { CategoryEditorScreen } from "@/components/knit/CategoryEditorScreen";
 import { GoalDetailScreen } from "@/components/knit/GoalDetailScreen";
+import { EditGoalScreen } from "@/components/knit/EditGoalScreen";
 import { LoginScreen } from "@/components/knit/LoginScreen";
 import { SignUpScreen } from "@/components/knit/SignUpScreen";
 import { JoinFamilyScreen } from "@/components/knit/JoinFamilyScreen";
@@ -121,6 +122,8 @@ function AppRouter() {
       return <RequestMoneyScreen />;
     case "goal_detail":
       return <GoalDetailScreen />;
+    case "edit_goal":
+      return <EditGoalScreen />;
     case "goal_withdraw":
       return <GoalWithdrawScreen />;
     case "goal_achieved":

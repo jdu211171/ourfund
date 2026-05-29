@@ -1,6 +1,6 @@
 import { ArrowLeft, Check, Target } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAppNavigation } from "@/lib/navigation";
 import {
   currencyAdornment,
@@ -18,12 +18,21 @@ import {
 
 const presetUsd = [1000, 2500, 5000, 10000];
 
-export function RequestMoneyScreen() {
-  const { navigate, goBack, currency, addGoal, members: familyMembers } = useAppNavigation();
+export function EditGoalScreen() {
+  const {
+    navigate,
+    goBack,
+    currency,
+    goals,
+    selectedGoalId,
+    updateGoal,
+    members: familyMembers,
+  } = useAppNavigation();
+  const goal = goals.find((g) => g.id === selectedGoalId) ?? goals[0];
   const [amount, setAmount] = useState("0");
   const [title, setTitle] = useState("");
   const [targetDate, setTargetDate] = useState("");
-  const [contributors, setContributors] = useState(() => familyMembers.map((member) => member.id));
+  const [contributors, setContributors] = useState<string[]>([]);
   const [iconQuery, setIconQuery] = useState("");
   const [selectedIconKey, setSelectedIconKey] = useState(defaultGoalIconKey);
   const targetUsd = currencyValueToUsd(parseFloat(amount || "0"), currency);
@@ -40,18 +49,46 @@ export function RequestMoneyScreen() {
     );
   }, [iconQuery]);
 
-  const createGoal = () => {
-    const goal = addGoal({
-      title: title.trim() || "New goal",
-      targetUsd,
-      savedUsd: 0,
-      targetDate: targetDate.trim() || "No deadline",
-      icon: normalizedIconKey,
-      color: "oklch(0.55 0.24 265)",
-      contributors,
-    });
-    navigate(goal.targetUsd <= goal.savedUsd ? "goal_achieved" : "goal_detail");
-  };
+  useEffect(() => {
+    if (!goal) return;
+    setTitle(goal.title);
+    setTargetDate(goal.targetDate);
+    setContributors(goal.contributors ?? []);
+    setAmount(String(Math.round(usdToCurrencyValue(goal.targetUsd, currency))));
+    setSelectedIconKey(normalizeGoalIconKey(goal.icon));
+  }, [currency, goal?.id]);
+
+  if (!goal) {
+    return (
+      <PhoneFrame>
+        <div className="flex h-full flex-col px-7 pt-10 pb-7">
+          <header className="flex items-center justify-between">
+            <button
+              onClick={goBack}
+              className="grid h-9 w-9 place-items-center rounded-full text-foreground hover:bg-slate-50 transition-colors cursor-pointer"
+              aria-label="Back"
+            >
+              <ArrowLeft className="h-5 w-5" strokeWidth={2.25} />
+            </button>
+            <h2 className="text-[17px] font-bold tracking-tight">Edit Goal</h2>
+            <span className="h-9 w-9" />
+          </header>
+          <div className="m-auto rounded-3xl bg-white px-5 py-6 text-center shadow-[var(--shadow-soft)]">
+            <p className="text-[14px] font-bold text-foreground">No goal selected</p>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Create a savings goal to edit its details.
+            </p>
+            <button
+              onClick={() => navigate("new_goal")}
+              className="mt-4 rounded-full bg-[var(--primary)] px-5 py-2.5 text-[12px] font-semibold text-white"
+            >
+              Create goal
+            </button>
+          </div>
+        </div>
+      </PhoneFrame>
+    );
+  }
 
   return (
     <PhoneFrame>
@@ -64,7 +101,7 @@ export function RequestMoneyScreen() {
           >
             <ArrowLeft className="h-5 w-5" strokeWidth={2.25} />
           </button>
-          <h2 className="text-[17px] font-bold tracking-tight">New Goal</h2>
+          <h2 className="text-[17px] font-bold tracking-tight">Edit Goal</h2>
           <span className="h-9 w-9" />
         </header>
 
@@ -85,9 +122,7 @@ export function RequestMoneyScreen() {
             placeholder="Goal Title"
           />
           <div className="mt-1 flex items-center justify-center gap-1">
-            {prefix && (
-              <span className="text-[20px] font-bold text-muted-foreground">{prefix}</span>
-            )}
+            {prefix && <span className="text-[20px] font-bold text-muted-foreground">{prefix}</span>}
             <input
               type="text"
               value={amount}
@@ -95,38 +130,7 @@ export function RequestMoneyScreen() {
               className="w-48 bg-transparent text-center text-[34px] font-extrabold tracking-tight text-foreground outline-none border-b border-transparent focus:border-[var(--primary)] transition-colors focus:ring-0"
               placeholder="0.00"
             />
-            {suffix && (
-              <span className="text-[14px] font-bold text-muted-foreground">{suffix}</span>
-            )}
-          </div>
-
-          <p className="mt-5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-            Icon
-          </p>
-          <div className="mt-2 rounded-2xl bg-white px-3 py-2 shadow-[var(--shadow-soft)]">
-            <input
-              value={iconQuery}
-              onChange={(e) => setIconQuery(e.target.value)}
-              className="w-full bg-transparent text-[12px] font-semibold text-foreground outline-none"
-              placeholder="Search icons"
-            />
-          </div>
-          <div className="mt-2 max-h-40 overflow-y-auto pr-1">
-            <div className="grid grid-cols-6 gap-2">
-              {filteredIcons.map(({ key, Icon }) => (
-                <button
-                  key={key}
-                  onClick={() => setSelectedIconKey(key)}
-                  className={`grid h-11 place-items-center rounded-2xl transition-all cursor-pointer ${
-                    normalizeGoalIconKey(selectedIconKey) === key
-                      ? "bg-[var(--primary)] text-white shadow-md scale-105"
-                      : "bg-white text-foreground shadow-[var(--shadow-soft)] hover:bg-slate-50 active:scale-95"
-                  }`}
-                >
-                  <Icon className="h-4 w-4" strokeWidth={2.25} />
-                </button>
-              ))}
-            </div>
+            {suffix && <span className="text-[14px] font-bold text-muted-foreground">{suffix}</span>}
           </div>
           <input
             type="text"
@@ -160,11 +164,48 @@ export function RequestMoneyScreen() {
           <div className="flex items-center justify-between text-[11px]">
             <span className="font-bold text-foreground">Progress</span>
             <span className="text-muted-foreground">
-              {formatUsdAsCurrency(0, currency)} of {formatUsdAsCurrency(targetUsd, currency)}
+              {formatUsdAsCurrency(goal.savedUsd, currency)} of {formatUsdAsCurrency(targetUsd, currency)}
             </span>
           </div>
           <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[var(--muted)]">
-            <div className="h-full w-0 rounded-full bg-[var(--primary)]" />
+            <div
+              className="h-full rounded-full bg-[var(--primary)]"
+              style={{
+                width: `${Math.min(
+                  100,
+                  Math.round((goal.savedUsd / Math.max(targetUsd, 1)) * 100),
+                )}%`,
+              }}
+            />
+          </div>
+        </div>
+
+        <p className="mt-5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+          Icon
+        </p>
+        <div className="mt-2 rounded-2xl bg-white px-3 py-2 shadow-[var(--shadow-soft)]">
+          <input
+            value={iconQuery}
+            onChange={(e) => setIconQuery(e.target.value)}
+            className="w-full bg-transparent text-[12px] font-semibold text-foreground outline-none"
+            placeholder="Search icons"
+          />
+        </div>
+        <div className="mt-2 max-h-40 overflow-y-auto pr-1">
+          <div className="grid grid-cols-6 gap-2">
+            {filteredIcons.map(({ key, Icon }) => (
+              <button
+                key={key}
+                onClick={() => setSelectedIconKey(key)}
+                className={`grid h-11 place-items-center rounded-2xl transition-all cursor-pointer ${
+                  normalizeGoalIconKey(selectedIconKey) === key
+                    ? "bg-[var(--primary)] text-white shadow-md scale-105"
+                    : "bg-white text-foreground shadow-[var(--shadow-soft)] hover:bg-slate-50 active:scale-95"
+                }`}
+              >
+                <Icon className="h-4 w-4" strokeWidth={2.25} />
+              </button>
+            ))}
           </div>
         </div>
 
@@ -214,10 +255,19 @@ export function RequestMoneyScreen() {
         </div>
 
         <button
-          onClick={createGoal}
+          onClick={() => {
+            updateGoal(goal.id, {
+              title: title.trim() || "New goal",
+              targetUsd,
+              targetDate: targetDate.trim() || "No deadline",
+              icon: normalizedIconKey,
+              contributors,
+            });
+            navigate("goal_detail");
+          }}
           className="mt-3 w-full rounded-full bg-[oklch(0.18_0.04_265)] py-4 text-[15px] font-semibold text-white active:scale-95 transition-all cursor-pointer"
         >
-          Create goal
+          Save changes
         </button>
       </div>
     </PhoneFrame>

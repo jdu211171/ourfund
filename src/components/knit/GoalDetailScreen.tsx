@@ -1,8 +1,9 @@
-import { ArrowLeft, Plane, Plus, MoreHorizontal } from "lucide-react";
+import { ArrowLeft, MoreHorizontal, Pencil, Plus, Target } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { useAppNavigation } from "@/lib/navigation";
 import { useState } from "react";
 import { currencyAdornment, currencyValueToUsd, formatUsdAsCurrency } from "@/lib/currency";
+import { goalIconMap, normalizeGoalIconKey } from "./goalIconOptions";
 
 export function GoalDetailScreen() {
   const { navigate, goBack, currency, goals, selectedGoalId, setSelectedGoalId, contributeToGoal } =
@@ -47,6 +48,7 @@ export function GoalDetailScreen() {
 
   const pct = Math.min(100, Math.round((goal.savedUsd / goal.targetUsd) * 100));
   const monthly = Math.max(1, Math.ceil((goal.targetUsd - goal.savedUsd) / 6));
+  const GoalIcon = goalIconMap[normalizeGoalIconKey(goal.icon)] ?? Target;
 
   return (
     <PhoneFrame>
@@ -60,13 +62,22 @@ export function GoalDetailScreen() {
             <ArrowLeft className="h-5 w-5" strokeWidth={2.25} />
           </button>
           <h2 className="text-[17px] font-bold tracking-tight">Goal Details</h2>
-          <button
-            onClick={() => navigate("goal_withdraw")}
-            className="grid h-9 w-9 place-items-center rounded-full text-foreground hover:bg-slate-50 transition-colors cursor-pointer"
-            aria-label="Withdraw options"
-          >
-            <MoreHorizontal className="h-5 w-5" strokeWidth={2.25} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate("edit_goal")}
+              className="grid h-9 w-9 place-items-center rounded-full text-foreground hover:bg-slate-50 transition-colors cursor-pointer"
+              aria-label="Edit goal"
+            >
+              <Pencil className="h-4 w-4" strokeWidth={2.25} />
+            </button>
+            <button
+              onClick={() => navigate("goal_withdraw")}
+              className="grid h-9 w-9 place-items-center rounded-full text-foreground hover:bg-slate-50 transition-colors cursor-pointer"
+              aria-label="Withdraw options"
+            >
+              <MoreHorizontal className="h-5 w-5" strokeWidth={2.25} />
+            </button>
+          </div>
         </header>
 
         <div
@@ -85,7 +96,7 @@ export function GoalDetailScreen() {
                 </span>
               </p>
             </div>
-            <Plane className="h-5 w-5" strokeWidth={2.25} />
+            <GoalIcon className="h-5 w-5" strokeWidth={2.25} />
           </div>
           <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-white/20">
             <div className="h-full rounded-full bg-white" style={{ width: `${pct}%` }} />
