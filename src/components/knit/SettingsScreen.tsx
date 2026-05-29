@@ -1,5 +1,6 @@
 import { ArrowLeft, Moon, Bell, Globe, Fingerprint, ChevronRight, Camera } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
+import { ComingSoonBadge } from "./ComingSoonBadge";
 import { useState } from "react";
 import { useAppNavigation } from "@/lib/navigation";
 
@@ -94,6 +95,7 @@ export function SettingsScreen() {
               value: currencies.personal,
               screen: "currency" as const,
               target: "personal" as const,
+              comingSoon: false,
             },
             {
               Icon: Globe,
@@ -101,47 +103,77 @@ export function SettingsScreen() {
               value: currencies.family,
               screen: "currency" as const,
               target: "family" as const,
+              comingSoon: false,
             },
             {
               Icon: Bell,
               label: "Notifications",
               value: "All admins",
               screen: "notif_prefs" as const,
+              comingSoon: false,
             },
             {
               Icon: Fingerprint,
               label: "Passcode & Face ID",
               value: faceIdEnabled ? "Enabled" : "PIN only",
               screen: "passcode" as const,
+              comingSoon: true,
             },
             {
               Icon: Moon,
               label: "Quiet hours",
               value: quietHours ? "22:00 - 07:00" : "Off",
               screen: "settings" as const,
+              comingSoon: true,
             },
           ].map((r) => (
-            <button
-              key={r.label}
-              onClick={() => {
-                if (r.label === "Quiet hours") {
-                  setQuietHours((prev) => !prev);
-                  return;
-                }
-                if ("target" in r) setCurrencyTarget(r.target);
-                navigate(r.screen);
-              }}
-              className="flex w-full items-center gap-3 rounded-2xl bg-white px-3 py-3 text-left shadow-[var(--shadow-soft)] hover:bg-slate-50 transition-colors active:scale-[0.99] cursor-pointer"
-            >
-              <div className="grid h-9 w-9 place-items-center rounded-xl bg-[oklch(0.95_0.04_265)] text-[var(--primary)]">
-                <r.Icon className="h-4 w-4" strokeWidth={2.25} />
-              </div>
-              <div className="flex-1 leading-tight">
-                <p className="text-[12px] font-bold text-foreground">{r.label}</p>
-                <p className="text-[10px] text-muted-foreground">{r.value}</p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground" strokeWidth={2.25} />
-            </button>
+            <div key={r.label} className="relative">
+              <button
+                onClick={() => {
+                  if (r.comingSoon) return;
+                  if (r.label === "Quiet hours") {
+                    setQuietHours((prev) => !prev);
+                    return;
+                  }
+                  if ("target" in r) setCurrencyTarget(r.target);
+                  navigate(r.screen);
+                }}
+                disabled={r.comingSoon}
+                className={`w-full flex items-center gap-3 rounded-2xl px-3 py-3 text-left shadow-[var(--shadow-soft)] transition-colors active:scale-[0.99] ${
+                  r.comingSoon
+                    ? "bg-white/70 cursor-not-allowed"
+                    : "bg-white hover:bg-slate-50 cursor-pointer"
+                }`}
+              >
+                <div
+                  className={`grid h-9 w-9 place-items-center rounded-xl ${
+                    r.comingSoon
+                      ? "bg-red-50 text-red-500"
+                      : "bg-[oklch(0.95_0.04_265)] text-[var(--primary)]"
+                  }`}
+                >
+                  <r.Icon className="h-4 w-4" strokeWidth={2.25} />
+                </div>
+                <div className="flex-1 leading-tight">
+                  <p
+                    className={`text-[12px] font-bold ${
+                      r.comingSoon ? "text-red-500" : "text-foreground"
+                    }`}
+                  >
+                    {r.label}
+                  </p>
+                  <p
+                    className={`text-[10px] ${
+                      r.comingSoon ? "text-red-400" : "text-muted-foreground"
+                    }`}
+                  >
+                    {r.comingSoon ? "Coming soon" : r.value}
+                  </p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" strokeWidth={2.25} />
+              </button>
+              {r.comingSoon && <ComingSoonBadge />}
+            </div>
           ))}
         </div>
 

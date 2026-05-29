@@ -11,6 +11,7 @@ import {
   WalletCards,
 } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
+import { ComingSoonBadge } from "./ComingSoonBadge";
 import { BottomNav } from "./BottomNav";
 import { BudgetModeToggle } from "./BudgetModeToggle";
 import { Money } from "./Money";
@@ -191,17 +192,19 @@ export function WalletScreen() {
         <div className="mt-4 grid grid-cols-2 gap-2">
           <button
             type="button"
-            onClick={() => navigate("connect_bank")}
-            className="rounded-2xl bg-white p-3 text-left"
+            onClick={() => {}}
+            disabled={true}
+            className="relative rounded-2xl bg-white/70 p-3 text-left cursor-not-allowed"
           >
             <div className="flex items-center gap-2">
-              <span className="grid h-8 w-8 place-items-center rounded-xl bg-[oklch(0.95_0.04_265)] text-[var(--primary)]">
+              <span className="grid h-8 w-8 place-items-center rounded-xl bg-red-50 text-red-500">
                 <Landmark className="h-4 w-4" strokeWidth={2.25} />
               </span>
-              <span className="text-[11px] font-bold text-foreground">Banks</span>
+              <span className="text-[11px] font-bold text-red-500">Banks</span>
             </div>
-            <p className="mt-3 text-[13px] font-extrabold text-foreground">{linkedBanks.length}</p>
-            <p className="mt-0.5 text-[10px] text-muted-foreground">Connected accounts</p>
+            <p className="mt-3 text-[13px] font-extrabold text-red-500">{linkedBanks.length}</p>
+            <p className="mt-0.5 text-[10px] text-red-400">Connected accounts</p>
+            <ComingSoonBadge />
           </button>
           <button
             type="button"
