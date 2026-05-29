@@ -1,59 +1,26 @@
 import { OAuth2Client } from "google-auth-library";
-import {
-  clearSession as clearStartSession,
-  deleteCookie,
-  getRequestHeader,
-  getSession,
-  updateSession,
-} from "@tanstack/react-start/server";
-import type { SessionConfig } from "@tanstack/react-start/server";
+import jwt from "jsonwebtoken";
+import { getRequestHeader, setResponseHeader } from "@tanstack/react-start/server";
 import { prisma } from "./db";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
-const SESSION_NAME = "ourfund_app_session";
-const LEGACY_COOKIE_NAME = "ourfund_session";
-const SESSION_SECRET =
-  process.env.SESSION_SECRET ||
-  process.env.JWT_SECRET ||
-  "ourfund-default-session-secret-key-123456";
-const SESSION_MAX_AGE = 90 * 24 * 60 * 60; // 90 days in seconds
+const JWT_SECRET = process.env.JWT_SECRET || "ourfund-default-secret-key-12345";
+const COOKIE_NAME = "ourfund_session";
 
 const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
 
 export interface SessionData {
-  userId?: string;
+  userId: string;
 }
 
-function isLocalHost(host: string) {
-  return /^(localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/i.test(host);
-}
-
-function shouldUseSecureCookie() {
-  const override = process.env.COOKIE_SECURE?.trim().toLowerCase();
-  if (override === "true") return true;
-  if (override === "false") return false;
-
-  const forwardedProto = getRequestHeader("x-forwarded-proto")?.split(",")[0]?.trim();
-  const host = getRequestHeader("host") ?? "";
-
-  if (forwardedProto === "https") return true;
-  if (isLocalHost(host)) return false;
-
-  return process.env.NODE_ENV === "production";
-}
-
-function getSessionConfig(): SessionConfig {
-  return {
-    name: SESSION_NAME,
-    password: SESSION_SECRET,
-    maxAge: SESSION_MAX_AGE,
-    cookie: {
-      httpOnly: true,
-      secure: shouldUseSecureCookie(),
-      sameSite: "lax",
-      path: "/",
-    },
-  };
+export function parseCookies(cookieHeader: string | null | undefined): Record<string, string> {
+  if (!cookieHeader) return {};
+  return Object.fromEntries(
+    cookieHeader.split(";").map((c) => {
+      const parts = c.split("=");
+      return [parts[0].trim(), parts.slice(1).join("=").trim()];
+    }),
+  );
 }
 
 export async function verifyGoogleToken(idToken: string) {
@@ -76,33 +43,33 @@ export async function verifyGoogleToken(idToken: string) {
   };
 }
 
-export async function createSession(userId: string) {
-  await updateSession<SessionData>(getSessionConfig(), { userId });
-  deleteCookie(LEGACY_COOKIE_NAME, {
-    path: "/",
-    secure: shouldUseSecureCookie(),
-    sameSite: "lax",
-  });
+export function createSessionCookie(userId: string) {
+  const token = jwt.sign({ userId }, JWT_SECRET, { expiresIn: "90d" });
+  const maxAge = 90 * 24 * 60 * 60; // 90 days in seconds
+  const secureFlag = process.env.NODE_ENV === "production" ? "; Secure" : "";
+  const cookieValue = `${COOKIE_NAME}=${token}; HttpOnly${secureFlag}; SameSite=Lax; Path=/; Max-Age=${maxAge}`;
+  setResponseHeader("Set-Cookie", cookieValue);
 }
 
-export async function clearSession() {
-  await clearStartSession(getSessionConfig());
-  deleteCookie(LEGACY_COOKIE_NAME, {
-    path: "/",
-    secure: shouldUseSecureCookie(),
-    sameSite: "lax",
-  });
+export function clearSessionCookie() {
+  const secureFlag = process.env.NODE_ENV === "production" ? "; Secure" : "";
+  const cookieValue = `${COOKIE_NAME}=; HttpOnly${secureFlag}; SameSite=Lax; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+  setResponseHeader("Set-Cookie", cookieValue);
 }
 
 export async function getSessionUser() {
-  const session = await getSession<SessionData>(getSessionConfig());
-  const userId = session.data.userId;
+  const cookieHeader = getRequestHeader("Cookie");
+  const cookies = parseCookies(cookieHeader);
+  const token = cookies[COOKIE_NAME];
 
-  if (!userId) return null;
+  if (!token) return null;
 
   try {
+    const decoded = jwt.verify(token, JWT_SECRET) as SessionData;
+    if (!decoded || !decoded.userId) return null;
+
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id: decoded.userId },
       include: {
         householdMembers: {
           include: {
@@ -113,7 +80,7 @@ export async function getSessionUser() {
     });
     return user;
   } catch (error) {
-    console.error("Session user lookup failed:", error);
+    console.error("JWT Session verification failed:", error);
     return null;
   }
 }

@@ -7,6 +7,8 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { registerSW } from "virtual:pwa-register";
 
 import appCss from "../styles.css?url";
 
@@ -78,6 +80,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "Pixel Perfect Twin replicates an existing app's design, spacing, and fonts for a family budget management experience.",
       },
+      { name: "theme-color", content: "#4f46e5" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       { name: "author", content: "Lovable" },
       { property: "og:title", content: "Lovable App" },
       {
@@ -110,6 +115,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
+      {
+        rel: "manifest",
+        href: `${import.meta.env.BASE_URL}manifest.webmanifest`,
+      },
+      {
+        rel: "apple-touch-icon",
+        href: `${import.meta.env.BASE_URL}pwa-192.png`,
+      },
     ],
   }),
   shellComponent: RootShell,
@@ -134,6 +147,12 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  useEffect(() => {
+    if (import.meta.env.PROD) {
+      registerSW({ immediate: true });
+    }
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

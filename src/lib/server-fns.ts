@@ -4,7 +4,12 @@ import { setResponseHeaders } from "@tanstack/react-start/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "./db";
 import { currencyMeta, currencyValueToUsd } from "./currency";
-import { getSessionUser, createSession, clearSession, verifyGoogleToken } from "./auth-server";
+import {
+  getSessionUser,
+  createSessionCookie,
+  clearSessionCookie,
+  verifyGoogleToken,
+} from "./auth-server";
 
 const defaultNotificationPrefs = {
   "Category at 80%": true,
@@ -134,7 +139,7 @@ export const loginWithEmailServerFn = createServerFn({ method: "POST" })
     if (!match) {
       throw new Error("Invalid email or password");
     }
-    await createSession(user.id);
+    createSessionCookie(user.id);
     return { success: true };
   });
 
@@ -164,7 +169,7 @@ export const signUpWithEmailServerFn = createServerFn({ method: "POST" })
         initials,
       },
     });
-    await createSession(user.id);
+    createSessionCookie(user.id);
     return { success: true };
   });
 
@@ -202,12 +207,12 @@ export const loginWithGoogleServerFn = createServerFn({ method: "POST" })
       });
     }
 
-    await createSession(user.id);
+    createSessionCookie(user.id);
     return { success: true };
   });
 
 export const logoutServerFn = createServerFn({ method: "POST" }).handler(async () => {
-  await clearSession();
+  clearSessionCookie();
   return { success: true };
 });
 
