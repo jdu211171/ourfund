@@ -111,7 +111,7 @@ export function HomeScreen() {
           />
         </div>
 
-        <div className="mt-5 flex items-center justify-between">
+        <div className="mt-3 flex items-center justify-between">
           <p className="text-[13px] font-bold text-foreground">Today</p>
           <button
             type="button"
