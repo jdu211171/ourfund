@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseHeaders } from "@tanstack/react-start/server";
+import crypto from "node:crypto";
 import bcrypt from "bcryptjs";
 import { prisma } from "./db";
 import { currencyMeta, currencyValueToUsd } from "./currency";
@@ -10,6 +11,14 @@ import {
   clearSessionCookie,
   verifyGoogleToken,
 } from "./auth-server";
+import {
+  getAppBaseUrl,
+  sendInviteEmail,
+  sendLoanCreatedEmail,
+  sendLoanPaidEmail,
+  sendPasswordResetEmail,
+  sendWelcomeEmail,
+} from "./mailer";
 
 const defaultNotificationPrefs = {
   "Category at 80%": true,
@@ -125,6 +134,46 @@ function normalizeCurrencyCode(value: unknown, fallback: string) {
   return normalized in currencyMeta ? normalized : fallback in currencyMeta ? fallback : "JPY";
 }
 
+function isDeliverableEmail(email?: string | null) {
+  if (!email) return false;
+  const normalized = email.trim().toLowerCase();
+  return (
+    normalized.includes("@") &&
+    !normalized.endsWith("@pending.invite") &&
+    !normalized.endsWith("@family.local")
+  );
+}
+
+function uniqueEmails(emails: Array<string | null | undefined>) {
+  return Array.from(
+    new Set(
+      emails
+        .map((email) => email?.trim())
+        .filter((email): email is string => Boolean(email)),
+    ),
+  );
+}
+
+async function getHouseholdUsers(householdId: string) {
+  return prisma.user.findMany({
+    where: { householdMembers: { some: { householdId } } },
+    select: { id: true, email: true, name: true },
+  });
+}
+
+async function createNotificationsForUsers(
+  userIds: string[],
+  data: Omit<Parameters<typeof prisma.appNotification.createMany>[0]["data"][number], "userId">,
+) {
+  if (userIds.length === 0) return;
+  await prisma.appNotification.createMany({
+    data: userIds.map((userId) => ({
+      userId,
+      ...data,
+    })),
+  });
+}
+
 // ─── Auth Server Functions ──────────────────────────────────────────────────
 
 export const loginWithEmailServerFn = createServerFn({ method: "POST" })
@@ -170,6 +219,18 @@ export const signUpWithEmailServerFn = createServerFn({ method: "POST" })
       },
     });
     createSessionCookie(user.id);
+    await prisma.appNotification.create({
+      data: {
+        userId: user.id,
+        title: "Welcome to Nest",
+        desc: "Your account is ready. Start your first household whenever you’re ready.",
+        time: "now",
+        group: "Today",
+        tone: "primary",
+        screen: "home",
+      },
+    });
+    await sendWelcomeEmail({ to: user.email, name: user.name });
     return { success: true };
   });
 
@@ -178,11 +239,13 @@ export const loginWithGoogleServerFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { credential } = data;
     const googleProfile = await verifyGoogleToken(credential);
+    let isNewUser = false;
     let user = await prisma.user.findUnique({
       where: { email: googleProfile.email },
     });
 
     if (!user) {
+      isNewUser = true;
       const initials =
         googleProfile.name
           .split(" ")
@@ -208,6 +271,20 @@ export const loginWithGoogleServerFn = createServerFn({ method: "POST" })
     }
 
     createSessionCookie(user.id);
+    if (isNewUser) {
+      await prisma.appNotification.create({
+        data: {
+          userId: user.id,
+          title: "Welcome to Nest",
+          desc: "Your Google account is linked. Start your first household whenever you’re ready.",
+          time: "now",
+          group: "Today",
+          tone: "primary",
+          screen: "home",
+        },
+      });
+      await sendWelcomeEmail({ to: user.email, name: user.name });
+    }
     return { success: true };
   });
 
@@ -215,6 +292,88 @@ export const logoutServerFn = createServerFn({ method: "POST" }).handler(async (
   clearSessionCookie();
   return { success: true };
 });
+
+export const requestPasswordResetServerFn = createServerFn({ method: "POST" })
+  .inputValidator((d: { email: string }) => d)
+  .handler(async ({ data }) => {
+    const email = data.email.trim().toLowerCase();
+    if (!email) throw new Error("Email is required");
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      return { success: true };
+    }
+
+    const token = crypto.randomBytes(32).toString("hex");
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordResetTokenHash: tokenHash,
+        passwordResetTokenExpiresAt: expiresAt,
+      },
+    });
+
+    const resetUrl = `${getAppBaseUrl()}/?reset=${encodeURIComponent(token)}`;
+    await sendPasswordResetEmail({ to: user.email, name: user.name, resetUrl });
+    await prisma.appNotification.create({
+      data: {
+        userId: user.id,
+        title: "Password reset requested",
+        desc: "We emailed you a secure link to reset your password.",
+        time: "now",
+        group: "Today",
+        tone: "primary",
+        screen: "settings",
+      },
+    });
+
+    return { success: true };
+  });
+
+export const resetPasswordServerFn = createServerFn({ method: "POST" })
+  .inputValidator((d: { token: string; password: string }) => d)
+  .handler(async ({ data }) => {
+    const token = data.token.trim();
+    const password = data.password.trim();
+    if (!token) throw new Error("Reset token is required");
+    if (password.length < 8) throw new Error("Password must be at least 8 characters");
+
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+    const user = await prisma.user.findFirst({
+      where: {
+        passwordResetTokenHash: tokenHash,
+        passwordResetTokenExpiresAt: { gt: new Date() },
+      },
+    });
+
+    if (!user) throw new Error("Reset link is invalid or has expired");
+
+    const hash = await bcrypt.hash(password, 10);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash: hash,
+        passwordResetTokenHash: null,
+        passwordResetTokenExpiresAt: null,
+      },
+    });
+
+    await prisma.appNotification.create({
+      data: {
+        userId: user.id,
+        title: "Password updated",
+        desc: "Your password was updated successfully.",
+        time: "now",
+        group: "Today",
+        tone: "success",
+        screen: "settings",
+      },
+    });
+
+    return { success: true };
+  });
 
 export const getAppDataServerFn = createServerFn({ method: "GET" }).handler(async () => {
   setResponseHeaders(
@@ -705,6 +864,17 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
             startingBalanceUsd: 0,
           },
         });
+        await prisma.appNotification.create({
+          data: {
+            userId: user.id,
+            title: "Household created",
+            desc: `${household.name} is ready. Invite your family to join.`,
+            time: "now",
+            group: "Today",
+            tone: "primary",
+            screen: "family",
+          },
+        });
         break;
       }
 
@@ -773,6 +943,18 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
             startingBalanceUsd: 0,
           },
         });
+        const householdUsers = await getHouseholdUsers(found.id);
+        await createNotificationsForUsers(
+          householdUsers.map((member) => member.id),
+          {
+            title: "New member joined",
+            desc: `${payload.name || user.name} joined ${found.name}.`,
+            time: "now",
+            group: "Today",
+            tone: "primary",
+            screen: "family",
+          },
+        );
         break;
       }
 
@@ -1012,7 +1194,7 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
       // ── Family members ─────────────────────────────────────────────────────
       case "inviteMember": {
         if (!householdId) throw new Error("No household linked");
-        await prisma.familyMember.create({
+        const newMember = await prisma.familyMember.create({
           data: {
             id: payload.id,
             householdId,
@@ -1035,6 +1217,17 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
             screen: "family",
           },
         });
+        if (isDeliverableEmail(newMember.email)) {
+          const household = await prisma.household.findUnique({ where: { id: householdId } });
+          if (household) {
+            await sendInviteEmail({
+              to: newMember.email!,
+              inviterName: user.name || "Family admin",
+              householdName: household.name,
+              inviteCode: household.inviteCode,
+            });
+          }
+        }
         break;
       }
 
@@ -1125,7 +1318,7 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
       // ── Lending, product tracking, and receipt scans ───────────────────────
       case "addLoanEntry": {
         if (!householdId) throw new Error("No household linked");
-        await prisma.loanEntry.create({
+        const created = await prisma.loanEntry.create({
           data: {
             id: payload.id,
             householdId,
@@ -1141,6 +1334,38 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
               : "pending",
           },
         });
+        const household = await prisma.household.findUnique({ where: { id: householdId } });
+        const householdUsers = await getHouseholdUsers(householdId);
+        const summary = `${
+          created.direction === "borrowed" ? "Borrowed from" : "Lent to"
+        } ${created.counterpartyName} · $${created.amountUsd.toFixed(2)}`;
+        await createNotificationsForUsers(
+          householdUsers.map((member) => member.id),
+          {
+            title: "Loan created",
+            desc: summary,
+            time: "now",
+            group: "Today",
+            tone: "primary",
+            screen: "lend_borrow",
+          },
+        );
+        const recipients = uniqueEmails(householdUsers.map((member) => member.email)).filter(
+          isDeliverableEmail,
+        );
+        if (household) {
+          const linkUrl = getAppBaseUrl();
+          await Promise.all(
+            recipients.map((email) =>
+              sendLoanCreatedEmail({
+                to: email,
+                householdName: household.name,
+                summary,
+                linkUrl,
+              }),
+            ),
+          );
+        }
         break;
       }
 
@@ -1148,7 +1373,10 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
         if (!householdId) throw new Error("No household linked");
         const entry = await prisma.loanEntry.findUnique({ where: { id: payload.id } });
         if (!entry || entry.householdId !== householdId) throw new Error("Forbidden");
-        await prisma.loanEntry.update({
+        const nextStatus = ["paid", "overdue", "pending"].includes(payload.status)
+          ? payload.status
+          : "pending";
+        const updated = await prisma.loanEntry.update({
           where: { id: payload.id },
           data: {
             counterpartyMemberId: payload.counterpartyMemberId || null,
@@ -1158,11 +1386,43 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
             amountUsd: payload.amountUsd !== undefined ? Number(payload.amountUsd) : undefined,
             paidAmountUsd: payload.paidAmountUsd !== undefined ? Number(payload.paidAmountUsd) : undefined,
             direction: payload.direction === "borrowed" ? "borrowed" : "lent",
-            status: ["paid", "overdue", "pending"].includes(payload.status)
-              ? payload.status
-              : "pending",
+            status: nextStatus,
           },
         });
+        if (entry.status !== "paid" && updated.status === "paid") {
+          const household = await prisma.household.findUnique({ where: { id: householdId } });
+          const householdUsers = await getHouseholdUsers(householdId);
+          const summary = `${
+            updated.direction === "borrowed" ? "Borrowed from" : "Lent to"
+          } ${updated.counterpartyName} · $${updated.amountUsd.toFixed(2)}`;
+          await createNotificationsForUsers(
+            householdUsers.map((member) => member.id),
+            {
+              title: "Loan marked paid",
+              desc: summary,
+              time: "now",
+              group: "Today",
+              tone: "success",
+              screen: "lend_borrow",
+            },
+          );
+          const recipients = uniqueEmails(householdUsers.map((member) => member.email)).filter(
+            isDeliverableEmail,
+          );
+          if (household) {
+            const linkUrl = getAppBaseUrl();
+            await Promise.all(
+              recipients.map((email) =>
+                sendLoanPaidEmail({
+                  to: email,
+                  householdName: household.name,
+                  summary,
+                  linkUrl,
+                }),
+              ),
+            );
+          }
+        }
         break;
       }
 

@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "LoanEntry" ADD COLUMN     "paidAmountUsd" DOUBLE PRECISION NOT NULL DEFAULT 0;

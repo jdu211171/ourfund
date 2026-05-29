@@ -2,7 +2,7 @@ import { Mail, Lock, Eye } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useAppNavigation } from "@/lib/navigation";
-import { loginWithEmailServerFn, loginWithGoogleServerFn } from "@/lib/server-fns";
+import { loginWithEmailServerFn, loginWithGoogleServerFn, requestPasswordResetServerFn } from "@/lib/server-fns";
 
 const GOOGLE_CLIENT_ID = "648158368972-tl49o2fco00r73tor6c4es4kqs9ash9m.apps.googleusercontent.com";
 const GSI_SRC = "https://accounts.google.com/gsi/client";
@@ -85,6 +85,24 @@ export function LoginScreen() {
       navigate(pendingInvite ? "confirm_invite" : "home");
     } catch (err: unknown) {
       setError(errorMessage(err, "Invalid credentials"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setError("Enter your email to reset password");
+      return;
+    }
+    setError("");
+    setLoading(true);
+    try {
+      await requestPasswordResetServerFn({ data: { email } });
+      setResetSent(true);
+      setTimeout(() => setResetSent(false), 3000);
+    } catch (err: unknown) {
+      setError(errorMessage(err, "Failed to send reset link"));
     } finally {
       setLoading(false);
     }
@@ -194,7 +212,7 @@ export function LoginScreen() {
         )}
 
         <button
-          onClick={() => setResetSent(true)}
+          onClick={handleForgotPassword}
           className="mt-3 self-end text-[11px] font-semibold text-[var(--primary)]"
         >
           {resetSent ? "Reset link sent" : "Forgot password?"}

@@ -47,6 +47,7 @@ import { PlaidSuccessScreen } from "@/components/knit/PlaidSuccessScreen";
 import { LendBorrowScreen } from "@/components/knit/LendBorrowScreen";
 import { ProductTrackerScreen } from "@/components/knit/ProductTrackerScreen";
 import { ScanReceiptScreen } from "@/components/knit/ScanReceiptScreen";
+import { ResetPasswordScreen } from "@/components/knit/ResetPasswordScreen";
 import { PhoneFrame } from "@/components/knit/PhoneFrame";
 
 import { useState } from "react";
@@ -86,6 +87,8 @@ function AppRouter() {
       return <OnboardingScreen />;
     case "login":
       return <LoginScreen />;
+    case "reset_password":
+      return <ResetPasswordScreen />;
     case "signup":
       return <SignUpScreen />;
     case "join_family":

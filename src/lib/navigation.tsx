@@ -29,6 +29,7 @@ export type ScreenName =
   | "onboarding"
   | "login"
   | "signup"
+  | "reset_password"
   | "join_family"
   | "join_family_error"
   | "confirm_invite"
@@ -316,6 +317,8 @@ interface NavigationContextType {
   updateProfile: (profile: Partial<Profile>) => void;
   household: Household | null;
   pendingInvite: HouseholdInvite | null;
+  resetToken: string | null;
+  setResetToken: (token: string | null) => void;
   createHousehold: (input: {
     name: string;
     email: string;
@@ -365,7 +368,7 @@ interface NavigationContextType {
   setSelectedMemberId: (id: string | null) => void;
   selectedMemberIds: string[];
   setSelectedMemberIds: (ids: string[]) => void;
-  inviteMember: (role: MemberRole) => FamilyMember;
+  inviteMember: (role: MemberRole, email?: string) => FamilyMember;
   updateMember: (id: string, updates: Partial<FamilyMember>) => void;
   updateMemberPermission: (memberId: string, permission: string, on: boolean) => void;
   removeMember: (id: string) => void;
@@ -499,6 +502,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [signupHouseholdMode, setSignupHouseholdMode] = useState<"new" | "join">("new");
+  const [resetToken, setResetToken] = useState<string | null>(null);
   const [budgetMode, setBudgetModeState] = useState<BudgetMode>(initialSeed.budgetMode);
   const [reportPeriod, setReportPeriodState] = useState<ReportPeriod>(initialSeed.reportPeriod);
   const [profile, setProfile] = useState<Profile>(initialSeed.profile);
@@ -643,6 +647,16 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     passcode,
     faceIdEnabled,
   ]);
+
+  // Parse URL query params for reset token
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("reset");
+    if (token) {
+      setResetToken(token);
+      setCurrentScreen("reset_password");
+    }
+  }, []);
 
   const setBudgetMode = useCallback((mode: BudgetMode) => {
     setBudgetModeState(mode);
@@ -1781,6 +1795,8 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         setPasscode,
         faceIdEnabled,
         setFaceIdEnabled,
+        resetToken,
+        setResetToken,
       }}
     >
       {children}
