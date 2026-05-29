@@ -23,6 +23,7 @@ function getSessionCookieOptions(maxAge?: number) {
   const protocol = getRequestProtocol({ xForwardedProto: true });
   const secure = protocol === "https";
   const sameSiteEnv = process.env.COOKIE_SAMESITE?.trim().toLowerCase();
+  const domain = process.env.COOKIE_DOMAIN?.trim();
   let sameSite: "lax" | "strict" | "none" = "lax";
 
   if (sameSiteEnv === "strict") sameSite = "strict";
@@ -33,6 +34,7 @@ function getSessionCookieOptions(maxAge?: number) {
     httpOnly: true,
     secure,
     sameSite,
+    ...(domain ? { domain } : {}),
     path: "/",
     maxAge,
   };
