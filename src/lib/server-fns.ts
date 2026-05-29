@@ -1158,6 +1158,14 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
         break;
       }
 
+      case "deleteLoanEntry": {
+        if (!householdId) throw new Error("No household linked");
+        const loanToDelete = await prisma.loanEntry.findUnique({ where: { id: payload.id } });
+        if (!loanToDelete || loanToDelete.householdId !== householdId) throw new Error("Forbidden");
+        await prisma.loanEntry.delete({ where: { id: payload.id } });
+        break;
+      }
+
       case "addTrackedProduct": {
         if (!householdId) throw new Error("No household linked");
         await prisma.trackedProduct.create({

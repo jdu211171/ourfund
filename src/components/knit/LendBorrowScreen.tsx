@@ -1,4 +1,4 @@
-import { ArrowDownLeft, ArrowLeft, ArrowUpRight, Check, Plus, UserRound, Users } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, ArrowLeft, Check, Plus, Trash2, UserRound, Users, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { currencyAdornment, currencyValueToUsd, usdToCurrencyValue } from "@/lib/currency";
 import { useAppNavigation, type LoanDirection, type LoanEntry } from "@/lib/navigation";
@@ -17,11 +17,11 @@ export function LendBorrowScreen() {
     currency,
     addLoanEntry,
     updateLoanEntry,
+    deleteLoanEntries,
     activeWallets,
     addTransaction,
     profile,
     wallets,
-    household,
   } = useAppNavigation();
 
   const [walletId, setWalletId] = useState("");
@@ -48,6 +48,10 @@ export function LendBorrowScreen() {
   const amountUsd = currencyValueToUsd(parseFloat(amount || "0"), currency);
   const { prefix, suffix } = currencyAdornment(currency);
 
+  // Select mode
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
   const filteredEntries = useMemo(() => {
     if (tab === "Lent") return loanEntries.filter((entry) => entry.direction === "lent");
     if (tab === "Borrowed") return loanEntries.filter((entry) => entry.direction === "borrowed");
@@ -62,6 +66,26 @@ export function LendBorrowScreen() {
   const owedTotal = loanEntries
     .filter((entry) => entry.direction === "borrowed" && entry.status !== "paid")
     .reduce((sum, entry) => sum + (entry.amountUsd - entry.paidAmountUsd), 0);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedIds.size === 0) return;
+    deleteLoanEntries([...selectedIds]);
+    exitSelectMode();
+  };
 
   const saveLoan = () => {
     if (amountUsd <= 0) return;
@@ -79,7 +103,6 @@ export function LendBorrowScreen() {
       status: "pending",
     });
 
-    // 1. Transaction for the current member:
     addTransaction({
       name: direction === "lent"
         ? `Lent to ${cpName}`
@@ -91,7 +114,6 @@ export function LendBorrowScreen() {
       date: "today",
     });
 
-    // 2. If counterparty is a household member, create the corresponding transaction for them:
     if (selectedMember) {
       const counterpartyWallet = wallets.find(w => w.members.includes(selectedMember.id)) || wallets[0];
       addTransaction({
@@ -123,15 +145,13 @@ export function LendBorrowScreen() {
     const remainingUsd = Math.max(0, paymentLoan.amountUsd - newPaidUsd);
     const updatedStatus = remainingUsd <= 0.01 ? "paid" : paymentLoan.status;
 
-    // Update the loan entry status and paid amount (keeping original amountUsd unchanged!)
+    // Keep original amountUsd unchanged — only update paidAmountUsd
     updateLoanEntry(paymentLoan.id, {
       paidAmountUsd: newPaidUsd,
       status: updatedStatus,
     });
 
-    // Record transactions for repayment
     if (paymentLoan.direction === "lent") {
-      // Current member receives payment
       addTransaction({
         name: `Repayment from ${paymentLoan.counterpartyName}`,
         who: `${profile?.name || "Me"} · today`,
@@ -141,7 +161,6 @@ export function LendBorrowScreen() {
         date: "today",
       });
 
-      // If counterparty is a household member, record their pay outflow
       if (paymentLoan.counterpartyMemberId) {
         const counterpartyWallet =
           wallets.find((w) => w.members.includes(paymentLoan.counterpartyMemberId!)) || wallets[0];
@@ -156,7 +175,6 @@ export function LendBorrowScreen() {
         });
       }
     } else {
-      // Current member pays back borrowed money
       addTransaction({
         name: `Repay to ${paymentLoan.counterpartyName}`,
         who: `${profile?.name || "Me"} · today`,
@@ -166,7 +184,6 @@ export function LendBorrowScreen() {
         date: "today",
       });
 
-      // If counterparty is a household member, record their repayment inflow
       if (paymentLoan.counterpartyMemberId) {
         const counterpartyWallet =
           wallets.find((w) => w.members.includes(paymentLoan.counterpartyMemberId!)) || wallets[0];
@@ -190,21 +207,57 @@ export function LendBorrowScreen() {
     <PhoneFrame>
       <div className="flex-1 overflow-y-auto flex flex-col px-7 pt-10 pb-7 min-h-0">
         <header className="flex items-center justify-between">
-          <button
-            onClick={goBack}
-            className="grid h-9 w-9 place-items-center rounded-full text-foreground"
-            aria-label="Back"
-          >
-            <ArrowLeft className="h-5 w-5" strokeWidth={2.25} />
-          </button>
-          <h2 className="text-[17px] font-bold tracking-tight">Lend & Borrow</h2>
-          <button
-            onClick={() => setShowForm((prev) => !prev)}
-            className="grid h-9 w-9 place-items-center rounded-full bg-[var(--primary)] text-white"
-            aria-label="New loan"
-          >
-            <Plus className="h-4 w-4" strokeWidth={2.75} />
-          </button>
+          {selectMode ? (
+            <>
+              <button
+                onClick={exitSelectMode}
+                className="grid h-9 w-9 place-items-center rounded-full text-foreground"
+                aria-label="Cancel selection"
+              >
+                <X className="h-5 w-5" strokeWidth={2.25} />
+              </button>
+              <span className="text-[14px] font-bold text-foreground">
+                {selectedIds.size > 0 ? `${selectedIds.size} selected` : "Select entries"}
+              </span>
+              <button
+                onClick={handleDeleteSelected}
+                disabled={selectedIds.size === 0}
+                className="grid h-9 w-9 place-items-center rounded-full bg-red-50 text-red-500 disabled:opacity-30"
+                aria-label="Delete selected"
+              >
+                <Trash2 className="h-4 w-4" strokeWidth={2.5} />
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={goBack}
+                className="grid h-9 w-9 place-items-center rounded-full text-foreground"
+                aria-label="Back"
+              >
+                <ArrowLeft className="h-5 w-5" strokeWidth={2.25} />
+              </button>
+              <h2 className="text-[17px] font-bold tracking-tight">Lend &amp; Borrow</h2>
+              <div className="flex items-center gap-1.5">
+                {filteredEntries.length > 0 && (
+                  <button
+                    onClick={() => { setSelectMode(true); setShowForm(false); setPaymentLoan(null); }}
+                    className="grid h-9 w-9 place-items-center rounded-full bg-[var(--muted)] text-muted-foreground"
+                    aria-label="Select entries"
+                  >
+                    <Trash2 className="h-4 w-4" strokeWidth={2.25} />
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowForm((prev) => !prev)}
+                  className="grid h-9 w-9 place-items-center rounded-full bg-[var(--primary)] text-white"
+                  aria-label="New loan"
+                >
+                  <Plus className="h-4 w-4" strokeWidth={2.75} />
+                </button>
+              </div>
+            </>
+          )}
         </header>
 
         <div className="mt-5 grid grid-cols-2 gap-3">
@@ -228,7 +281,7 @@ export function LendBorrowScreen() {
           ))}
         </div>
 
-        {paymentLoan && (
+        {paymentLoan && !selectMode && (
           <div className="mt-3 rounded-3xl bg-white p-4 shadow-[var(--shadow-soft)] border border-[var(--primary)]/10 animate-in fade-in slide-in-from-bottom-3 duration-200">
             <h3 className="text-[13px] font-bold text-foreground">Record Repayment</h3>
             <p className="text-[10px] text-muted-foreground mt-0.5">
@@ -286,7 +339,7 @@ export function LendBorrowScreen() {
           </div>
         )}
 
-        {showForm && (
+        {showForm && !selectMode && (
           <div className="mt-3 rounded-3xl bg-white p-4 shadow-[var(--shadow-soft)]">
             <div className="grid grid-cols-2 gap-2">
               {(["lent", "borrowed"] as LoanDirection[]).map((item) => (
@@ -384,6 +437,9 @@ export function LendBorrowScreen() {
               title="You lent"
               rows={lent}
               direction="in"
+              selectMode={selectMode}
+              selectedIds={selectedIds}
+              onToggleSelect={toggleSelect}
               onMarkPaid={(id) => {
                 const row = loanEntries.find(entry => entry.id === id);
                 if (row) {
@@ -399,6 +455,9 @@ export function LendBorrowScreen() {
               title="You borrowed"
               rows={borrowed}
               direction="out"
+              selectMode={selectMode}
+              selectedIds={selectedIds}
+              onToggleSelect={toggleSelect}
               onMarkPaid={(id) => {
                 const row = loanEntries.find(entry => entry.id === id);
                 if (row) {
@@ -463,11 +522,17 @@ function Group({
   title,
   rows,
   direction,
+  selectMode,
+  selectedIds,
+  onToggleSelect,
   onMarkPaid,
 }: {
   title: string;
   rows: LoanEntry[];
   direction: "in" | "out";
+  selectMode: boolean;
+  selectedIds: Set<string>;
+  onToggleSelect: (id: string) => void;
   onMarkPaid: (id: string) => void;
 }) {
   if (rows.length === 0) return null;
@@ -481,15 +546,33 @@ function Group({
       </p>
       <div className="mt-2 space-y-2">
         {rows.map((row) => {
-          const displayUsd = row.status === "paid" ? row.amountUsd : (row.amountUsd - row.paidAmountUsd);
-          
+          // Active loans: show remaining. Paid loans: show original full amount (history record).
+          const displayUsd = row.status === "paid"
+            ? row.amountUsd
+            : (row.amountUsd - row.paidAmountUsd);
+          const isSelected = selectedIds.has(row.id);
+
           return (
             <div
               key={row.id}
-              className="flex items-center gap-3 rounded-2xl bg-white px-3 py-2.5 shadow-[var(--shadow-soft)] animate-in fade-in duration-200"
+              onClick={selectMode ? () => onToggleSelect(row.id) : undefined}
+              className={`flex items-center gap-3 rounded-2xl bg-white px-3 py-2.5 shadow-[var(--shadow-soft)] animate-in fade-in duration-200 transition-all ${
+                selectMode ? "cursor-pointer" : ""
+              } ${isSelected ? "ring-2 ring-[var(--primary)] ring-offset-1" : ""}`}
             >
+              {selectMode && (
+                <div
+                  className={`flex-shrink-0 h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                    isSelected
+                      ? "bg-[var(--primary)] border-[var(--primary)]"
+                      : "border-[var(--muted-foreground)] bg-transparent"
+                  }`}
+                >
+                  {isSelected && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
+                </div>
+              )}
               <div
-                className="grid h-9 w-9 place-items-center rounded-xl text-[11px] font-bold"
+                className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-xl text-[11px] font-bold"
                 style={{
                   background: direction === "in" ? "oklch(0.96 0.04 145)" : "oklch(0.96 0.05 25)",
                   color: direction === "in" ? "var(--success)" : "var(--danger)",
@@ -509,7 +592,13 @@ function Group({
                     </span>
                   )}
                 </p>
-                {row.status !== "paid" && (
+                {/* For paid entries, show the original amount as a subtle history note */}
+                {row.status === "paid" && row.paidAmountUsd > 0 && row.amountUsd > 0 && (
+                  <p className="text-[9px] text-muted-foreground/60 mt-0.5">
+                    Fully repaid
+                  </p>
+                )}
+                {row.status !== "paid" && !selectMode && (
                   <button
                     type="button"
                     onClick={() => onMarkPaid(row.id)}

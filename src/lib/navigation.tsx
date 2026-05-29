@@ -386,6 +386,7 @@ interface NavigationContextType {
   loanEntries: LoanEntry[];
   addLoanEntry: (entry: Omit<LoanEntry, "id" | "createdAt" | "paidAmountUsd"> & { paidAmountUsd?: number }) => LoanEntry;
   updateLoanEntry: (id: string, updates: Partial<Omit<LoanEntry, "id" | "createdAt">>) => void;
+  deleteLoanEntries: (ids: string[]) => void;
   trackedProducts: ProductEntry[];
   addTrackedProduct: (product: Omit<ProductEntry, "id" | "createdAt">) => ProductEntry;
   receiptScans: ReceiptScan[];
@@ -1422,6 +1423,13 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const deleteLoanEntries = (ids: string[]) => {
+    setLoanEntries((prev) => prev.filter((entry) => !ids.includes(entry.id)));
+    ids.forEach((id) =>
+      syncMutationServerFn({ data: { type: "deleteLoanEntry", data: { id } } }).catch(console.error),
+    );
+  };
+
   const addTrackedProduct = (product: Omit<ProductEntry, "id" | "createdAt">) => {
     const newProduct: ProductEntry = {
       ...product,
@@ -1749,6 +1757,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         loanEntries,
         addLoanEntry,
         updateLoanEntry,
+        deleteLoanEntries,
         trackedProducts,
         addTrackedProduct,
         receiptScans,
