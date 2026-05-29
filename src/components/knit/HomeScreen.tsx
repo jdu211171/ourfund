@@ -19,6 +19,7 @@ import { BalanceHeader } from "./BalanceHeader";
 import { Money } from "./Money";
 import { useAppNavigation } from "@/lib/navigation";
 import { GoalIcon, normalizeGoalIconName } from "./goalIconOptions";
+import { formatScheduleSubtext, getScheduleInfo } from "@/lib/schedules";
 
 export function HomeScreen() {
   const {
@@ -51,8 +52,18 @@ export function HomeScreen() {
 
   const firstName = profile.name.trim().split(" ").filter(Boolean)[0] ?? "there";
   const unreadCount = notifications.filter((notification) => !notification.read).length;
-  const upcomingBills = subscriptions.slice(0, 2);
-  const expectedIncomeUsd = recurringIncome.reduce((sum, item) => sum + item.amountUsd, 0);
+  const scheduleToday = new Date();
+  const upcomingBills = subscriptions
+    .map((item) => ({ item, info: getScheduleInfo(item.every, scheduleToday) }))
+    .filter((entry) => entry.info.daysUntil !== null && entry.info.daysUntil <= 5)
+    .sort((a, b) => (a.info.daysUntil ?? 0) - (b.info.daysUntil ?? 0));
+  const forecastItems = recurringIncome
+    .map((item) => ({ item, info: getScheduleInfo(item.every, scheduleToday) }))
+    .filter((entry) => entry.info.daysUntil !== null && entry.info.daysUntil <= 5)
+    .sort((a, b) => (a.info.daysUntil ?? 0) - (b.info.daysUntil ?? 0));
+  const expectedIncomeUsd = forecastItems.reduce((sum, entry) => sum + entry.item.amountUsd, 0);
+  const showUpcoming = upcomingBills.length > 0;
+  const showForecast = forecastItems.length > 0;
   const primaryGoal = goals.find((goal) => goal.savedUsd < goal.targetUsd) ?? goals[0];
   const goalPct = primaryGoal
     ? Math.min(100, Math.round((primaryGoal.savedUsd / Math.max(primaryGoal.targetUsd, 1)) * 100))
@@ -159,45 +170,55 @@ export function HomeScreen() {
           </button>
         </div>
 
-        <div className="mt-2 grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={() => navigate("subscriptions")}
-            className="rounded-2xl bg-white p-3 text-left"
+        {(showUpcoming || showForecast) && (
+          <div
+            className={`mt-2 grid gap-2 ${showUpcoming && showForecast ? "grid-cols-2" : "grid-cols-1"}`}
           >
-            <div className="flex items-center gap-2">
-              <span className="grid h-8 w-8 place-items-center rounded-xl bg-[oklch(0.96_0.05_25)] text-[var(--danger)]">
-                <Clock className="h-4 w-4" strokeWidth={2.25} />
-              </span>
-              <span className="text-[11px] font-bold text-foreground">Upcoming</span>
-            </div>
-            <p className="mt-3 text-[12px] font-semibold text-foreground">
-              {upcomingBills[0]?.label ?? "No bills due"}
-            </p>
-            <p className="mt-0.5 text-[10px] text-muted-foreground">
-              {upcomingBills[0]?.every ?? "Add recurring bills"}
-            </p>
-          </button>
+            {showUpcoming && (
+              <button
+                type="button"
+                onClick={() => navigate("subscriptions")}
+                className="rounded-2xl bg-white p-3 text-left"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="grid h-8 w-8 place-items-center rounded-xl bg-[oklch(0.96_0.05_25)] text-[var(--danger)]">
+                    <Clock className="h-4 w-4" strokeWidth={2.25} />
+                  </span>
+                  <span className="text-[11px] font-bold text-foreground">Upcoming</span>
+                </div>
+                <p className="mt-3 text-[12px] font-semibold text-foreground">
+                  {upcomingBills[0]?.item.label ?? "No bills due"}
+                </p>
+                <p className="mt-0.5 text-[10px] text-muted-foreground">
+                  {upcomingBills[0]
+                    ? formatScheduleSubtext(upcomingBills[0].info, { includeCategory: true })
+                    : "Add recurring bills"}
+                </p>
+              </button>
+            )}
 
-          <button
-            type="button"
-            onClick={() => navigate("recurring_income")}
-            className="rounded-2xl bg-white p-3 text-left"
-          >
-            <div className="flex items-center gap-2">
-              <span className="grid h-8 w-8 place-items-center rounded-xl bg-[oklch(0.96_0.04_145)] text-[var(--success)]">
-                <TrendingUp className="h-4 w-4" strokeWidth={2.25} />
-              </span>
-              <span className="text-[11px] font-bold text-foreground">Forecast</span>
-            </div>
-            <div className="mt-3">
-              <Money usd={expectedIncomeUsd} size="sm" tone="success" />
-            </div>
-            <p className="mt-0.5 text-[10px] text-muted-foreground">
-              {recurringIncome.length} scheduled deposits
-            </p>
-          </button>
-        </div>
+            {showForecast && (
+              <button
+                type="button"
+                onClick={() => navigate("recurring_income")}
+                className="rounded-2xl bg-white p-3 text-left"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="grid h-8 w-8 place-items-center rounded-xl bg-[oklch(0.96_0.04_145)] text-[var(--success)]">
+                    <TrendingUp className="h-4 w-4" strokeWidth={2.25} />
+                  </span>
+                  <span className="text-[11px] font-bold text-foreground">Forecast</span>
+                </div>
+                <div className="mt-3">
+                  <Money usd={expectedIncomeUsd} size="sm" tone="success" />
+                </div>
+                <p className="mt-0.5 text-[10px] text-muted-foreground">
+                  {forecastItems.length} deposit{forecastItems.length === 1 ? "" : "s"} due soon
+                </p>
+              </button>
+            )}
+          </div>
+        )}
 
         {(primaryGoal || budgetAlerts.length > 0) && (
           <div className="mt-3 space-y-2">

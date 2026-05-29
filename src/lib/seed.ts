@@ -13,6 +13,7 @@ import type {
   Transaction,
   WalletAccount,
 } from "./navigation";
+import { buildScheduleEvery, formatISODate } from "./schedules";
 
 export const defaultPermissions = {
   "Approve children's requests": true,
@@ -299,11 +300,20 @@ const demoNotifications: AppNotification[] = [
   },
 ];
 
+const seedToday = new Date();
+const addSeedDays = (base: Date, days: number) =>
+  new Date(base.getFullYear(), base.getMonth(), base.getDate() + days);
+const seedISO = (date: Date) => formatISODate(date);
+
 const demoRecurringIncome: ScheduleItem[] = [
   {
     id: "ri1",
     label: "Salary · James",
-    every: "Monthly · 25th",
+    every: buildScheduleEvery("Monthly · 25th", {
+      frequency: "monthly",
+      nextDate: seedISO(addSeedDays(seedToday, 3)),
+      category: "Salary",
+    }),
     amountUsd: 4820,
     color: "oklch(0.55 0.24 265)",
     type: "income",
@@ -311,7 +321,11 @@ const demoRecurringIncome: ScheduleItem[] = [
   {
     id: "ri2",
     label: "Freelance · Emma",
-    every: "Bi-weekly · Fri",
+    every: buildScheduleEvery("Weekly · Fri", {
+      frequency: "weekly",
+      nextDate: seedISO(addSeedDays(seedToday, 5)),
+      category: "Freelance",
+    }),
     amountUsd: 1200,
     color: "oklch(0.65 0.22 200)",
     type: "income",
@@ -319,7 +333,11 @@ const demoRecurringIncome: ScheduleItem[] = [
   {
     id: "ri3",
     label: "Allowance · Ava",
-    every: "Weekly · Sun",
+    every: buildScheduleEvery("Weekly · Sun", {
+      frequency: "weekly",
+      nextDate: seedISO(addSeedDays(seedToday, 6)),
+      category: "Allowance",
+    }),
     amountUsd: 25,
     color: "oklch(0.65 0.22 320)",
     type: "income",
@@ -327,7 +345,11 @@ const demoRecurringIncome: ScheduleItem[] = [
   {
     id: "ri4",
     label: "Pension · Grandma",
-    every: "Monthly · 1st",
+    every: buildScheduleEvery("Monthly · 1st", {
+      frequency: "monthly",
+      nextDate: seedISO(addSeedDays(seedToday, 12)),
+      category: "Pension",
+    }),
     amountUsd: 600,
     color: "oklch(0.7 0.18 150)",
     type: "income",
@@ -338,7 +360,11 @@ const demoSubscriptions: ScheduleItem[] = [
   {
     id: "s1",
     label: "Rent",
-    every: "Due Dec 1",
+    every: buildScheduleEvery("Monthly · 1st", {
+      frequency: "monthly",
+      nextDate: seedISO(addSeedDays(seedToday, 2)),
+      category: "Rent & Utilities",
+    }),
     amountUsd: 1420,
     color: "oklch(0.55 0.24 265)",
     type: "subscription",
@@ -346,7 +372,11 @@ const demoSubscriptions: ScheduleItem[] = [
   {
     id: "s2",
     label: "Electricity",
-    every: "Due Dec 4",
+    every: buildScheduleEvery("Monthly · 4th", {
+      frequency: "monthly",
+      nextDate: seedISO(addSeedDays(seedToday, 4)),
+      category: "Bills & Utilities",
+    }),
     amountUsd: 118.4,
     color: "oklch(0.65 0.22 60)",
     type: "subscription",
@@ -354,7 +384,11 @@ const demoSubscriptions: ScheduleItem[] = [
   {
     id: "s3",
     label: "Internet",
-    every: "Monthly · 12th",
+    every: buildScheduleEvery("Monthly · 12th", {
+      frequency: "monthly",
+      nextDate: seedISO(addSeedDays(seedToday, 15)),
+      category: "Bills & Utilities",
+    }),
     amountUsd: 64,
     color: "oklch(0.65 0.22 200)",
     type: "subscription",
@@ -362,7 +396,11 @@ const demoSubscriptions: ScheduleItem[] = [
   {
     id: "s4",
     label: "Netflix",
-    every: "Monthly · 18th",
+    every: buildScheduleEvery("Monthly · 18th", {
+      frequency: "monthly",
+      nextDate: seedISO(addSeedDays(seedToday, 18)),
+      category: "Entertainment",
+    }),
     amountUsd: 15.99,
     color: "oklch(0.65 0.22 30)",
     type: "subscription",
@@ -370,7 +408,11 @@ const demoSubscriptions: ScheduleItem[] = [
   {
     id: "s5",
     label: "Spotify Family",
-    every: "Monthly · 22nd",
+    every: buildScheduleEvery("Monthly · 22nd", {
+      frequency: "monthly",
+      nextDate: seedISO(addSeedDays(seedToday, 22)),
+      category: "Entertainment",
+    }),
     amountUsd: 16.99,
     color: "oklch(0.65 0.22 320)",
     type: "subscription",

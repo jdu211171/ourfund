@@ -24,6 +24,7 @@ import {
   syncMutationServerFn,
   validateInviteCodeServerFn,
 } from "./server-fns";
+import { formatISODate, makeScheduleMeta, nextDateFromWeekday } from "./schedules";
 
 export type ScreenName =
   | "onboarding"
@@ -425,6 +426,10 @@ function initialsFor(name: string) {
     .join("")
     .slice(0, 2)
     .toUpperCase();
+}
+
+function plusDays(date: Date, days: number) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
 }
 
 function firstName(name: string) {
@@ -1318,10 +1323,12 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     updateMember(memberId, { allowanceUsd: amountUsd, allowanceDay: day, allowanceOn: true });
     const label = `Allowance · ${member.name.split(" ")[0]}`;
     const existingAllowance = recurringIncome.find((item) => item.label === label);
+    const nextDate = nextDateFromWeekday(day);
+    const meta = makeScheduleMeta({ frequency: "weekly", nextDate, category: "Allowance" });
     const newAllowance: ScheduleItem = {
       id: existingAllowance?.id ?? makeId("allowance"),
       label,
-      every: `Weekly · ${day}`,
+      every: meta.every,
       amountUsd,
       color: "oklch(0.65 0.22 320)",
       type: "income",
@@ -1408,10 +1415,16 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   };
 
   const addRecurringIncome = (item: Partial<ScheduleItem> = {}) => {
+    const defaultNextDate = formatISODate(plusDays(new Date(), 7));
+    const fallbackMeta = makeScheduleMeta({
+      frequency: "monthly",
+      nextDate: defaultNextDate,
+      category: "Income",
+    });
     const newItem: ScheduleItem = {
       id: makeId("income-schedule"),
       label: item.label ?? "New income schedule",
-      every: item.every ?? "Monthly · 1st",
+      every: item.every ?? fallbackMeta.every,
       amountUsd: item.amountUsd ?? 500,
       color: item.color ?? "oklch(0.7 0.18 150)",
       type: "income",
@@ -1422,10 +1435,16 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   };
 
   const addSubscription = (item: Partial<ScheduleItem> = {}) => {
+    const defaultNextDate = formatISODate(plusDays(new Date(), 7));
+    const fallbackMeta = makeScheduleMeta({
+      frequency: "monthly",
+      nextDate: defaultNextDate,
+      category: "Expense",
+    });
     const newItem: ScheduleItem = {
       id: makeId("subscription"),
       label: item.label ?? "New subscription",
-      every: item.every ?? "Monthly · 1st",
+      every: item.every ?? fallbackMeta.every,
       amountUsd: item.amountUsd ?? 24.99,
       color: item.color ?? "oklch(0.65 0.22 30)",
       type: "subscription",
