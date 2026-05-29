@@ -1210,13 +1210,20 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const inviteMember = (role: MemberRole) => {
+  const inviteMember = (role: MemberRole, email?: string) => {
+    const cleanEmail = email?.trim().toLowerCase();
+    const emailName = cleanEmail?.split("@")[0] ?? "";
+    const formattedName = emailName
+      ? emailName
+          .replace(/[._-]+/g, " ")
+          .replace(/\b\w/g, (char) => char.toUpperCase())
+      : `Invited ${role}`;
     const newMember: FamilyMember = {
       id: makeId("member"),
-      name: `Invited ${role}`,
-      email: `${role.toLowerCase()}@pending.invite`,
+      name: formattedName,
+      email: cleanEmail ?? `${role.toLowerCase()}@pending.invite`,
       role,
-      initials: role.slice(0, 2).toUpperCase(),
+      initials: initialsFor(formattedName),
       permissions: permissionsForRole(role),
     };
     setMembers((prev) => [...prev, newMember]);
