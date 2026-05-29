@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, Target } from "lucide-react";
+import { ArrowLeft, Check } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { useEffect, useMemo, useState } from "react";
 import { useAppNavigation } from "@/lib/navigation";
@@ -10,10 +10,10 @@ import {
   usdToCurrencyValue,
 } from "@/lib/currency";
 import {
-  defaultGoalIconKey,
-  goalIconMap,
+  defaultGoalIconName,
+  GoalIcon,
   goalIconOptions,
-  normalizeGoalIconKey,
+  normalizeGoalIconName,
 } from "./goalIconOptions";
 
 const presetUsd = [1000, 2500, 5000, 10000];
@@ -34,11 +34,10 @@ export function EditGoalScreen() {
   const [targetDate, setTargetDate] = useState("");
   const [contributors, setContributors] = useState<string[]>([]);
   const [iconQuery, setIconQuery] = useState("");
-  const [selectedIconKey, setSelectedIconKey] = useState(defaultGoalIconKey);
+  const [selectedIconName, setSelectedIconName] = useState(defaultGoalIconName);
   const targetUsd = currencyValueToUsd(parseFloat(amount || "0"), currency);
   const { prefix, suffix } = currencyAdornment(currency);
-  const normalizedIconKey = normalizeGoalIconKey(selectedIconKey);
-  const ActiveIcon = goalIconMap[normalizedIconKey] ?? Target;
+  const normalizedIconName = normalizeGoalIconName(selectedIconName);
   const filteredIcons = useMemo(() => {
     const query = iconQuery.trim().toLowerCase();
     if (!query) return goalIconOptions;
@@ -55,7 +54,7 @@ export function EditGoalScreen() {
     setTargetDate(goal.targetDate);
     setContributors(goal.contributors ?? []);
     setAmount(String(Math.round(usdToCurrencyValue(goal.targetUsd, currency))));
-    setSelectedIconKey(normalizeGoalIconKey(goal.icon));
+    setSelectedIconName(normalizeGoalIconName(goal.icon));
   }, [currency, goal?.id]);
 
   if (!goal) {
@@ -112,7 +111,7 @@ export function EditGoalScreen() {
               background: "linear-gradient(135deg, oklch(0.65 0.22 265), oklch(0.45 0.24 265))",
             }}
           >
-            <ActiveIcon className="h-6 w-6" strokeWidth={2.25} />
+            <GoalIcon name={normalizedIconName} className="h-6 w-6" strokeWidth={2.25} />
           </div>
           <input
             type="text"
@@ -192,21 +191,26 @@ export function EditGoalScreen() {
           />
         </div>
         <div className="mt-2 max-h-40 overflow-y-auto pr-1">
-          <div className="grid grid-cols-6 gap-2">
-            {filteredIcons.map(({ key, Icon }) => (
+          <div className="grid grid-cols-5 gap-2">
+            {filteredIcons.map(({ key }) => (
               <button
                 key={key}
-                onClick={() => setSelectedIconKey(key)}
-                className={`grid h-11 place-items-center rounded-2xl transition-all cursor-pointer ${
-                  normalizeGoalIconKey(selectedIconKey) === key
+                onClick={() => setSelectedIconName(key)}
+                className={`grid h-12 place-items-center rounded-2xl transition-all cursor-pointer ${
+                  normalizeGoalIconName(selectedIconName) === key
                     ? "bg-[var(--primary)] text-white shadow-md scale-105"
                     : "bg-white text-foreground shadow-[var(--shadow-soft)] hover:bg-slate-50 active:scale-95"
                 }`}
               >
-                <Icon className="h-4 w-4" strokeWidth={2.25} />
+                <GoalIcon name={key} className="h-4 w-4" strokeWidth={2.25} />
               </button>
             ))}
           </div>
+          {filteredIcons.length === 0 && (
+            <p className="mt-2 text-center text-[11px] text-muted-foreground">
+              No icons found.
+            </p>
+          )}
         </div>
 
         <p className="mt-4 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
@@ -260,7 +264,7 @@ export function EditGoalScreen() {
               title: title.trim() || "New goal",
               targetUsd,
               targetDate: targetDate.trim() || "No deadline",
-              icon: normalizedIconKey,
+              icon: normalizedIconName,
               contributors,
             });
             navigate("goal_detail");

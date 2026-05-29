@@ -1,9 +1,9 @@
-import { ArrowLeft, MoreHorizontal, Pencil, Plus, Target } from "lucide-react";
+import { ArrowLeft, MoreHorizontal, Pencil, Plus } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { useAppNavigation } from "@/lib/navigation";
 import { useState } from "react";
 import { currencyAdornment, currencyValueToUsd, formatUsdAsCurrency } from "@/lib/currency";
-import { goalIconMap, normalizeGoalIconKey } from "./goalIconOptions";
+import { GoalIcon, normalizeGoalIconName } from "./goalIconOptions";
 
 export function GoalDetailScreen() {
   const { navigate, goBack, currency, goals, selectedGoalId, setSelectedGoalId, contributeToGoal } =
@@ -48,7 +48,7 @@ export function GoalDetailScreen() {
 
   const pct = Math.min(100, Math.round((goal.savedUsd / goal.targetUsd) * 100));
   const monthly = Math.max(1, Math.ceil((goal.targetUsd - goal.savedUsd) / 6));
-  const GoalIcon = goalIconMap[normalizeGoalIconKey(goal.icon)] ?? Target;
+  const goalIconName = normalizeGoalIconName(goal.icon);
 
   return (
     <PhoneFrame>
@@ -96,7 +96,7 @@ export function GoalDetailScreen() {
                 </span>
               </p>
             </div>
-            <GoalIcon className="h-5 w-5" strokeWidth={2.25} />
+            <GoalIcon name={goalIconName} className="h-5 w-5" strokeWidth={2.25} />
           </div>
           <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-white/20">
             <div className="h-full rounded-full bg-white" style={{ width: `${pct}%` }} />
