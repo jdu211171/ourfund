@@ -154,7 +154,7 @@ export interface Goal {
   icon: string;
   color: string;
   contributors: string[];
-  history: { id: string; who: string; initials: string; date: string; amountUsd: number }[];
+  history: { id: string; who: string; initials: string; date: string; amountUsd: number, transactionId?: string }[];
 }
 
 export interface LinkedBank {
@@ -1021,6 +1021,18 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     setTransactions((prev) => prev.filter((t) => t.id !== id));
     setSelectedTransactionId(null);
     // Persist to DB in background
+    // Cascade delete into goal history records
+    setGoals((prevGoals) => 
+      prevGoals.map((goal) => {
+        const match = goal.history.find((h) => h.transactionId === id);
+        if(!match) return goal;
+        return {
+          ...goal,
+          savedUsd: Math.max(0, goal.savedUsd - match.amountUsd),
+          history: goal.history.filter((h) => h.transactionId !== id),
+        };
+      })
+    );
     syncMutationServerFn({ data: { type: "deleteTransaction", data: { id } } }).catch(
       console.error,
     );
@@ -1141,6 +1153,19 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
 
   const contributeToGoal = (goalId: string, amountUsd: number, who = firstName(profile.name)) => {
     if (amountUsd <= 0) return;
+    const contributorName = who || profile.name || "You";
+    const sharedTxnId = makeId("txn");
+    const linkedTxn = {
+      id: sharedTxnId,
+      name: `Goal Contribution: ${goals.find((g) => g.id === goalId)?.title || "Savings"}`,
+      who: contributorName,
+      usd: -amountUsd,
+      category: "Goals",
+      wallet: activeWallets[0]?.label || "Private Wallet",
+      date: formatISODate(new Date()),
+    };
+    setTransactions((prev) => [linkedTxn, ...prev]);
+
     const goalToUpdate = goals.find((g) => g.id === goalId);
     if (!goalToUpdate) return;
     const contributionUsd = Math.min(
@@ -1156,16 +1181,26 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
       amountUsd: contributionUsd,
     };
     setGoals((prev) =>
-      prev.map((goal) =>
-        goal.id === goalId
-          ? {
-              ...goal,
-              savedUsd: Math.min(goal.targetUsd, goal.savedUsd + contributionUsd),
-              history: [contribution, ...goal.history],
-            }
-          : goal,
-      ),
-    );
+      prev.map((g) => {
+        if (g.id !== goalId) return g;
+        return {
+        ...g,
+        savedUsd: g.savedUsd + amountUsd,
+        history: [
+          {
+            id: makeId("contrib"),
+            who: contributorName,
+            initials: initialsFor(contributorName),
+            date: "Just now",
+            amountUsd,
+            transactionId: sharedTxnId,
+          },
+          ...g.history,
+         ],
+        };
+      }),
+     );
+  syncMutationServerFn({ data: { type: "addTransaction", data: linkedTxn } }).catch(console.error);;
     const updatedSaved = Math.min(goalToUpdate.targetUsd, goalToUpdate.savedUsd + contributionUsd);
     const updatedHistory = [contribution, ...goalToUpdate.history];
     syncMutationServerFn({
