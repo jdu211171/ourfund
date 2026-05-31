@@ -1,6 +1,7 @@
 # Nest — Family Budget App · Feature List
 
 ## 🔐 Auth & Onboarding
+
 - [ ] Onboarding splash / intro screens
   - [ ] Multi-step carousel with value props
   - [ ] Skip button to go straight to sign-up
@@ -36,6 +37,7 @@
   - [ ] Option to request a new code from admin
 
 ## 🏠 Home
+
 - [ ] Dashboard with total balance header
   - [ ] Animated balance counter on load
   - [ ] Toggle to show / hide balance (privacy mode)
@@ -59,6 +61,7 @@
   - [ ] Badge for unread notifications
 
 ## 💸 Transactions
+
 - [ ] Add expense (amount, category, wallet, note, date)
   - [ ] Numeric keypad with decimal support
   - [ ] Category picker with icons
@@ -102,6 +105,7 @@
   - [ ] Active filter count badge on filter icon
 
 ## 💰 Wallets
+
 - [ ] View all wallets and balances
   - [ ] Card-per-wallet with icon, name, balance
   - [ ] Total across all wallets in header
@@ -126,6 +130,7 @@
   - [ ] Show imported accounts & balances
 
 ## 🗂️ Categories
+
 - [ ] View and manage spending categories
   - [ ] Grid of icon + color tiles
   - [ ] Drag-to-reorder
@@ -140,6 +145,7 @@
   - [ ] Delete with merge-into option
 
 ## 🎯 Goals
+
 - [ ] Create a savings goal (name, target amount, deadline)
   - [ ] Goal name & emoji picker
   - [ ] Target amount input
@@ -159,6 +165,7 @@
   - [ ] Archive or delete goal option
 
 ## 🔁 Recurring Items
+
 - [ ] View and manage subscriptions
   - [ ] List with next-billing date & amount
   - [ ] Swipe to pause / cancel
@@ -174,6 +181,7 @@
   - [ ] Configurable reminder lead time (1 day, 3 days, etc.)
 
 ## 📊 Reports & Analytics
+
 - [ ] Weekly spending report
   - [ ] Bar chart of spending by day
   - [ ] Top 3 categories this week
@@ -191,6 +199,7 @@
   - [ ] Export report as PDF / CSV
 
 ## 🔔 Alerts & Notifications
+
 - [ ] In-app notifications / alerts list
   - [ ] Grouped by date (Today, Yesterday, Older)
   - [ ] Swipe to dismiss
@@ -205,6 +214,7 @@
   - [ ] Per-wallet minimum balance threshold
 
 ## 👨‍👩‍👧 Family / Household
+
 - [ ] Family profile screen (all members)
   - [ ] Avatar grid with name & role badge
   - [ ] Tap member to view their activity
@@ -226,6 +236,7 @@
   - [ ] Option to reassign their transactions before removal
 
 ## 💳 Lend & Borrow
+
 - [ ] Log money lent to someone
   - [ ] Borrower name (contact picker or manual)
   - [ ] Amount, note, due date
@@ -240,6 +251,7 @@
   - [ ] Send reminder to borrower (SMS / copy link)
 
 ## 🛍️ Product Tracker
+
 - [ ] Add a product / price to watch
   - [ ] Product name & URL input
   - [ ] Target price threshold input
@@ -251,6 +263,7 @@
   - [ ] Remove a tracked product
 
 ## ⚙️ Settings & Profile
+
 - [ ] Edit profile (name, avatar, email)
   - [ ] Avatar: pick from library, take photo, or upload
   - [ ] Display name & email update
@@ -268,6 +281,7 @@
   - [ ] Delete account with data-wipe confirmation
 
 ## 🧩 Edge States
+
 - [ ] Empty history / no transactions state
   - [ ] Illustrated empty-state graphic
   - [ ] CTA to add first transaction

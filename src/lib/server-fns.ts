@@ -147,9 +147,7 @@ function isDeliverableEmail(email?: string | null) {
 function uniqueEmails(emails: Array<string | null | undefined>) {
   return Array.from(
     new Set(
-      emails
-        .map((email) => email?.trim())
-        .filter((email): email is string => Boolean(email)),
+      emails.map((email) => email?.trim()).filter((email): email is string => Boolean(email)),
     ),
   );
 }
@@ -376,12 +374,10 @@ export const resetPasswordServerFn = createServerFn({ method: "POST" })
   });
 
 export const getAppDataServerFn = createServerFn({ method: "GET" }).handler(async () => {
-  setResponseHeaders(
-    {
-      "Cache-Control": "no-store",
-      Vary: "Cookie",
-    },
-  );
+  setResponseHeaders({
+    "Cache-Control": "no-store",
+    Vary: "Cookie",
+  });
 
   const user = await getSessionUser();
   if (!user) return null;
@@ -621,9 +617,10 @@ export const scanReceiptServerFn = createServerFn({ method: "POST" })
     const householdId = member?.householdId || null;
     const model = process.env.GEMINI_MODEL || "gemini-3.5-flash";
     const currency = data.currency || "JPY";
-    const categoriesList = data.categories && data.categories.length > 0
-      ? data.categories.join(", ")
-      : "Groceries, Dining, Household, Electronics, Clothing, Health, Other";
+    const categoriesList =
+      data.categories && data.categories.length > 0
+        ? data.categories.join(", ")
+        : "Groceries, Dining, Household, Electronics, Clothing, Health, Other";
     const prompt = [
       "Extract line-item product data from this receipt.",
       "Japanese receipts are the primary target, so read Japanese product names carefully.",
@@ -1403,7 +1400,8 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
             note: payload.note,
             due: payload.due,
             amountUsd: payload.amountUsd !== undefined ? Number(payload.amountUsd) : undefined,
-            paidAmountUsd: payload.paidAmountUsd !== undefined ? Number(payload.paidAmountUsd) : undefined,
+            paidAmountUsd:
+              payload.paidAmountUsd !== undefined ? Number(payload.paidAmountUsd) : undefined,
             direction: payload.direction === "borrowed" ? "borrowed" : "lent",
             status: nextStatus,
           },

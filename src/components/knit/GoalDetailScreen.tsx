@@ -17,10 +17,14 @@ export function GoalDetailScreen() {
     setSelectedGoalId,
     contributeToGoal,
     deleteContributionFromGoal,
+    activeWallets,
   } = useAppNavigation();
   const goal = goals.find((g) => g.id === selectedGoalId) ?? goals[0];
   const [contribution, setContribution] = useState("100");
   const [selectedContributionId, setSelectedContributionId] = useState<string | null>(null);
+  const [selectedWalletId, setSelectedWalletId] = useState<string | null>(
+    activeWallets[0]?.id ?? null,
+  );
   const contributionUsd = currencyValueToUsd(parseFloat(contribution || "0"), currency);
   const { prefix, suffix } = currencyAdornment(currency);
   const currentMember = members.find((member) => member.id === currentMemberId);
@@ -32,7 +36,8 @@ export function GoalDetailScreen() {
     return entry.who.trim().toLowerCase() === currentMemberFirstName;
   };
   const selectedContribution = goal.history.find((entry) => entry.id === selectedContributionId);
-  const canDeleteSelectedContribution = selectedContribution && canDeleteContribution(selectedContribution);
+  const canDeleteSelectedContribution =
+    selectedContribution && canDeleteContribution(selectedContribution);
 
   if (!goal) {
     return (
@@ -77,15 +82,12 @@ export function GoalDetailScreen() {
     const targetYear = parseInt(match[1], 10);
     const targetMonth = parseInt(match[2], 10) - 1; // 0-indexed
     const now = new Date();
-    const months =
-      (targetYear - now.getFullYear()) * 12 + (targetMonth - now.getMonth());
+    const months = (targetYear - now.getFullYear()) * 12 + (targetMonth - now.getMonth());
     return Math.max(1, months);
   })();
 
   const monthly =
-    monthsRemaining != null
-      ? Math.ceil((goal.targetUsd - goal.savedUsd) / monthsRemaining)
-      : null;
+    monthsRemaining != null ? Math.ceil((goal.targetUsd - goal.savedUsd) / monthsRemaining) : null;
 
   // Format stored "YYYY-MM" into a human-readable label like "Aug 2026"
   const targetDateLabel = (() => {
@@ -160,7 +162,10 @@ export function GoalDetailScreen() {
             {
               l: "Monthly",
               v: monthly != null ? formatUsdAsCurrency(monthly, currency) : "—",
-              sub: monthly != null && monthsRemaining != null ? `${monthsRemaining} mo left` : "No deadline",
+              sub:
+                monthly != null && monthsRemaining != null
+                  ? `${monthsRemaining} mo left`
+                  : "No deadline",
             },
             { l: "Saved", v: formatUsdAsCurrency(goal.savedUsd, currency), sub: null },
             {
@@ -193,22 +198,25 @@ export function GoalDetailScreen() {
                   : "hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]"
               }`}
             >
-            <div
-              className={`grid h-9 w-9 place-items-center rounded-full text-white text-[11px] font-bold ${
-                selectedContributionId === h.id
-                  ? "bg-[var(--primary)]"
-                  : ""
-              }`}
-              style={selectedContributionId !== h.id ? {
-                background: "linear-gradient(135deg, oklch(0.65 0.22 265), oklch(0.45 0.24 265))",
-              } : undefined}
-            >
-              {selectedContributionId === h.id ? (
-                <CheckCircle2 className="h-5 w-5" strokeWidth={2.5} />
-              ) : (
-                h.initials
-              )}
-            </div>
+              <div
+                className={`grid h-9 w-9 place-items-center rounded-full text-white text-[11px] font-bold ${
+                  selectedContributionId === h.id ? "bg-[var(--primary)]" : ""
+                }`}
+                style={
+                  selectedContributionId !== h.id
+                    ? {
+                        background:
+                          "linear-gradient(135deg, oklch(0.65 0.22 265), oklch(0.45 0.24 265))",
+                      }
+                    : undefined
+                }
+              >
+                {selectedContributionId === h.id ? (
+                  <CheckCircle2 className="h-5 w-5" strokeWidth={2.5} />
+                ) : (
+                  h.initials
+                )}
+              </div>
               <div className="flex-1 leading-tight">
                 <p className="text-[12px] font-bold text-foreground">{h.who}</p>
                 <p className="text-[10px] text-muted-foreground">{h.date}</p>
@@ -253,11 +261,29 @@ export function GoalDetailScreen() {
               <span className="text-[11px] font-bold text-muted-foreground">{suffix}</span>
             )}
           </div>
+          {activeWallets.length > 1 && (
+            <div className="mt-3">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
+                From wallet
+              </p>
+              <select
+                value={selectedWalletId ?? ""}
+                onChange={(e) => setSelectedWalletId(e.target.value || null)}
+                className="w-full px-3 py-2 rounded-lg border border-border bg-white text-[14px] font-medium text-foreground outline-none"
+              >
+                {activeWallets.map((wallet) => (
+                  <option key={wallet.id} value={wallet.id}>
+                    {wallet.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         <button
           onClick={() => {
-            contributeToGoal(goal.id, contributionUsd);
+            contributeToGoal(goal.id, contributionUsd, undefined, selectedWalletId ?? undefined);
             setSelectedGoalId(goal.id);
             if (goal.savedUsd + contributionUsd >= goal.targetUsd) navigate("goal_achieved");
           }}

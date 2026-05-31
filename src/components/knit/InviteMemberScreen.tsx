@@ -143,16 +143,22 @@ export function InviteMemberScreen() {
             >
               <div
                 className={`grid h-10 w-10 place-items-center rounded-xl ${
-                  m.enabled ? "bg-[oklch(0.95_0.04_265)] text-[var(--primary)]" : "bg-red-50 text-red-500"
+                  m.enabled
+                    ? "bg-[oklch(0.95_0.04_265)] text-[var(--primary)]"
+                    : "bg-red-50 text-red-500"
                 }`}
               >
                 <m.Icon className="h-4 w-4" strokeWidth={2.25} />
               </div>
               <div className="flex-1 text-left leading-tight">
-                <p className={`text-[12px] font-bold ${m.enabled ? "text-foreground" : "text-red-500"}`}>
+                <p
+                  className={`text-[12px] font-bold ${m.enabled ? "text-foreground" : "text-red-500"}`}
+                >
                   {m.label}
                 </p>
-                <p className={`text-[10px] ${m.enabled ? "text-muted-foreground" : "text-red-400"}`}>
+                <p
+                  className={`text-[10px] ${m.enabled ? "text-muted-foreground" : "text-red-400"}`}
+                >
                   {m.enabled ? m.sub : "Coming soon"}
                 </p>
               </div>
@@ -173,7 +179,9 @@ export function InviteMemberScreen() {
           </div>
         )}
 
-        {error && <p className="mt-3 text-center text-[11px] font-semibold text-red-500">{error}</p>}
+        {error && (
+          <p className="mt-3 text-center text-[11px] font-semibold text-red-500">{error}</p>
+        )}
 
         <button
           onClick={sendInvite}

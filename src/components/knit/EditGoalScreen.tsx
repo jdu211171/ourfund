@@ -45,8 +45,7 @@ export function EditGoalScreen() {
     if (!query) return goalIconOptions;
     return goalIconOptions.filter(
       (option) =>
-        option.label.toLowerCase().includes(query) ||
-        option.key.toLowerCase().includes(query),
+        option.label.toLowerCase().includes(query) || option.key.toLowerCase().includes(query),
     );
   }, [iconQuery]);
   const visibleIconOptions = filteredIcons.slice(0, visibleIcons);
@@ -136,7 +135,9 @@ export function EditGoalScreen() {
             placeholder="Goal Title"
           />
           <div className="mt-1 flex items-center justify-center gap-1">
-            {prefix && <span className="text-[20px] font-bold text-muted-foreground">{prefix}</span>}
+            {prefix && (
+              <span className="text-[20px] font-bold text-muted-foreground">{prefix}</span>
+            )}
             <input
               type="text"
               value={amount}
@@ -144,7 +145,9 @@ export function EditGoalScreen() {
               className="w-48 bg-transparent text-center text-[34px] font-extrabold tracking-tight text-foreground outline-none border-b border-transparent focus:border-[var(--primary)] transition-colors focus:ring-0"
               placeholder="0.00"
             />
-            {suffix && <span className="text-[14px] font-bold text-muted-foreground">{suffix}</span>}
+            {suffix && (
+              <span className="text-[14px] font-bold text-muted-foreground">{suffix}</span>
+            )}
           </div>
           {/* Month / Year picker */}
           {(() => {
@@ -152,15 +155,28 @@ export function EditGoalScreen() {
             const currentYear = now.getFullYear();
             const currentMonth = now.getMonth(); // 0-indexed
             const months = [
-              "Jan","Feb","Mar","Apr","May","Jun",
-              "Jul","Aug","Sep","Oct","Nov","Dec",
+              "Jan",
+              "Feb",
+              "Mar",
+              "Apr",
+              "May",
+              "Jun",
+              "Jul",
+              "Aug",
+              "Sep",
+              "Oct",
+              "Nov",
+              "Dec",
             ];
             const years = Array.from({ length: 10 }, (_, i) => currentYear + i);
             const selectedYear = targetDate ? parseInt(targetDate.split("-")[0], 10) : "";
             const selectedMonth = targetDate ? parseInt(targetDate.split("-")[1], 10) : "";
 
             const update = (year: string | number, month: string | number) => {
-              if (!year || !month) { setTargetDate(""); return; }
+              if (!year || !month) {
+                setTargetDate("");
+                return;
+              }
               setTargetDate(`${year}-${String(month).padStart(2, "0")}`);
             };
 
@@ -174,8 +190,7 @@ export function EditGoalScreen() {
                   <option value="">Month</option>
                   {months.map((m, i) => {
                     const monthNum = i + 1;
-                    const disabled =
-                      selectedYear === currentYear && i < currentMonth;
+                    const disabled = selectedYear === currentYear && i < currentMonth;
                     return (
                       <option key={m} value={monthNum} disabled={disabled}>
                         {m}
@@ -190,7 +205,9 @@ export function EditGoalScreen() {
                 >
                   <option value="">Year</option>
                   {years.map((y) => (
-                    <option key={y} value={y}>{y}</option>
+                    <option key={y} value={y}>
+                      {y}
+                    </option>
                   ))}
                 </select>
                 {targetDate && (
@@ -230,7 +247,8 @@ export function EditGoalScreen() {
           <div className="flex items-center justify-between text-[11px]">
             <span className="font-bold text-foreground">Progress</span>
             <span className="text-muted-foreground">
-              {formatUsdAsCurrency(goal.savedUsd, currency)} of {formatUsdAsCurrency(targetUsd, currency)}
+              {formatUsdAsCurrency(goal.savedUsd, currency)} of{" "}
+              {formatUsdAsCurrency(targetUsd, currency)}
             </span>
           </div>
           <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-[var(--muted)]">
@@ -346,9 +364,7 @@ export function EditGoalScreen() {
               ))}
             </div>
             {filteredIcons.length === 0 && (
-              <p className="mt-3 text-center text-[11px] text-muted-foreground">
-                No icons found.
-              </p>
+              <p className="mt-3 text-center text-[11px] text-muted-foreground">No icons found.</p>
             )}
             {filteredIcons.length > visibleIcons && (
               <button

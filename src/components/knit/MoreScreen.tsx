@@ -75,7 +75,10 @@ function parseTodo(text: string) {
     if (match) {
       const rawLabel = match[1].trim();
       const status: TodoItem["status"] = STATUS_TESTING.test(rawLabel) ? "testing" : "coming";
-      const label = rawLabel.replace(STATUS_TESTING, "").replace(/\s{2,}/g, " ").trim();
+      const label = rawLabel
+        .replace(STATUS_TESTING, "")
+        .replace(/\s{2,}/g, " ")
+        .trim();
       items.push({ section, label, status });
     }
   });
@@ -247,7 +250,9 @@ export function MoreScreen() {
                         canNavigate ? "cursor-pointer" : "cursor-default"
                       }`}
                     >
-                      <span className={`absolute right-2 top-2 rounded-full px-1.5 py-0.5 text-[8px] font-bold ${badgeClass}`}>
+                      <span
+                        className={`absolute right-2 top-2 rounded-full px-1.5 py-0.5 text-[8px] font-bold ${badgeClass}`}
+                      >
                         {statusLabel}
                       </span>
                       <div className="flex flex-col items-center gap-2 blur-[0.8px] opacity-70">

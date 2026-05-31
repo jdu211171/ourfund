@@ -79,7 +79,6 @@ export function HomeScreen() {
     .slice(0, 2);
   const recentTransactions = activeTransactions.slice(0, 3);
 
-
   return (
     <PhoneFrame className="z-10">
       <div className="flex-1 overflow-y-auto flex flex-col px-7 pt-10 pb-28 min-h-0">

@@ -16,7 +16,8 @@ import {
 const icons = [Home, Zap, Wifi, Tv, Music];
 
 export function SubscriptionsScreen() {
-  const { goBack, navigate, currency, addSubscription, subscriptions, categories } = useAppNavigation();
+  const { goBack, navigate, currency, addSubscription, subscriptions, categories } =
+    useAppNavigation();
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
@@ -45,8 +46,7 @@ export function SubscriptionsScreen() {
   const handleAdd = () => {
     if (!name.trim() || !amountUsd || !nextDate) return;
     const meta = makeScheduleMeta({ frequency, nextDate, category });
-    const color =
-      categories.find((c) => c.label === category)?.color ?? "oklch(0.65 0.22 30)";
+    const color = categories.find((c) => c.label === category)?.color ?? "oklch(0.65 0.22 30)";
     addSubscription({
       label: name.trim(),
       amountUsd,

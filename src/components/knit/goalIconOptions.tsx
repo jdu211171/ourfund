@@ -27,7 +27,7 @@ const toKebabCase = (value: string) =>
 
 export const defaultGoalIconName = iconNameSet.has("target")
   ? "target"
-  : iconNames[0] ?? "target";
+  : (iconNames[0] ?? "target");
 
 export const normalizeGoalIconName = (icon?: string | null) => {
   if (!icon) return defaultGoalIconName;

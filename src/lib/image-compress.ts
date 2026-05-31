@@ -2,11 +2,7 @@
  * Compresses an image file client-side by resizing it and lowering the quality.
  * Returns a data URL (JPEG).
  */
-export function compressImage(
-  file: File,
-  maxDimension = 1600,
-  quality = 0.85
-): Promise<string> {
+export function compressImage(file: File, maxDimension = 1600, quality = 0.85): Promise<string> {
   return new Promise((resolve, reject) => {
     // If not running in a browser environment, skip compression
     if (typeof window === "undefined" || typeof FileReader === "undefined") {

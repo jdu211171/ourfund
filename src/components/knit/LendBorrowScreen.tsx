@@ -1,4 +1,14 @@
-import { ArrowDownLeft, ArrowUpRight, ArrowLeft, Check, Plus, Trash2, UserRound, Users, X } from "lucide-react";
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  ArrowLeft,
+  Check,
+  Plus,
+  Trash2,
+  UserRound,
+  Users,
+  X,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { currencyAdornment, currencyValueToUsd, usdToCurrencyValue } from "@/lib/currency";
 import { useAppNavigation, type LoanDirection, type LoanEntry } from "@/lib/navigation";
@@ -104,9 +114,7 @@ export function LendBorrowScreen() {
     });
 
     addTransaction({
-      name: direction === "lent"
-        ? `Lent to ${cpName}`
-        : `Borrowed from ${cpName}`,
+      name: direction === "lent" ? `Lent to ${cpName}` : `Borrowed from ${cpName}`,
       who: `${profile?.name || "Me"} · today`,
       usd: direction === "lent" ? -amountUsd : amountUsd,
       category: "Lend/Borrow",
@@ -115,11 +123,13 @@ export function LendBorrowScreen() {
     });
 
     if (selectedMember) {
-      const counterpartyWallet = wallets.find(w => w.members.includes(selectedMember.id)) || wallets[0];
+      const counterpartyWallet =
+        wallets.find((w) => w.members.includes(selectedMember.id)) || wallets[0];
       addTransaction({
-        name: direction === "lent"
-          ? `Borrowed from ${profile?.name || "Me"}`
-          : `Lent to ${profile?.name || "Me"}`,
+        name:
+          direction === "lent"
+            ? `Borrowed from ${profile?.name || "Me"}`
+            : `Lent to ${profile?.name || "Me"}`,
         who: `${selectedMember.name} · today`,
         usd: direction === "lent" ? amountUsd : -amountUsd,
         category: "Lend/Borrow",
@@ -241,7 +251,11 @@ export function LendBorrowScreen() {
               <div className="flex items-center gap-1.5">
                 {filteredEntries.length > 0 && (
                   <button
-                    onClick={() => { setSelectMode(true); setShowForm(false); setPaymentLoan(null); }}
+                    onClick={() => {
+                      setSelectMode(true);
+                      setShowForm(false);
+                      setPaymentLoan(null);
+                    }}
                     className="grid h-9 w-9 place-items-center rounded-full bg-[var(--muted)] text-muted-foreground"
                     aria-label="Select entries"
                   >
@@ -441,7 +455,7 @@ export function LendBorrowScreen() {
               selectedIds={selectedIds}
               onToggleSelect={toggleSelect}
               onMarkPaid={(id) => {
-                const row = loanEntries.find(entry => entry.id === id);
+                const row = loanEntries.find((entry) => entry.id === id);
                 if (row) {
                   setPaymentLoan(row);
                   const remaining = row.amountUsd - row.paidAmountUsd;
@@ -459,7 +473,7 @@ export function LendBorrowScreen() {
               selectedIds={selectedIds}
               onToggleSelect={toggleSelect}
               onMarkPaid={(id) => {
-                const row = loanEntries.find(entry => entry.id === id);
+                const row = loanEntries.find((entry) => entry.id === id);
                 if (row) {
                   setPaymentLoan(row);
                   const remaining = row.amountUsd - row.paidAmountUsd;
@@ -547,9 +561,8 @@ function Group({
       <div className="mt-2 space-y-2">
         {rows.map((row) => {
           // Active loans: show remaining. Paid loans: show original full amount (history record).
-          const displayUsd = row.status === "paid"
-            ? row.amountUsd
-            : (row.amountUsd - row.paidAmountUsd);
+          const displayUsd =
+            row.status === "paid" ? row.amountUsd : row.amountUsd - row.paidAmountUsd;
           const isSelected = selectedIds.has(row.id);
 
           return (
@@ -594,9 +607,7 @@ function Group({
                 </p>
                 {/* For paid entries, show the original amount as a subtle history note */}
                 {row.status === "paid" && row.paidAmountUsd > 0 && row.amountUsd > 0 && (
-                  <p className="text-[9px] text-muted-foreground/60 mt-0.5">
-                    Fully repaid
-                  </p>
+                  <p className="text-[9px] text-muted-foreground/60 mt-0.5">Fully repaid</p>
                 )}
                 {row.status !== "paid" && !selectMode && (
                   <button

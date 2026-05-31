@@ -373,7 +373,7 @@ interface NavigationContextType {
   setSelectedGoalId: (id: string | null) => void;
   addGoal: (goal: Omit<Goal, "id" | "savedUsd" | "history"> & { savedUsd?: number }) => Goal;
   updateGoal: (goalId: string, updates: Partial<Omit<Goal, "id" | "history" | "savedUsd">>) => void;
-  contributeToGoal: (goalId: string, amountUsd: number, who?: string) => void;
+  contributeToGoal: (goalId: string, amountUsd: number, who?: string, walletId?: string) => void;
   withdrawFromGoal: (goalId: string, amountUsd: number, wallet: string) => void;
   members: FamilyMember[];
   currentMemberId: string | null;
@@ -1051,10 +1051,10 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   const deleteContributionFromGoal = (goalId: string, contributionId: string) => {
     const goal = goals.find((g) => g.id === goalId);
     if (!goal) return;
-    
+
     const contribution = goal.history.find((h) => h.id === contributionId);
     if (!contribution) return;
-    
+
     // If the contribution has a transactionId, delete the transaction too
     if (contribution.transactionId) {
       deleteTransaction(contribution.transactionId);
@@ -1197,7 +1197,12 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     }).catch(console.error);
   };
 
-  const contributeToGoal = (goalId: string, amountUsd: number, who = firstName(profile.name)) => {
+  const contributeToGoal = (
+    goalId: string,
+    amountUsd: number,
+    who = firstName(profile.name),
+    walletId?: string,
+  ) => {
     if (amountUsd <= 0) return;
     const contributorName = who || profile.name || "You";
     const goalToUpdate = goals.find((g) => g.id === goalId);
@@ -1207,12 +1212,18 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
       Math.max(0, goalToUpdate.targetUsd - goalToUpdate.savedUsd),
     );
     if (contributionUsd <= 0) return;
+
+    const selectedWallet = walletId
+      ? activeWallets.find((w) => w.id === walletId)
+      : activeWallets[0];
+    const walletLabel = selectedWallet?.label || "Private Wallet";
+
     const transaction = addTransaction({
       name: `Goal Contribution: ${goalToUpdate.title}`,
       who: contributorName,
       usd: -contributionUsd,
       category: "Goals",
-      wallet: activeWallets[0]?.label || "Private Wallet",
+      wallet: walletLabel,
       date: formatISODate(new Date()),
     });
     const contribution = {
@@ -1223,6 +1234,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
       amountUsd: contributionUsd,
       transactionId: transaction.id,
       memberId: currentMemberId ?? undefined,
+      walletId: selectedWallet?.id,
     };
     const updatedSaved = Math.min(goalToUpdate.targetUsd, goalToUpdate.savedUsd + contributionUsd);
     const updatedHistory = [contribution, ...goalToUpdate.history];

@@ -242,7 +242,9 @@ export function ScanReceiptScreen() {
                     </div>
 
                     <div className="flex items-center gap-0.5 shrink-0 pt-0.5">
-                      <span className="text-[11.5px] font-bold text-foreground">{currencySymbol}</span>
+                      <span className="text-[11.5px] font-bold text-foreground">
+                        {currencySymbol}
+                      </span>
                       <input
                         type="number"
                         value={localValue}

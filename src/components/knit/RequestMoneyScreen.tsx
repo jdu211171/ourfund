@@ -36,8 +36,7 @@ export function RequestMoneyScreen() {
     if (!query) return goalIconOptions;
     return goalIconOptions.filter(
       (option) =>
-        option.label.toLowerCase().includes(query) ||
-        option.key.toLowerCase().includes(query),
+        option.label.toLowerCase().includes(query) || option.key.toLowerCase().includes(query),
     );
   }, [iconQuery]);
   const visibleIconOptions = filteredIcons.slice(0, visibleIcons);
@@ -243,9 +242,7 @@ export function RequestMoneyScreen() {
               ))}
             </div>
             {filteredIcons.length === 0 && (
-              <p className="mt-3 text-center text-[11px] text-muted-foreground">
-                No icons found.
-              </p>
+              <p className="mt-3 text-center text-[11px] text-muted-foreground">No icons found.</p>
             )}
             {filteredIcons.length > visibleIcons && (
               <button

@@ -86,7 +86,9 @@ export function ResetPasswordScreen() {
             Success!
           </h2>
           <p className="mt-2 text-center text-[13px] text-muted-foreground">
-            {phase === "request" ? "Check your email for the reset link." : "Your password has been reset."}
+            {phase === "request"
+              ? "Check your email for the reset link."
+              : "Your password has been reset."}
           </p>
         </div>
       </PhoneFrame>
