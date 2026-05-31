@@ -31,7 +31,7 @@ export function EditGoalScreen() {
   const goal = goals.find((g) => g.id === selectedGoalId) ?? goals[0];
   const [amount, setAmount] = useState("0");
   const [title, setTitle] = useState("");
-  const [targetDate, setTargetDate] = useState("");
+  const [targetDate, setTargetDate] = useState(""); // "YYYY-MM" or "" for no deadline
   const [contributors, setContributors] = useState<string[]>([]);
   const [iconQuery, setIconQuery] = useState("");
   const [selectedIconName, setSelectedIconName] = useState(defaultGoalIconName);
@@ -54,7 +54,9 @@ export function EditGoalScreen() {
   useEffect(() => {
     if (!goal) return;
     setTitle(goal.title);
-    setTargetDate(goal.targetDate);
+    // Normalize legacy free-text dates to empty (no deadline) if not parseable
+    const isIso = /^\d{4}-\d{2}$/.test(goal.targetDate);
+    setTargetDate(isIso ? goal.targetDate : "");
     setContributors(goal.contributors ?? []);
     setAmount(String(Math.round(usdToCurrencyValue(goal.targetUsd, currency))));
     setSelectedIconName(normalizeGoalIconName(goal.icon));
@@ -144,13 +146,65 @@ export function EditGoalScreen() {
             />
             {suffix && <span className="text-[14px] font-bold text-muted-foreground">{suffix}</span>}
           </div>
-          <input
-            type="text"
-            value={targetDate}
-            onChange={(e) => setTargetDate(e.target.value)}
-            className="mt-1 w-36 bg-transparent text-center text-[11px] text-muted-foreground outline-none border-b border-transparent focus:border-[var(--primary)]"
-            placeholder="Target date"
-          />
+          {/* Month / Year picker */}
+          {(() => {
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth(); // 0-indexed
+            const months = [
+              "Jan","Feb","Mar","Apr","May","Jun",
+              "Jul","Aug","Sep","Oct","Nov","Dec",
+            ];
+            const years = Array.from({ length: 10 }, (_, i) => currentYear + i);
+            const selectedYear = targetDate ? parseInt(targetDate.split("-")[0], 10) : "";
+            const selectedMonth = targetDate ? parseInt(targetDate.split("-")[1], 10) : "";
+
+            const update = (year: string | number, month: string | number) => {
+              if (!year || !month) { setTargetDate(""); return; }
+              setTargetDate(`${year}-${String(month).padStart(2, "0")}`);
+            };
+
+            return (
+              <div className="mt-2 flex items-center justify-center gap-2">
+                <select
+                  value={selectedMonth}
+                  onChange={(e) => update(selectedYear || "", e.target.value)}
+                  className="rounded-full border border-[var(--muted)] bg-white px-3 py-1.5 text-[11px] font-semibold text-foreground outline-none focus:ring-1 focus:ring-[var(--primary)] cursor-pointer"
+                >
+                  <option value="">Month</option>
+                  {months.map((m, i) => {
+                    const monthNum = i + 1;
+                    const disabled =
+                      selectedYear === currentYear && i < currentMonth;
+                    return (
+                      <option key={m} value={monthNum} disabled={disabled}>
+                        {m}
+                      </option>
+                    );
+                  })}
+                </select>
+                <select
+                  value={selectedYear}
+                  onChange={(e) => update(e.target.value, selectedMonth || "")}
+                  className="rounded-full border border-[var(--muted)] bg-white px-3 py-1.5 text-[11px] font-semibold text-foreground outline-none focus:ring-1 focus:ring-[var(--primary)] cursor-pointer"
+                >
+                  <option value="">Year</option>
+                  {years.map((y) => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+                {targetDate && (
+                  <button
+                    type="button"
+                    onClick={() => setTargetDate("")}
+                    className="text-[10px] font-semibold text-muted-foreground underline"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            );
+          })()}
         </div>
 
         <div className="mt-4 flex gap-2">
@@ -242,7 +296,7 @@ export function EditGoalScreen() {
             updateGoal(goal.id, {
               title: title.trim() || "New goal",
               targetUsd,
-              targetDate: targetDate.trim() || "No deadline",
+              targetDate: targetDate || "No deadline",
               icon: normalizedIconName,
               contributors,
             });

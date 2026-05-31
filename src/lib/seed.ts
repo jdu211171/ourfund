@@ -243,7 +243,7 @@ const demoGoals: Goal[] = [
     title: "Family vacation",
     targetUsd: 5000,
     savedUsd: 1820,
-    targetDate: "Aug 2026",
+    targetDate: "2026-08",
     icon: "plane",
     color: "oklch(0.55 0.24 265)",
     contributors: ["james", "emma", "ava"],

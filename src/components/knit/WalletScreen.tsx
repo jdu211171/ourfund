@@ -303,6 +303,15 @@ export function WalletScreen() {
               Math.round((goal.savedUsd / Math.max(goal.targetUsd, 1)) * 100),
             );
             const goalIconName = normalizeGoalIconName(goal.icon);
+            const targetDateLabel = (() => {
+              const d = goal.targetDate;
+              if (!d || d === "No deadline") return "No deadline";
+              const match = d.match(/^(\d{4})-(\d{2})$/);
+              if (!match) return d;
+              const dt = new Date(parseInt(match[1], 10), parseInt(match[2], 10) - 1, 1);
+              return dt.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+            })();
+
             return (
               <button
                 key={goal.id}
@@ -321,7 +330,7 @@ export function WalletScreen() {
                     {goal.title}
                   </span>
                   <span className="block text-[10px] text-muted-foreground">
-                    {pct}% funded by {goal.targetDate}
+                    {pct}% funded by {targetDateLabel}
                   </span>
                 </span>
                 <ChevronRight className="h-4 w-4 text-muted-foreground" strokeWidth={2.25} />

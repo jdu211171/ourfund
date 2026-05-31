@@ -68,7 +68,34 @@ export function GoalDetailScreen() {
   }
 
   const pct = Math.min(100, Math.round((goal.savedUsd / goal.targetUsd) * 100));
-  const monthly = Math.max(1, Math.ceil((goal.targetUsd - goal.savedUsd) / 6));
+
+  // Parse "YYYY-MM" target date and compute months remaining from today
+  const monthsRemaining = (() => {
+    if (!goal.targetDate || goal.targetDate === "No deadline") return null;
+    const match = goal.targetDate.match(/^(\d{4})-(\d{2})$/);
+    if (!match) return null;
+    const targetYear = parseInt(match[1], 10);
+    const targetMonth = parseInt(match[2], 10) - 1; // 0-indexed
+    const now = new Date();
+    const months =
+      (targetYear - now.getFullYear()) * 12 + (targetMonth - now.getMonth());
+    return Math.max(1, months);
+  })();
+
+  const monthly =
+    monthsRemaining != null
+      ? Math.ceil((goal.targetUsd - goal.savedUsd) / monthsRemaining)
+      : null;
+
+  // Format stored "YYYY-MM" into a human-readable label like "Aug 2026"
+  const targetDateLabel = (() => {
+    if (!goal.targetDate || goal.targetDate === "No deadline") return "No deadline";
+    const match = goal.targetDate.match(/^(\d{4})-(\d{2})$/);
+    if (!match) return goal.targetDate;
+    const d = new Date(parseInt(match[1], 10), parseInt(match[2], 10) - 1, 1);
+    return d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+  })();
+
   const goalIconName = normalizeGoalIconName(goal.icon);
 
   return (
@@ -124,22 +151,28 @@ export function GoalDetailScreen() {
           </div>
           <div className="mt-2 flex items-center justify-between text-[10px] text-white/80">
             <span>{pct}% saved</span>
-            <span>Target · {goal.targetDate}</span>
+            <span>Target · {targetDateLabel}</span>
           </div>
         </div>
 
         <div className="mt-4 grid grid-cols-3 gap-2 text-center">
           {[
-            { l: "Monthly", v: formatUsdAsCurrency(monthly, currency) },
-            { l: "Saved", v: formatUsdAsCurrency(goal.savedUsd, currency) },
+            {
+              l: "Monthly",
+              v: monthly != null ? formatUsdAsCurrency(monthly, currency) : "—",
+              sub: monthly != null && monthsRemaining != null ? `${monthsRemaining} mo left` : "No deadline",
+            },
+            { l: "Saved", v: formatUsdAsCurrency(goal.savedUsd, currency), sub: null },
             {
               l: "Remaining",
               v: formatUsdAsCurrency(Math.max(0, goal.targetUsd - goal.savedUsd), currency),
+              sub: null,
             },
           ].map((s) => (
             <div key={s.l} className="rounded-2xl bg-white py-3 shadow-[var(--shadow-soft)]">
               <p className="text-[10px] text-muted-foreground">{s.l}</p>
               <p className="mt-0.5 text-[13px] font-extrabold text-foreground">{s.v}</p>
+              {s.sub && <p className="text-[9px] text-muted-foreground mt-0.5">{s.sub}</p>}
             </div>
           ))}
         </div>
