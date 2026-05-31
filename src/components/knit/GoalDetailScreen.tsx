@@ -1,9 +1,18 @@
-import { ArrowLeft, MoreHorizontal, Pencil, Plus, Trash2, CheckCircle2 } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowDownLeft,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Trash2,
+  CheckCircle2,
+} from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { useAppNavigation } from "@/lib/navigation";
 import { useState } from "react";
 import { currencyAdornment, currencyValueToUsd, formatUsdAsCurrency } from "@/lib/currency";
 import { GoalIcon, normalizeGoalIconName } from "./goalIconOptions";
+import { OptionSelect } from "./OptionSelect";
 
 export function GoalDetailScreen() {
   const {
@@ -22,9 +31,7 @@ export function GoalDetailScreen() {
   const goal = goals.find((g) => g.id === selectedGoalId) ?? goals[0];
   const [contribution, setContribution] = useState("100");
   const [selectedContributionId, setSelectedContributionId] = useState<string | null>(null);
-  const [selectedWalletId, setSelectedWalletId] = useState<string | null>(
-    activeWallets[0]?.id ?? null,
-  );
+  const [selectedWalletId, setSelectedWalletId] = useState(activeWallets[0]?.id ?? "");
   const contributionUsd = currencyValueToUsd(parseFloat(contribution || "0"), currency);
   const { prefix, suffix } = currencyAdornment(currency);
   const currentMember = members.find((member) => member.id === currentMemberId);
@@ -261,29 +268,25 @@ export function GoalDetailScreen() {
               <span className="text-[11px] font-bold text-muted-foreground">{suffix}</span>
             )}
           </div>
-          {activeWallets.length > 1 && (
-            <div className="mt-3">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">
-                From wallet
-              </p>
-              <select
-                value={selectedWalletId ?? ""}
-                onChange={(e) => setSelectedWalletId(e.target.value || null)}
-                className="w-full px-3 py-2 rounded-lg border border-border bg-white text-[14px] font-medium text-foreground outline-none"
-              >
-                {activeWallets.map((wallet) => (
-                  <option key={wallet.id} value={wallet.id}>
-                    {wallet.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+          <div className="mt-3">
+            <OptionSelect
+              label="From wallet"
+              value={selectedWalletId}
+              options={activeWallets.map((wallet) => ({
+                value: wallet.id,
+                label: wallet.label,
+                description: wallet.sub,
+              }))}
+              onChange={setSelectedWalletId}
+              emptyLabel="No wallet available"
+              icon={<ArrowDownLeft className="h-5 w-5" strokeWidth={2.25} />}
+            />
+          </div>
         </div>
 
         <button
           onClick={() => {
-            contributeToGoal(goal.id, contributionUsd, undefined, selectedWalletId ?? undefined);
+            contributeToGoal(goal.id, contributionUsd, undefined, selectedWalletId || undefined);
             setSelectedGoalId(goal.id);
             if (goal.savedUsd + contributionUsd >= goal.targetUsd) navigate("goal_achieved");
           }}
