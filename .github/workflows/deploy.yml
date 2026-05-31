@@ -107,12 +107,11 @@ jobs:
                'SMTP_USER=${{ secrets.SMTP_USER }}' \
                'SMTP_PASS=${{ secrets.SMTP_PASS }}' \
                'SMTP_FROM=${{ secrets.SMTP_FROM }}' \
-               'APP_BASE_URL=${{ secrets.APP_BASE_URL }}' \
-               'PORT=3002' \
-               'NODE_ENV=production' \
-               'VITE_EMPTY_DATA=false' \
-               > .env && \
-             set -a && . ./.env && set +a && \
+             'APP_BASE_URL=${{ secrets.APP_BASE_URL }}' \
+             'PORT=3002' \
+             'NODE_ENV=production' \
+             'VITE_EMPTY_DATA=false' \
+             > .env && \
              npm install --no-audit --no-fund && \
              npx prisma migrate deploy && \
              npx prisma generate && \

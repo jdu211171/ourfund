@@ -6,6 +6,10 @@ import { dirname, resolve } from "node:path";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const serverEntryPath = resolve(__dirname, "dist/server/server.js");
 
+if (typeof process.loadEnvFile === "function") {
+  process.loadEnvFile();
+}
+
 const { default: server } = await import(serverEntryPath);
 
 const port = Number(process.env.PORT) || 3002;
