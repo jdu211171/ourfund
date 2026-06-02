@@ -152,6 +152,11 @@ function uniqueEmails(emails: Array<string | null | undefined>) {
   );
 }
 
+function canMemberSeeGoal(contributors: unknown, memberId: string | null) {
+  if (!memberId || !Array.isArray(contributors) || contributors.length === 0) return true;
+  return contributors.some((contributor) => contributor === memberId);
+}
+
 const loanEntrySelect = {
   id: true,
   householdId: true,
@@ -421,7 +426,9 @@ export const getAppDataServerFn = createServerFn({ method: "GET" }).handler(asyn
       where: { householdId },
       orderBy: { createdAt: "desc" },
     });
-    goals = await prisma.goal.findMany({ where: { householdId } });
+    goals = (await prisma.goal.findMany({ where: { householdId } })).filter((goal) =>
+      canMemberSeeGoal(goal.contributors, member.id),
+    );
     linkedBanks = await prisma.linkedBank.findMany({ where: { householdId } });
     const scheduleItems = await prisma.scheduleItem.findMany({ where: { householdId } });
     recurringIncome = scheduleItems.filter((i) => i.type === "income");

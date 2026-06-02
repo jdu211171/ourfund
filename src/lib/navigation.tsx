@@ -513,6 +513,11 @@ function normalizeHistoryFiltersInput(value: unknown): HistoryFilters {
   };
 }
 
+function canMemberSeeGoal(goal: Pick<Goal, "contributors">, memberId: string | null) {
+  if (!memberId || goal.contributors.length === 0) return true;
+  return goal.contributors.includes(memberId);
+}
+
 export function AppNavigationProvider({ children }: { children: ReactNode }) {
   const initialSeed = useMemo(() => getInitialSeed(), []);
   const [currentScreen, setCurrentScreen] = useState<ScreenName>("onboarding");
@@ -789,6 +794,11 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     const activeWalletLabels = new Set(activeWallets.map((wallet) => wallet.label));
     return transactions.filter((transaction) => activeWalletLabels.has(transaction.wallet));
   }, [activeWallets, transactions]);
+
+  const visibleGoals = useMemo(
+    () => goals.filter((goal) => canMemberSeeGoal(goal, viewedMemberId)),
+    [goals, viewedMemberId],
+  );
 
   const walletBalanceUsd = (walletLabel: string) => {
     const wallet = wallets.find((w) => w.label === walletLabel);
@@ -1861,7 +1871,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         updateCategoryLimit,
         deleteCategory,
         categorySpentUsd,
-        goals,
+        goals: visibleGoals,
         selectedGoalId,
         setSelectedGoalId,
         addGoal,
