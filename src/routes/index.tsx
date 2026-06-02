@@ -285,7 +285,7 @@ function Index() {
 
   if (viewMode === "app") {
     return (
-      <main className="min-h-screen w-full flex flex-col items-center justify-center bg-[var(--canvas)] relative">
+      <main className="relative flex min-h-[100dvh] w-full flex-col items-center justify-start bg-[var(--phone-bg)] sm:justify-center sm:bg-[var(--canvas)]">
         {/* Sleek toggle header - only visible on desktops/tablets to keep mobile clean */}
         <div className="absolute top-6 hidden sm:flex items-center gap-2 bg-white/80 backdrop-blur-md px-4 py-2 rounded-full border border-slate-200 shadow-sm z-50">
           <button

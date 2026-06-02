@@ -152,6 +152,20 @@ function uniqueEmails(emails: Array<string | null | undefined>) {
   );
 }
 
+const loanEntrySelect = {
+  id: true,
+  householdId: true,
+  counterpartyMemberId: true,
+  counterpartyName: true,
+  note: true,
+  due: true,
+  amountUsd: true,
+  paidAmountUsd: true,
+  direction: true,
+  status: true,
+  createdAt: true,
+} as const;
+
 async function getHouseholdUsers(householdId: string) {
   return prisma.user.findMany({
     where: { householdMembers: { some: { householdId } } },
@@ -414,6 +428,7 @@ export const getAppDataServerFn = createServerFn({ method: "GET" }).handler(asyn
     subscriptions = scheduleItems.filter((i) => i.type === "subscription");
     loanEntries = await prisma.loanEntry.findMany({
       where: { householdId },
+      select: loanEntrySelect,
       orderBy: { createdAt: "desc" },
     });
     trackedProducts = await prisma.trackedProduct.findMany({
@@ -1333,6 +1348,7 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
       case "addLoanEntry": {
         if (!householdId) throw new Error("No household linked");
         const created = await prisma.loanEntry.create({
+          select: loanEntrySelect,
           data: {
             id: payload.id,
             householdId,
@@ -1385,13 +1401,17 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
 
       case "updateLoanEntry": {
         if (!householdId) throw new Error("No household linked");
-        const entry = await prisma.loanEntry.findUnique({ where: { id: payload.id } });
+        const entry = await prisma.loanEntry.findUnique({
+          where: { id: payload.id },
+          select: loanEntrySelect,
+        });
         if (!entry || entry.householdId !== householdId) throw new Error("Forbidden");
         const nextStatus = ["paid", "overdue", "pending"].includes(payload.status)
           ? payload.status
           : "pending";
         const updated = await prisma.loanEntry.update({
           where: { id: payload.id },
+          select: loanEntrySelect,
           data: {
             counterpartyMemberId: payload.counterpartyMemberId || null,
             counterpartyName: payload.counterpartyName,
@@ -1443,9 +1463,12 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
 
       case "deleteLoanEntry": {
         if (!householdId) throw new Error("No household linked");
-        const loanToDelete = await prisma.loanEntry.findUnique({ where: { id: payload.id } });
+        const loanToDelete = await prisma.loanEntry.findUnique({
+          where: { id: payload.id },
+          select: loanEntrySelect,
+        });
         if (!loanToDelete || loanToDelete.householdId !== householdId) throw new Error("Forbidden");
-        await prisma.loanEntry.delete({ where: { id: payload.id } });
+        await prisma.loanEntry.delete({ where: { id: payload.id }, select: { id: true } });
         break;
       }
 

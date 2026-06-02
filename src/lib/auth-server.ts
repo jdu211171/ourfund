@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import {
   deleteCookie,
   getCookie,
+  getRequestHost,
   getRequestProtocol,
   setCookie,
 } from "@tanstack/react-start/server";
@@ -20,8 +21,16 @@ export interface SessionData {
 }
 
 function getSessionCookieOptions(maxAge?: number) {
-  const protocol = getRequestProtocol({ xForwardedProto: true });
-  const secure = protocol === "https";
+  const trustProxy = process.env.TRUST_PROXY === "true" || process.env.NODE_ENV === "production";
+  const protocol = getRequestProtocol({ xForwardedProto: trustProxy });
+  const host = getRequestHost({ xForwardedHost: trustProxy });
+  const secureEnv = process.env.COOKIE_SECURE?.trim().toLowerCase();
+  const secure =
+    secureEnv === "true"
+      ? true
+      : secureEnv === "false"
+        ? false
+        : protocol === "https" && !host.startsWith("127.0.0.1");
   const sameSiteEnv = process.env.COOKIE_SAMESITE?.trim().toLowerCase();
   const domain = process.env.COOKIE_DOMAIN?.trim();
   let sameSite: "lax" | "strict" | "none" = "lax";
@@ -37,6 +46,7 @@ function getSessionCookieOptions(maxAge?: number) {
     ...(domain ? { domain } : {}),
     path: "/",
     maxAge,
+    ...(maxAge ? { expires: new Date(Date.now() + maxAge * 1000) } : {}),
   };
 }
 
