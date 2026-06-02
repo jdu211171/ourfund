@@ -14,7 +14,6 @@ const initialPerms = [
   { name: "Approve children's requests", on: true },
   { name: "Edit budget limits", on: true },
   { name: "Add or remove members", on: false },
-  { name: "Connect bank accounts", on: true },
   { name: "View private wallets", on: false },
 ];
 

@@ -34,7 +34,6 @@ import { MemberPermissionsScreen } from "@/components/knit/MemberPermissionsScre
 import { AllowanceScreen } from "@/components/knit/AllowanceScreen";
 import { AddCategoryScreen } from "@/components/knit/AddCategoryScreen";
 import { GoalWithdrawScreen } from "@/components/knit/GoalWithdrawScreen";
-import { BankConnectScreen } from "@/components/knit/BankConnectScreen";
 import { EditProfileScreen } from "@/components/knit/EditProfileScreen";
 import { PasscodeScreen } from "@/components/knit/PasscodeScreen";
 import { NotificationPreferencesScreen } from "@/components/knit/NotificationPreferencesScreen";
@@ -107,8 +106,6 @@ function AppRouter() {
       return <WalletScreen />;
     case "new_wallet":
       return <CreateWalletScreen />;
-    case "connect_bank":
-      return <BankConnectScreen />;
     case "plaid_connecting":
       return <PlaidConnectingScreen />;
     case "plaid_success":
@@ -245,7 +242,6 @@ function Index() {
       screens: [
         { label: "Wallets", node: <WalletScreen /> },
         { label: "New Wallet", node: <CreateWalletScreen /> },
-        { label: "Connect Bank", node: <BankConnectScreen /> },
         { label: "Categories", node: <CategoryEditorScreen /> },
         { label: "New Category", node: <AddCategoryScreen /> },
         { label: "Subscriptions", node: <SubscriptionsScreen /> },

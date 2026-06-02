@@ -19,7 +19,6 @@ export const defaultPermissions = {
   "Approve children's requests": true,
   "Edit budget limits": true,
   "Add or remove members": false,
-  "Connect bank accounts": true,
   "View private wallets": false,
 };
 
@@ -231,7 +230,6 @@ const demoMembers: FamilyMember[] = [
     permissions: {
       ...defaultPermissions,
       "Edit budget limits": false,
-      "Connect bank accounts": false,
       "View private wallets": false,
     },
   },

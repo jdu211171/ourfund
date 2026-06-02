@@ -453,7 +453,6 @@ function permissionsForRole(role: MemberRole) {
     ...defaultPermissions,
     "Add or remove members": role === "Admin",
     "Edit budget limits": role !== "Kid",
-    "Connect bank accounts": role === "Admin" || role === "Adult",
     "View private wallets": role === "Admin" || role === "Adult",
   };
 }
