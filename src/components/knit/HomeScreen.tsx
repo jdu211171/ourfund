@@ -180,7 +180,7 @@ export function HomeScreen() {
                   setSelectedGoalId(primaryGoal.id);
                   navigate("goal_detail");
                 }}
-                className="w-full rounded-2xl bg-white p-3 text-left"
+                className="w-full rounded-2xl bg-white text-left"
               >
                 <div className="flex items-center gap-3">
                   <span className="grid h-10 w-10 place-items-center rounded-xl bg-[oklch(0.95_0.04_265)] text-[var(--primary)]">
@@ -239,7 +239,7 @@ export function HomeScreen() {
           </button>
         </div>
 
-        <div className="mt-2 space-y-2">
+        <div className="space-y-2">
           {recentTransactions.map((transaction) => (
             <button
               key={transaction.id}
@@ -279,7 +279,7 @@ export function HomeScreen() {
           {recentTransactions.length === 0 && (
             <button
               onClick={() => navigate("add_expense")}
-              className="flex w-full items-center gap-3 rounded-2xl bg-white px-3 py-3 text-left"
+              className="flex w-full items-center gap-3 rounded-2xl bg-white py-3 text-left"
             >
               <span className="grid h-10 w-10 place-items-center rounded-xl bg-[oklch(0.95_0.08_150)] text-[var(--success)]">
                 <CheckCircle2 className="h-4 w-4" strokeWidth={2.25} />
