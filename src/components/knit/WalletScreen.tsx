@@ -4,7 +4,6 @@ import {
   Landmark,
   Lock,
   PiggyBank,
-  Plus,
   Repeat,
   ShoppingBag,
   Users,
@@ -71,18 +70,8 @@ export function WalletScreen() {
             </h2>
             <p className="text-[11px] text-muted-foreground">{visibleOwner} money map</p>
           </div>
-          <button
-            onClick={() => navigate("new_wallet")}
-            className="grid h-9 w-9 place-items-center rounded-full bg-[var(--muted)] hover:bg-slate-200 transition-colors active:scale-95 cursor-pointer"
-            aria-label="Add wallet"
-          >
-            <Plus className="h-4 w-4" strokeWidth={2.5} />
-          </button>
+          <BudgetModeToggle className="scale-95 origin-right" />
         </header>
-
-        <div className="mt-4 flex items-center justify-between gap-3">
-          <BudgetModeToggle />
-        </div>
 
         <section className="mt-4 rounded-3xl bg-white">
           <div className="flex items-start justify-between gap-4">
@@ -182,11 +171,11 @@ export function WalletScreen() {
           )}
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-2">
+        <div className="mt-2 grid grid-cols-2 gap-2">
           <button
             type="button"
             onClick={() => navigate("subscriptions")}
-            className="rounded-2xl bg-white p-3 text-left"
+            className="rounded-2xl bg-white text-left"
           >
             <div className="flex items-center gap-2">
               <span className="grid h-8 w-8 place-items-center rounded-xl bg-[oklch(0.96_0.05_25)] text-[var(--danger)]">
@@ -194,11 +183,10 @@ export function WalletScreen() {
               </span>
               <span className="text-[11px] font-bold text-foreground">Scheduled</span>
             </div>
-            <div className="mt-3 flex items-end justify-between gap-2">
+            <div className="mt-3 flex items-end justify-between">
               <Money usd={upcomingTotalUsd} size="sm" tone="danger" />
               <Money usd={incomingTotalUsd} size="sm" tone="success" />
             </div>
-            <p className="mt-0.5 text-[10px] text-muted-foreground">Bills and deposits</p>
           </button>
         </div>
 
@@ -253,7 +241,7 @@ export function WalletScreen() {
           {categoryRows.length === 0 && (
             <button
               onClick={() => navigate("new_category")}
-              className="w-full rounded-2xl bg-white px-4 py-5 text-center"
+              className="w-full rounded-2xl bg-white px-4 py-2 text-center"
             >
               <p className="text-[13px] font-bold text-foreground">No limits yet</p>
               <p className="mt-1 text-[11px] text-muted-foreground">
@@ -263,7 +251,7 @@ export function WalletScreen() {
           )}
         </div>
 
-        <div className="mt-5 flex items-center justify-between">
+        <div className="mt-2 flex items-center justify-between">
           <p className="text-[13px] font-bold text-[oklch(0.2_0.08_265)]">Goals</p>
           <button
             type="button"
@@ -273,7 +261,7 @@ export function WalletScreen() {
             New
           </button>
         </div>
-        <div className="mt-2 space-y-2">
+        <div className="mt-2">
           {goals.slice(0, 2).map((goal) => {
             const pct = Math.min(
               100,
@@ -297,7 +285,7 @@ export function WalletScreen() {
                   setSelectedGoalId(goal.id);
                   navigate("goal_detail");
                 }}
-                className="flex w-full items-center gap-3 rounded-2xl bg-white px-3 py-3 text-left"
+                className="flex w-full items-center gap-3 rounded-2xl bg-white py-3 text-left"
               >
                 <span className="grid h-10 w-10 place-items-center rounded-xl bg-[oklch(0.95_0.04_265)] text-[var(--primary)]">
                   <GoalIcon name={goalIconName} className="h-4 w-4" strokeWidth={2.25} />
