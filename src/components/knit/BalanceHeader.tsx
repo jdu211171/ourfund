@@ -24,7 +24,7 @@ export function BalanceHeader({
   const { budgetMode, setBudgetMode } = useAppNavigation();
 
   return (
-    <div className="rounded-3xl bg-white p-5 shadow-[var(--shadow-soft)]">
+    <div className="rounded-3xl bg-white shadow-[var(--shadow-soft)]">
       <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
         <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold">
           {label}

@@ -84,7 +84,7 @@ export function WalletScreen() {
           <BudgetModeToggle />
         </div>
 
-        <section className="mt-4 rounded-3xl bg-white p-4">
+        <section className="mt-4 rounded-3xl bg-white">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
@@ -147,9 +147,9 @@ export function WalletScreen() {
           </button>
         </div>
 
-        <div className="mt-2 space-y-2">
+        <div className="mt-2">
           {sortedWallets.map((wallet) => (
-            <div key={wallet.id} className="flex items-center gap-3 rounded-2xl bg-white px-3 py-3">
+            <div key={wallet.id} className="flex items-center gap-3 rounded-2xl bg-white py-3">
               <div
                 className="grid h-11 w-11 place-items-center rounded-2xl"
                 style={{ background: "oklch(0.96 0.05 265)", color: wallet.color }}

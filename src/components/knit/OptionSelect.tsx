@@ -36,7 +36,7 @@ export function OptionSelect<T extends string>({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex w-full items-center gap-3 rounded-2xl bg-white px-3 py-3 text-left shadow-[var(--shadow-soft)] hover:bg-slate-50 active:scale-[0.99] transition-all"
+        className="flex w-full items-center gap-3 rounded-2xl bg-white py-3 text-left shadow-[var(--shadow-soft)] hover:bg-slate-50 active:scale-[0.99] transition-all"
       >
         <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[oklch(0.95_0.05_265)] text-[var(--primary)]">
           {icon}

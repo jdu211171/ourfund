@@ -251,7 +251,7 @@ export function GoalDetailScreen() {
           </button>
         ) : null}
 
-        <div className="mt-3 rounded-2xl bg-white px-4 py-3 shadow-[var(--shadow-soft)]">
+        <div className="mt-3 rounded-2xl bg-white py-3 shadow-[var(--shadow-soft)]">
           <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
             Add contribution
           </p>
