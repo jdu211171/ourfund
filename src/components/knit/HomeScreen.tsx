@@ -248,7 +248,7 @@ export function HomeScreen() {
                 setSelectedTransactionId(transaction.id);
                 navigate(transaction.usd < 0 ? "expense_detail" : "income_detail");
               }}
-              className="flex w-full items-center gap-3 rounded-2xl bg-white px-3 py-2.5 text-left"
+              className="flex w-full items-center gap-3 rounded-2xl bg-white py-1.5 text-left"
             >
               <span
                 className={`grid h-10 w-10 place-items-center rounded-xl ${

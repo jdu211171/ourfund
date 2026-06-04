@@ -60,7 +60,7 @@ export function ProfileScreen() {
           </button>
         </header>
 
-        <div className="mt-5 rounded-3xl bg-white p-4 shadow-[var(--shadow-soft)]">
+        <div className="rounded-2xl bg-white p-4 shadow-[var(--shadow-soft)]">
           <p className="text-[11px] uppercase tracking-widest text-muted-foreground">Household</p>
           <p className="mt-1 font-display text-[22px] leading-tight tracking-tight">
             {household?.name ?? "Create or join a household"}
@@ -77,7 +77,7 @@ export function ProfileScreen() {
           </p>
         </div>
 
-        <div className="mt-5 flex items-center justify-between">
+        <div className="flex items-center justify-between">
           <p className="text-[13px] font-bold text-foreground">Members</p>
           <button
             onClick={() => navigate("invite_member")}
@@ -87,14 +87,14 @@ export function ProfileScreen() {
           </button>
         </div>
 
-        <div className="mt-3 space-y-2">
+        <div className="mt-1 space-y-1">
           {members.map((m) => {
             const removalSelected = selectedMemberIds.includes(m.id);
             const canRemove = m.id !== currentMemberId;
             return (
               <div
                 key={m.id}
-                className={`flex w-full items-center gap-3 rounded-2xl bg-white px-3 py-2.5 text-left shadow-[var(--shadow-soft)] ${selectedMemberId === m.id ? "ring-2 ring-[var(--primary)]" : ""}`}
+                className={`flex w-full items-center gap-3 rounded-2xl bg-white py-2.5 text-left shadow-[var(--shadow-soft)] ${selectedMemberId === m.id ? "ring-2 ring-[var(--primary)]" : ""}`}
               >
                 <button
                   type="button"
@@ -172,7 +172,7 @@ export function ProfileScreen() {
             <button
               key={label}
               onClick={() => navigate(screen)}
-              className="flex w-full items-center gap-3 rounded-2xl bg-white px-3 py-3 text-left shadow-[var(--shadow-soft)] hover:bg-slate-50 transition-colors cursor-pointer"
+              className="flex w-full items-center gap-3 rounded-2xl bg-white py-1 text-left shadow-[var(--shadow-soft)] hover:bg-slate-50 transition-colors cursor-pointer"
             >
               <div className="grid h-10 w-10 place-items-center rounded-xl bg-[oklch(0.95_0.04_265)] text-[var(--primary)]">
                 <Icon className="h-4 w-4" strokeWidth={2.25} />
