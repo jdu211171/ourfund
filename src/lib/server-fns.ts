@@ -91,6 +91,66 @@ function normalizeProductName(value: string) {
     .replace(/[^\p{Letter}\p{Number}]+/gu, "");
 }
 
+const TEMPORARY_RECEIPT_SCAN_ERROR =
+  "AI receipt scanning is busy right now. We tried another model, but the service is still overloaded. Please try again shortly.";
+
+const DEFAULT_GEMINI_RECEIPT_SCAN_FALLBACK_MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite"];
+
+function splitGeminiModelList(value?: string) {
+  return String(value || "")
+    .split(",")
+    .map((model) => model.trim())
+    .filter(Boolean);
+}
+
+function getReceiptScanModels() {
+  const primaryModel = process.env.GEMINI_MODEL || "gemini-3.5-flash";
+  const configuredFallbacks = splitGeminiModelList(process.env.GEMINI_FALLBACK_MODELS);
+  const fallbackModels =
+    configuredFallbacks.length > 0
+      ? configuredFallbacks
+      : DEFAULT_GEMINI_RECEIPT_SCAN_FALLBACK_MODELS;
+
+  return Array.from(new Set([primaryModel, ...fallbackModels].filter(Boolean)));
+}
+
+function isRetryableGeminiFailure(status: number, body: string) {
+  const normalized = body.toLowerCase();
+  return (
+    [429, 500, 502, 503, 504].includes(status) ||
+    normalized.includes("high demand") ||
+    normalized.includes("unavailable") ||
+    normalized.includes("overloaded") ||
+    normalized.includes("resource_exhausted")
+  );
+}
+
+function isGeminiModelUnavailable(status: number, body: string) {
+  const normalized = body.toLowerCase();
+  return (
+    status === 404 ||
+    normalized.includes("not found") ||
+    normalized.includes("not supported") ||
+    normalized.includes("model is not available")
+  );
+}
+
+function receiptScanFailureMessage(status: number) {
+  if (status === 401 || status === 403) {
+    return "Receipt scanning is not configured correctly yet.";
+  }
+
+  if (status === 413) {
+    return "This receipt image is too large. Please upload a smaller photo.";
+  }
+
+  if (status === 400) {
+    return "Receipt scanning could not process this image. Please try a clearer receipt photo.";
+  }
+
+  return "Receipt scanning failed. Please try again.";
+}
+
 function parseGeminiJson(text: string) {
   const cleaned = text
     .replace(/^```(?:json)?/i, "")
@@ -626,7 +686,7 @@ export const scanReceiptServerFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY;
     if (!apiKey) {
-      throw new Error("Gemini API key is not configured");
+      throw new Error("Receipt scanning is not configured yet.");
     }
 
     const match = data.imageDataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
@@ -637,7 +697,6 @@ export const scanReceiptServerFn = createServerFn({ method: "POST" })
     const user = await getSessionUser();
     const member = user?.householdMembers[0];
     const householdId = member?.householdId || null;
-    const model = process.env.GEMINI_MODEL || "gemini-3.5-flash";
     const currency = data.currency || "JPY";
     const categoriesList =
       data.categories && data.categories.length > 0
@@ -654,34 +713,86 @@ export const scanReceiptServerFn = createServerFn({ method: "POST" })
       `Use ${currency} when the receipt currency is unclear.`,
     ].join(" ");
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [{ text: prompt }, { inline_data: { mime_type: match[1], data: match[2] } }],
-            },
-          ],
-          generationConfig: { responseMimeType: "application/json" },
-        }),
-      },
-    );
+    let parsed: any;
+    let sawTemporaryFailure = false;
+    let sawModelUnavailable = false;
+    let sawModelResponseFailure = false;
 
-    if (!response.ok) {
-      const body = await response.text();
-      throw new Error(`Gemini receipt scan failed: ${body.slice(0, 220)}`);
+    for (const candidateModel of getReceiptScanModels()) {
+      let response: Response;
+
+      try {
+        response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${candidateModel}:generateContent`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [
+                    { text: prompt },
+                    { inline_data: { mime_type: match[1], data: match[2] } },
+                  ],
+                },
+              ],
+              generationConfig: { responseMimeType: "application/json" },
+            }),
+          },
+        );
+      } catch {
+        sawTemporaryFailure = true;
+        continue;
+      }
+
+      if (!response.ok) {
+        const body = await response.text();
+        if (isRetryableGeminiFailure(response.status, body)) {
+          sawTemporaryFailure = true;
+          continue;
+        }
+
+        if (isGeminiModelUnavailable(response.status, body)) {
+          sawModelUnavailable = true;
+          continue;
+        }
+
+        throw new Error(receiptScanFailureMessage(response.status));
+      }
+
+      const payload = await response.json().catch(() => null);
+      const text = payload?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text || typeof text !== "string") {
+        sawModelResponseFailure = true;
+        continue;
+      }
+
+      try {
+        parsed = parseGeminiJson(text);
+        break;
+      } catch {
+        sawModelResponseFailure = true;
+      }
     }
 
-    const payload = await response.json();
-    const text = payload?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text || typeof text !== "string") {
-      throw new Error("Gemini did not return receipt data");
+    if (!parsed) {
+      if (sawTemporaryFailure) {
+        throw new Error(TEMPORARY_RECEIPT_SCAN_ERROR);
+      }
+
+      if (sawModelResponseFailure) {
+        throw new Error(
+          "AI receipt scanning could not read this receipt clearly. Please try a sharper photo or enter it manually.",
+        );
+      }
+
+      if (sawModelUnavailable) {
+        throw new Error("Receipt scanning is not configured correctly yet.");
+      }
+
+      throw new Error("Receipt scanning failed. Please try again.");
     }
 
-    const parsed = parseGeminiJson(text);
     const receiptCurrency = normalizeCurrencyCode(parsed.currency, currency);
     const trackedProducts = householdId
       ? await prisma.trackedProduct.findMany({

@@ -2,19 +2,106 @@ import {
   ArrowLeft,
   Calendar,
   Camera,
-  Check,
   Image as ImageIcon,
   RotateCcw,
   Sparkles,
   Store,
   Tag,
 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAppNavigation, type ReceiptScan } from "@/lib/navigation";
 import { PhoneFrame } from "./PhoneFrame";
 import { Money } from "./Money";
 import { compressImage } from "@/lib/image-compress";
 import { usdToCurrencyValue, currencyValueToUsd } from "@/lib/currency";
+
+const PENDING_RECEIPT_IMAGE_KEY = "ourfund:pending-receipt-image";
+const TEMPORARY_SCAN_MESSAGE =
+  "AI receipt scanning is busy right now. We tried another model and saved this image so you can retry when it is available.";
+const TEMPORARY_SCAN_UNSAVED_MESSAGE =
+  "AI receipt scanning is busy right now. We tried another model, but the service is still overloaded. Please try again shortly.";
+const SAVED_SCAN_MESSAGE =
+  "Your last receipt image is saved here because AI scanning was busy. Try scanning it again when it is available.";
+
+interface PendingReceiptImage {
+  imageDataUrl: string;
+  savedAt: string;
+}
+
+function isTemporaryReceiptScanError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error || "");
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes("busy right now") ||
+    normalized.includes("high demand") ||
+    normalized.includes("unavailable") ||
+    normalized.includes("overloaded") ||
+    normalized.includes("resource_exhausted") ||
+    normalized.includes("503")
+  );
+}
+
+function receiptScanErrorMessage(error: unknown, imageSaved: boolean) {
+  const message = error instanceof Error ? error.message : String(error || "");
+
+  if (isTemporaryReceiptScanError(error)) {
+    return imageSaved ? TEMPORARY_SCAN_MESSAGE : TEMPORARY_SCAN_UNSAVED_MESSAGE;
+  }
+
+  if (
+    message.includes("Gemini receipt scan failed") ||
+    message.includes('"error"') ||
+    message.includes("{")
+  ) {
+    return "AI receipt scanning could not finish. Please try again shortly.";
+  }
+
+  return message || "Receipt scan failed. Please try again.";
+}
+
+function savePendingReceiptImage(imageDataUrl: string) {
+  if (typeof window === "undefined") return null;
+
+  const pending = { imageDataUrl, savedAt: new Date().toISOString() };
+
+  try {
+    window.localStorage.setItem(PENDING_RECEIPT_IMAGE_KEY, JSON.stringify(pending));
+    return pending;
+  } catch {
+    return null;
+  }
+}
+
+function loadPendingReceiptImage(): PendingReceiptImage | null {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const raw = window.localStorage.getItem(PENDING_RECEIPT_IMAGE_KEY);
+    if (!raw) return null;
+
+    const pending = JSON.parse(raw) as Partial<PendingReceiptImage>;
+    if (
+      typeof pending.imageDataUrl !== "string" ||
+      !pending.imageDataUrl.startsWith("data:image/")
+    ) {
+      window.localStorage.removeItem(PENDING_RECEIPT_IMAGE_KEY);
+      return null;
+    }
+
+    return {
+      imageDataUrl: pending.imageDataUrl,
+      savedAt: typeof pending.savedAt === "string" ? pending.savedAt : new Date().toISOString(),
+    };
+  } catch {
+    window.localStorage.removeItem(PENDING_RECEIPT_IMAGE_KEY);
+    return null;
+  }
+}
+
+function clearPendingReceiptImage() {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(PENDING_RECEIPT_IMAGE_KEY);
+}
 
 export function ScanReceiptScreen() {
   const { navigate, goBack, scanReceiptImage, saveReceiptScan, categories } = useAppNavigation();
@@ -23,25 +110,80 @@ export function ScanReceiptScreen() {
   const [scan, setScan] = useState<ReceiptScan | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [pendingReceipt, setPendingReceipt] = useState<PendingReceiptImage | null>(null);
+
+  useEffect(() => {
+    const pending = loadPendingReceiptImage();
+    if (!pending) return;
+
+    setPendingReceipt(pending);
+    setPreview(pending.imageDataUrl);
+    setNotice(SAVED_SCAN_MESSAGE);
+  }, []);
+
+  const scanImageDataUrl = async (imageDataUrl: string) => {
+    setError("");
+    setNotice("");
+    setLoading(true);
+    setPreview(imageDataUrl);
+    setScan(null);
+
+    try {
+      const result = await scanReceiptImage(imageDataUrl);
+      clearPendingReceiptImage();
+      setPendingReceipt(null);
+      setScan(result);
+    } catch (err) {
+      const pending = isTemporaryReceiptScanError(err)
+        ? savePendingReceiptImage(imageDataUrl)
+        : null;
+      if (pending) {
+        setPendingReceipt(pending);
+      }
+      setError(receiptScanErrorMessage(err, Boolean(pending)));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleFile = async (file?: File) => {
     if (!file) return;
     setError("");
+    setNotice("");
+    setPendingReceipt(null);
+    clearPendingReceiptImage();
     setLoading(true);
     try {
       const compressedDataUrl = await compressImage(file);
-      setPreview(compressedDataUrl);
-      const result = await scanReceiptImage(compressedDataUrl);
-      setScan(result);
+      await scanImageDataUrl(compressedDataUrl);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Receipt scan failed");
-    } finally {
+      setError(receiptScanErrorMessage(err, false));
       setLoading(false);
     }
   };
 
   const detectedCount = scan?.items.length ?? 0;
   const total = scan?.totalUsd ?? 0;
+  const primaryLabel = scan
+    ? `Save ${detectedCount} items`
+    : preview
+      ? "Retry scan"
+      : "Scan receipt";
+  const handlePrimaryAction = () => {
+    if (scan) {
+      saveReceiptScan(scan);
+      navigate("product_tracker");
+      return;
+    }
+
+    if (preview) {
+      void scanImageDataUrl(preview);
+      return;
+    }
+
+    inputRef.current?.click();
+  };
 
   return (
     <PhoneFrame>
@@ -60,6 +202,9 @@ export function ScanReceiptScreen() {
               setPreview("");
               setScan(null);
               setError("");
+              setNotice("");
+              setPendingReceipt(null);
+              clearPendingReceiptImage();
             }}
             className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground"
             aria-label="Rescan"
@@ -74,7 +219,11 @@ export function ScanReceiptScreen() {
           accept="image/*"
           capture="environment"
           className="hidden"
-          onChange={(event) => void handleFile(event.target.files?.[0])}
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            event.currentTarget.value = "";
+            void handleFile(file);
+          }}
         />
 
         <button
@@ -117,10 +266,20 @@ export function ScanReceiptScreen() {
                 ? "Reading receipt..."
                 : detectedCount
                   ? `AI detected ${detectedCount} items`
-                  : "Tap to scan receipt"}
+                  : pendingReceipt
+                    ? "Saved receipt ready"
+                    : preview
+                      ? "Receipt ready to retry"
+                      : "Tap to scan receipt"}
             </span>
           </div>
         </button>
+
+        {notice && !error && (
+          <div className="mt-3 rounded-2xl bg-white px-3 py-2 text-[11px] font-semibold text-muted-foreground shadow-[var(--shadow-soft)]">
+            {notice}
+          </div>
+        )}
 
         {error && (
           <div className="mt-3 rounded-2xl bg-[oklch(0.96_0.05_25)] px-3 py-2 text-[11px] font-semibold text-[var(--danger)]">
@@ -311,18 +470,10 @@ export function ScanReceiptScreen() {
           </button>
           <button
             disabled={loading}
-            onClick={() => {
-              if (!scan) {
-                inputRef.current?.click();
-                return;
-              }
-              saveReceiptScan(scan);
-              navigate("product_tracker");
-            }}
+            onClick={handlePrimaryAction}
             className="flex flex-[1.4] items-center justify-center gap-1.5 rounded-full bg-[var(--primary)] py-2.5 text-[12px] font-semibold text-white disabled:opacity-50"
           >
-            <Camera className="h-3.5 w-3.5" strokeWidth={2.5} />{" "}
-            {scan ? `Save ${detectedCount} items` : "Scan receipt"}
+            <Camera className="h-3.5 w-3.5" strokeWidth={2.5} /> {primaryLabel}
           </button>
         </div>
         <button
