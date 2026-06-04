@@ -7,7 +7,7 @@ import {
   Search,
   ShoppingBag,
   SlidersHorizontal,
-  Target,
+  Landmark,
 } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis, ReferenceLine } from "recharts";
 import { PhoneFrame } from "./PhoneFrame";
@@ -145,30 +145,30 @@ export function ActivitiesScreen({
         </div>
 
         <section className="mt-4 grid grid-cols-3 gap-2">
-          <div className="rounded-2xl bg-white p-3">
+          <div className="rounded-2xl bg-white p-3 flex flex-col items-center text-center">
             <span className="grid h-7 w-7 place-items-center rounded-xl bg-[oklch(0.96_0.05_25)] text-[var(--danger)]">
               <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={2.5} />
             </span>
             <p className="mt-2 text-[10px] text-muted-foreground">Spent</p>
             <Money usd={spentUsd} size="sm" tone="danger" />
           </div>
-          <div className="rounded-2xl bg-white p-3">
+          <div className="rounded-2xl bg-white p-3 flex flex-col items-center text-center">
             <span className="grid h-7 w-7 place-items-center rounded-xl bg-[oklch(0.96_0.04_145)] text-[var(--success)]">
               <ArrowDownLeft className="h-3.5 w-3.5" strokeWidth={2.5} />
             </span>
             <p className="mt-2 text-[10px] text-muted-foreground">Income</p>
             <Money usd={incomeUsd} size="sm" tone="success" />
           </div>
-          <div className="rounded-2xl bg-white p-3">
+          <div className="rounded-2xl bg-white p-3 flex flex-col items-center text-center">
             <span className="grid h-7 w-7 place-items-center rounded-xl bg-[oklch(0.95_0.04_265)] text-[var(--primary)]">
-              <Target className="h-3.5 w-3.5" strokeWidth={2.5} />
+              <Landmark className="h-3.5 w-3.5" strokeWidth={2.5} />
             </span>
             <p className="mt-2 text-[10px] text-muted-foreground">Net</p>
-            <Money usd={netUsd} size="sm" tone={netUsd >= 0 ? "success" : "danger"} signed />
+            <Money usd={netUsd} size="sm" />
           </div>
         </section>
 
-        <section className="mt-4 rounded-3xl bg-white p-4">
+        <section className="rounded-3xl bg-white p-4">
           <div className="flex items-end justify-between gap-3">
             <div>
               <p className="text-[10px] uppercase tracking-widest text-muted-foreground">

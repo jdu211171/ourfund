@@ -239,7 +239,7 @@ export function HomeScreen() {
           </button>
         </div>
 
-        <div className="space-y-2">
+        <div>
           {recentTransactions.map((transaction) => (
             <button
               key={transaction.id}
