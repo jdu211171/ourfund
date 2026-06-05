@@ -1,6 +1,7 @@
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { Money } from "./Money";
 import { useAppNavigation } from "@/lib/navigation";
+import { BudgetModeToggle } from "./BudgetModeToggle";
 
 type Props = {
   label?: string;
@@ -29,31 +30,10 @@ export function BalanceHeader({
         <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-bold">
           {label}
         </p>
-        <div className="inline-flex rounded-full bg-[var(--muted)] p-0.5 scale-95 origin-right">
-          <button
-            onClick={() => setBudgetMode("personal")}
-            className={`rounded-full px-3 py-1 text-[10px] font-bold transition-all active:scale-95 cursor-pointer ${
-              budgetMode === "personal"
-                ? "bg-white text-foreground shadow-[var(--shadow-soft)] font-extrabold"
-                : "text-muted-foreground"
-            }`}
-          >
-            Personal
-          </button>
-          <button
-            onClick={() => setBudgetMode("family")}
-            className={`rounded-full px-3 py-1 text-[10px] font-bold transition-all active:scale-95 cursor-pointer ${
-              budgetMode === "family"
-                ? "bg-white text-foreground shadow-[var(--shadow-soft)] font-extrabold"
-                : "text-muted-foreground"
-            }`}
-          >
-            Family
-          </button>
-        </div>
       </div>
-      <div className="mt-1">
+      <div className="mt-1 flex items-center justify-between">
         <Money usd={balanceUsd} size="xl" />
+        <BudgetModeToggle className="scale-80 origin-right" variant="vertical" />
       </div>
       <div className="mt-4 grid grid-cols-2 gap-3">
         <Cell

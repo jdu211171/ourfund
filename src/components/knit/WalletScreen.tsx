@@ -1,11 +1,12 @@
 import {
   ArrowRightLeft,
+  CalendarClock,
   ChevronRight,
-  Landmark,
   Lock,
   PiggyBank,
-  Repeat,
   ShoppingBag,
+  TrendingDown,
+  TrendingUp,
   Users,
   WalletCards,
 } from "lucide-react";
@@ -17,6 +18,7 @@ import { Money } from "./Money";
 import { useAppNavigation } from "@/lib/navigation";
 import { categoryIconMap } from "./categoryOptions";
 import { GoalIcon, normalizeGoalIconName } from "./goalIconOptions";
+import { formatScheduleSubtext, getScheduleInfo } from "@/lib/schedules";
 
 export function WalletScreen() {
   const {
@@ -55,10 +57,17 @@ export function WalletScreen() {
     })
     .sort((a, b) => b.pct - a.pct)
     .slice(0, 4);
-  const upcomingTotalUsd = subscriptions.slice(0, 3).reduce((sum, item) => sum + item.amountUsd, 0);
-  const incomingTotalUsd = recurringIncome
-    .slice(0, 3)
-    .reduce((sum, item) => sum + item.amountUsd, 0);
+  const scheduledIncomeRows = recurringIncome
+    .map((item) => ({ item, info: getScheduleInfo(item.every) }))
+    .sort((a, b) => (a.info.daysUntil ?? 9999) - (b.info.daysUntil ?? 9999));
+  const scheduledExpenseRows = subscriptions
+    .map((item) => ({ item, info: getScheduleInfo(item.every) }))
+    .sort((a, b) => (a.info.daysUntil ?? 9999) - (b.info.daysUntil ?? 9999));
+  const scheduledIncomeUsd = recurringIncome.reduce((sum, item) => sum + item.amountUsd, 0);
+  const scheduledExpenseUsd = subscriptions.reduce((sum, item) => sum + item.amountUsd, 0);
+  const scheduledNetUsd = scheduledIncomeUsd - scheduledExpenseUsd;
+  const nextIncome = scheduledIncomeRows[0];
+  const nextExpense = scheduledExpenseRows[0];
 
   return (
     <PhoneFrame>
@@ -171,24 +180,79 @@ export function WalletScreen() {
           )}
         </div>
 
-        <div className="mt-2 grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={() => navigate("subscriptions")}
-            className="rounded-2xl bg-white text-left"
-          >
-            <div className="flex items-center gap-2">
-              <span className="grid h-8 w-8 place-items-center rounded-xl bg-[oklch(0.96_0.05_25)] text-[var(--danger)]">
-                <Repeat className="h-4 w-4" strokeWidth={2.25} />
+        <section className="mt-3">
+          <div className="flex items-center justify-between">
+            <p className="text-[13px] font-bold text-[oklch(0.2_0.08_265)]">Scheduled cashflow</p>
+            <button
+              type="button"
+              onClick={() => navigate("subscriptions")}
+              className="text-[11px] font-bold text-[var(--primary)]"
+            >
+              Manage
+            </button>
+          </div>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => navigate("recurring_income")}
+              className="rounded-2xl bg-white p-3 text-left shadow-[var(--shadow-soft)]"
+            >
+              <span className="flex items-center gap-2">
+                <span className="grid h-8 w-8 place-items-center rounded-xl bg-[oklch(0.95_0.08_150)] text-[var(--success)]">
+                  <TrendingUp className="h-4 w-4" strokeWidth={2.25} />
+                </span>
+                <span className="text-[11px] font-bold text-foreground">Income</span>
               </span>
-              <span className="text-[11px] font-bold text-foreground">Scheduled</span>
-            </div>
-            <div className="mt-3 flex items-end justify-between">
-              <Money usd={upcomingTotalUsd} size="sm" tone="danger" />
-              <Money usd={incomingTotalUsd} size="sm" tone="success" />
-            </div>
-          </button>
-        </div>
+              <Money
+                usd={scheduledIncomeUsd}
+                size="sm"
+                tone="success"
+                signed={scheduledIncomeUsd > 0}
+                className="mt-3"
+              />
+              <span className="mt-2 block truncate text-[10px] text-muted-foreground">
+                {nextIncome
+                  ? `${nextIncome.item.label} · ${formatScheduleSubtext(nextIncome.info)}`
+                  : "No scheduled income"}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate("subscriptions")}
+              className="rounded-2xl bg-white p-3 text-left shadow-[var(--shadow-soft)]"
+            >
+              <span className="flex items-center gap-2">
+                <span className="grid h-8 w-8 place-items-center rounded-xl bg-[oklch(0.96_0.05_25)] text-[var(--danger)]">
+                  <TrendingDown className="h-4 w-4" strokeWidth={2.25} />
+                </span>
+                <span className="text-[11px] font-bold text-foreground">Bills</span>
+              </span>
+              <Money usd={scheduledExpenseUsd} size="sm" tone="danger" className="mt-3" />
+              <span className="mt-2 block truncate text-[10px] text-muted-foreground">
+                {nextExpense
+                  ? `${nextExpense.item.label} · ${formatScheduleSubtext(nextExpense.info)}`
+                  : "No scheduled bills"}
+              </span>
+            </button>
+          </div>
+          <div className="mt-2 flex items-center gap-3 rounded-2xl bg-white p-3 shadow-[var(--shadow-soft)]">
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-[var(--muted)] text-[var(--primary)]">
+              <CalendarClock className="h-4 w-4" strokeWidth={2.25} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[11px] font-bold text-foreground">Net scheduled</span>
+              <span className="block text-[10px] text-muted-foreground">
+                {recurringIncome.length} income · {subscriptions.length} bills
+              </span>
+            </span>
+            <Money
+              usd={scheduledNetUsd}
+              size="sm"
+              tone={scheduledNetUsd >= 0 ? "success" : "danger"}
+              signed
+            />
+          </div>
+        </section>
 
         <div className="mt-2 flex items-center justify-between">
           <p className="text-[13px] font-bold text-[oklch(0.2_0.08_265)]">Category controls</p>

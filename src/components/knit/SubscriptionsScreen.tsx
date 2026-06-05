@@ -1,9 +1,9 @@
-import { ArrowLeft, Plus, Tv, Wifi, Zap, Music, Home, Tag } from "lucide-react";
+import { ArrowLeft, Home, Music, Pencil, Plus, Tag, Trash2, Tv, Wifi, Zap } from "lucide-react";
 import { useMemo, useState } from "react";
 import { PhoneFrame } from "./PhoneFrame";
 import { useAppNavigation } from "@/lib/navigation";
 import { Money } from "./Money";
-import { currencyValueToUsd, formatUsdAsCurrency } from "@/lib/currency";
+import { currencyValueToUsd, formatUsdAsCurrency, usdToCurrencyValue } from "@/lib/currency";
 import { OptionSelect } from "./OptionSelect";
 import {
   ScheduleFrequency,
@@ -14,27 +14,40 @@ import {
 } from "@/lib/schedules";
 
 const icons = [Home, Zap, Wifi, Tv, Music];
+const frequencyOptions: { value: ScheduleFrequency; label: string }[] = [
+  { value: "weekly", label: "Weekly" },
+  { value: "monthly", label: "Monthly" },
+  { value: "yearly", label: "Yearly" },
+];
+
+const defaultNextScheduleDate = () => formatISODate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000));
 
 export function SubscriptionsScreen() {
-  const { goBack, navigate, currency, addSubscription, subscriptions, categories } =
-    useAppNavigation();
+  const {
+    goBack,
+    navigate,
+    currency,
+    addSubscription,
+    subscriptions,
+    categories,
+    updateScheduleItem,
+    deleteScheduleItem,
+  } = useAppNavigation();
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [frequency, setFrequency] = useState<ScheduleFrequency>("monthly");
-  const [nextDate, setNextDate] = useState(
-    formatISODate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
-  );
+  const [nextDate, setNextDate] = useState(defaultNextScheduleDate);
   const categoryOptions = useMemo(
-    () =>
-      [
-        ...categories.map((category) => ({
-          value: category.label,
-          label: category.label,
-          description: `${formatUsdAsCurrency(category.limitUsd, currency)} limit`,
-        })),
-        { value: "Uncategorized", label: "Uncategorized" },
-      ] as const,
+    () => [
+      ...categories.map((category) => ({
+        value: category.label,
+        label: category.label,
+        description: `${formatUsdAsCurrency(category.limitUsd, currency)} limit`,
+      })),
+      { value: "Uncategorized", label: "Uncategorized" },
+    ],
     [categories, currency],
   );
   const [category, setCategory] = useState(categoryOptions[0]?.value ?? "Uncategorized");
@@ -43,21 +56,66 @@ export function SubscriptionsScreen() {
     .map((item) => ({ item, info: getScheduleInfo(item.every) }))
     .sort((a, b) => (a.info.daysUntil ?? 9999) - (b.info.daysUntil ?? 9999));
   const total = subscriptions.reduce((sum, item) => sum + item.amountUsd, 0);
-  const handleAdd = () => {
+
+  const resetForm = () => {
+    setName("");
+    setAmount("");
+    setFrequency("monthly");
+    setNextDate(defaultNextScheduleDate());
+    setCategory(categoryOptions[0]?.value ?? "Uncategorized");
+    setEditingId(null);
+  };
+
+  const beginCreate = () => {
+    resetForm();
+    setShowForm(true);
+  };
+
+  const formatAmountInput = (amountUsdValue: number) => {
+    const localAmount = usdToCurrencyValue(amountUsdValue, currency);
+    return Number.isInteger(localAmount)
+      ? String(localAmount)
+      : localAmount.toFixed(2).replace(/\.?0+$/, "");
+  };
+
+  const beginEdit = (item: (typeof subscriptions)[number]) => {
+    const info = getScheduleInfo(item.every);
+    setEditingId(item.id);
+    setName(item.label);
+    setAmount(formatAmountInput(item.amountUsd));
+    setFrequency(info.meta?.frequency ?? "monthly");
+    setNextDate(info.nextDate ? formatISODate(info.nextDate) : defaultNextScheduleDate());
+    setCategory(info.meta?.category ?? categoryOptions[0]?.value ?? "Uncategorized");
+    setShowForm(true);
+  };
+
+  const removeSchedule = (id: string) => {
+    if (editingId === id) {
+      resetForm();
+      setShowForm(false);
+    }
+    deleteScheduleItem(id);
+  };
+
+  const handleSave = () => {
     if (!name.trim() || !amountUsd || !nextDate) return;
     const meta = makeScheduleMeta({ frequency, nextDate, category });
     const color = categories.find((c) => c.label === category)?.color ?? "oklch(0.65 0.22 30)";
-    addSubscription({
+    const payload = {
       label: name.trim(),
       amountUsd,
       every: meta.every,
       color,
-    });
-    setName("");
-    setAmount("");
-    setFrequency("monthly");
-    setNextDate(formatISODate(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)));
-    setCategory(categoryOptions[0]?.value ?? "Uncategorized");
+      type: "subscription" as const,
+    };
+
+    if (editingId) {
+      updateScheduleItem(editingId, payload);
+    } else {
+      addSubscription(payload);
+    }
+
+    resetForm();
     setShowForm(false);
   };
 
@@ -74,7 +132,7 @@ export function SubscriptionsScreen() {
           </button>
           <h2 className="text-[17px] font-bold tracking-tight">Recurring</h2>
           <button
-            onClick={() => setShowForm(true)}
+            onClick={beginCreate}
             className="grid h-9 w-9 place-items-center rounded-full bg-[var(--muted)]"
             aria-label="Add subscription"
           >
@@ -97,7 +155,7 @@ export function SubscriptionsScreen() {
         {showForm && (
           <div className="mt-4 space-y-3 rounded-3xl bg-white p-4 shadow-[var(--shadow-soft)]">
             <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-              New recurring expense
+              {editingId ? "Edit recurring expense" : "New recurring expense"}
             </p>
             <div className="rounded-2xl bg-[var(--muted)] px-3 py-2">
               <p className="text-[10px] text-muted-foreground">Name</p>
@@ -131,11 +189,7 @@ export function SubscriptionsScreen() {
             <OptionSelect
               label="Frequency"
               value={frequency}
-              options={[
-                { value: "weekly", label: "Weekly" },
-                { value: "monthly", label: "Monthly" },
-                { value: "yearly", label: "Yearly" },
-              ]}
+              options={frequencyOptions}
               onChange={setFrequency}
               icon={<Home className="h-5 w-5" strokeWidth={2.25} />}
             />
@@ -150,13 +204,16 @@ export function SubscriptionsScreen() {
             </div>
             <div className="flex gap-2">
               <button
-                onClick={handleAdd}
+                onClick={handleSave}
                 className="flex-1 rounded-full bg-[oklch(0.18_0.04_265)] py-3 text-[13px] font-semibold text-white"
               >
-                Save schedule
+                {editingId ? "Update schedule" : "Save schedule"}
               </button>
               <button
-                onClick={() => setShowForm(false)}
+                onClick={() => {
+                  resetForm();
+                  setShowForm(false);
+                }}
                 className="flex-1 rounded-full bg-[var(--muted)] py-3 text-[13px] font-semibold text-foreground"
               >
                 Cancel
@@ -182,7 +239,7 @@ export function SubscriptionsScreen() {
           Up next
         </p>
 
-        <div className="mt-2 flex-1 space-y-2 overflow-hidden">
+        <div className="mt-2 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
           {scheduleRows.map(({ item: s, info }, index) => {
             const Icon = icons[index % icons.length];
             const soon = info.daysUntil !== null && info.daysUntil <= 5;
@@ -203,12 +260,30 @@ export function SubscriptionsScreen() {
                   </p>
                 </div>
                 <Money usd={s.amountUsd} size="sm" />
+                <div className="flex shrink-0 items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => beginEdit(s)}
+                    className="grid h-8 w-8 place-items-center rounded-full bg-[var(--muted)] text-foreground"
+                    aria-label={`Edit ${s.label}`}
+                  >
+                    <Pencil className="h-3.5 w-3.5" strokeWidth={2.4} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeSchedule(s.id)}
+                    className="grid h-8 w-8 place-items-center rounded-full bg-[oklch(0.96_0.05_25)] text-[var(--danger)]"
+                    aria-label={`Delete ${s.label}`}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" strokeWidth={2.4} />
+                  </button>
+                </div>
               </div>
             );
           })}
           {subscriptions.length === 0 && (
             <button
-              onClick={() => setShowForm(true)}
+              onClick={beginCreate}
               className="w-full rounded-2xl bg-white px-4 py-5 text-center shadow-[var(--shadow-soft)]"
             >
               <p className="text-[13px] font-bold text-foreground">No recurring bills</p>
@@ -218,6 +293,13 @@ export function SubscriptionsScreen() {
             </button>
           )}
         </div>
+
+        <button
+          onClick={beginCreate}
+          className="mt-auto w-full rounded-full bg-[oklch(0.18_0.04_265)] py-4 text-[15px] font-semibold text-white"
+        >
+          Add new schedule
+        </button>
       </div>
     </PhoneFrame>
   );

@@ -400,6 +400,8 @@ interface NavigationContextType {
   addRecurringIncome: (item?: Partial<ScheduleItem>) => void;
   subscriptions: ScheduleItem[];
   addSubscription: (item?: Partial<ScheduleItem>) => void;
+  updateScheduleItem: (id: string, updates: Partial<Omit<ScheduleItem, "id">>) => void;
+  deleteScheduleItem: (id: string) => void;
   loanEntries: LoanEntry[];
   addLoanEntry: (
     entry: Omit<LoanEntry, "id" | "createdAt" | "paidAmountUsd"> & { paidAmountUsd?: number },
@@ -1534,6 +1536,47 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     syncMutationServerFn({ data: { type: "addScheduleItem", data: newItem } }).catch(console.error);
   };
 
+  const updateScheduleItem = (id: string, updates: Partial<Omit<ScheduleItem, "id">>) => {
+    const current =
+      recurringIncome.find((item) => item.id === id) ??
+      subscriptions.find((item) => item.id === id);
+    if (!current) return;
+
+    const nextItem: ScheduleItem = {
+      ...current,
+      ...updates,
+      id,
+      type: updates.type ?? current.type,
+    };
+
+    setRecurringIncome((prev) => {
+      const withoutItem = prev.filter((item) => item.id !== id);
+      if (nextItem.type !== "income") return withoutItem;
+      return prev.some((item) => item.id === id)
+        ? prev.map((item) => (item.id === id ? nextItem : item))
+        : [nextItem, ...withoutItem];
+    });
+    setSubscriptions((prev) => {
+      const withoutItem = prev.filter((item) => item.id !== id);
+      if (nextItem.type !== "subscription") return withoutItem;
+      return prev.some((item) => item.id === id)
+        ? prev.map((item) => (item.id === id ? nextItem : item))
+        : [nextItem, ...withoutItem];
+    });
+
+    syncMutationServerFn({ data: { type: "updateScheduleItem", data: nextItem } }).catch(
+      console.error,
+    );
+  };
+
+  const deleteScheduleItem = (id: string) => {
+    setRecurringIncome((prev) => prev.filter((item) => item.id !== id));
+    setSubscriptions((prev) => prev.filter((item) => item.id !== id));
+    syncMutationServerFn({ data: { type: "removeScheduleItem", data: { id } } }).catch(
+      console.error,
+    );
+  };
+
   const addLoanEntry = (
     entry: Omit<LoanEntry, "id" | "createdAt" | "paidAmountUsd"> & { paidAmountUsd?: number },
   ) => {
@@ -1903,6 +1946,8 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         addRecurringIncome,
         subscriptions,
         addSubscription,
+        updateScheduleItem,
+        deleteScheduleItem,
         loanEntries,
         addLoanEntry,
         updateLoanEntry,

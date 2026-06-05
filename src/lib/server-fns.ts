@@ -1453,6 +1453,23 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
         break;
       }
 
+      case "updateScheduleItem": {
+        if (!householdId) throw new Error("No household linked");
+        const item = await prisma.scheduleItem.findUnique({ where: { id: payload.id } });
+        if (!item || item.householdId !== householdId) throw new Error("Forbidden");
+        await prisma.scheduleItem.update({
+          where: { id: payload.id },
+          data: {
+            label: payload.label,
+            every: payload.every,
+            amountUsd: Number(payload.amountUsd) || 0,
+            color: payload.color,
+            type: payload.type === "subscription" ? "subscription" : "income",
+          },
+        });
+        break;
+      }
+
       case "removeScheduleItem": {
         if (!householdId) throw new Error("No household linked");
         // Authorization: verify this schedule item belongs to the user's household
