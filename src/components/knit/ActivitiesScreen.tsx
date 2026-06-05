@@ -108,21 +108,14 @@ export function ActivitiesScreen({
               {budgetMode === "personal" ? "Personal" : "Family"} insights
             </p>
           </div>
-          <button
-            onClick={() => navigate("alerts")}
-            className="grid h-9 w-9 place-items-center rounded-full bg-[var(--muted)] text-foreground hover:bg-slate-200 transition-colors active:scale-95 cursor-pointer"
-            aria-label="Notifications"
-          >
-            <Bell className="h-4 w-4" strokeWidth={2.25} />
-          </button>
+          <BudgetModeToggle className="scale-95 origin-right" />
         </header>
 
-        <div className="mt-4 flex items-center justify-between gap-3">
-          <BudgetModeToggle />
+        <div className="mt-2 flex items-center justify-end gap-3">
           <button
             type="button"
             onClick={() => navigate("analytics")}
-            className="rounded-full bg-white px-3 py-2 text-[11px] font-bold text-foreground"
+            className="text-[11px] font-bold text-[var(--primary)]"
           >
             Analytics
           </button>

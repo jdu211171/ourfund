@@ -95,7 +95,7 @@ export function WalletScreen() {
             <button
               type="button"
               onClick={() => navigate("transfer")}
-              className="flex items-center gap-2 rounded-2xl bg-[var(--muted)] px-3 py-3 text-left"
+              className="flex items-center gap-2 rounded-2xl bg-[var(--muted)] py-3 text-left"
             >
               <span className="grid h-8 w-8 place-items-center rounded-xl bg-white text-[var(--primary)]">
                 <ArrowRightLeft className="h-4 w-4" strokeWidth={2.25} />
@@ -108,7 +108,7 @@ export function WalletScreen() {
             <button
               type="button"
               onClick={() => navigate("new_wallet")}
-              className="flex items-center gap-2 rounded-2xl bg-[var(--muted)] px-3 py-3 text-left"
+              className="flex items-center gap-2 rounded-2xl bg-[var(--muted)] py-3 text-left"
             >
               <span className="grid h-8 w-8 place-items-center rounded-xl bg-white text-[var(--primary)]">
                 <WalletCards className="h-4 w-4" strokeWidth={2.25} />
@@ -161,7 +161,7 @@ export function WalletScreen() {
           {sortedWallets.length === 0 && (
             <button
               onClick={() => navigate("new_wallet")}
-              className="w-full rounded-2xl bg-white px-4 py-5 text-center"
+              className="w-full rounded-2xl bg-white py-5 text-center"
             >
               <p className="text-[13px] font-bold text-foreground">No wallet here yet</p>
               <p className="mt-1 text-[11px] text-muted-foreground">
@@ -190,7 +190,7 @@ export function WalletScreen() {
           </button>
         </div>
 
-        <div className="mt-5 flex items-center justify-between">
+        <div className="mt-2 flex items-center justify-between">
           <p className="text-[13px] font-bold text-[oklch(0.2_0.08_265)]">Category controls</p>
           <button
             type="button"
@@ -209,7 +209,7 @@ export function WalletScreen() {
                 type="button"
                 key={category.id}
                 onClick={() => navigate("categories")}
-                className="w-full rounded-2xl bg-white px-3 py-2.5 text-left"
+                className="w-full rounded-2xl bg-white py-2.5 text-left"
               >
                 <div className="flex items-center gap-3">
                   <div
@@ -241,7 +241,7 @@ export function WalletScreen() {
           {categoryRows.length === 0 && (
             <button
               onClick={() => navigate("new_category")}
-              className="w-full rounded-2xl bg-white px-4 py-2 text-center"
+              className="w-full rounded-2xl bg-white py-2 text-center"
             >
               <p className="text-[13px] font-bold text-foreground">No limits yet</p>
               <p className="mt-1 text-[11px] text-muted-foreground">
