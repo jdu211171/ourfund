@@ -211,7 +211,7 @@ export function HomeScreen() {
                 type="button"
                 key={category.id}
                 onClick={() => navigate("categories")}
-                className="flex w-full items-center gap-3 rounded-2xl bg-white px-3 py-2.5 text-left"
+                className="flex w-full items-center gap-3 rounded-2xl bg-white py-2.5 text-left"
               >
                 <span className="grid h-10 w-10 place-items-center rounded-xl bg-[oklch(0.96_0.05_25)] text-[var(--danger)]">
                   <AlertTriangle className="h-4 w-4" strokeWidth={2.25} />
