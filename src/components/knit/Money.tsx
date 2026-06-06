@@ -1,5 +1,5 @@
 import { useOptionalAppNavigation } from "@/lib/navigation";
-import { formatUsdAsCurrency } from "@/lib/currency";
+import { formatCurrencyValue, formatUsdAsCurrency } from "@/lib/currency";
 
 const sizeMap = {
   sm: { primary: "text-[13px]", sub: "text-[9px]" },
@@ -10,23 +10,23 @@ const sizeMap = {
 
 type Size = keyof typeof sizeMap;
 
-function fmtUSD(usd: number) {
-  const abs = Math.abs(usd);
-  const s = abs.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return `${usd < 0 ? "-" : ""}$${s}`;
-}
-
 export function Money({
   usd,
   size = "md",
   tone = "default",
   signed = false,
+  compact = false,
+  nowrap = false,
+  primaryClassName = "",
   className = "",
 }: {
   usd: number;
   size?: Size;
   tone?: "default" | "success" | "danger";
   signed?: boolean;
+  compact?: boolean;
+  nowrap?: boolean;
+  primaryClassName?: string;
   className?: string;
 }) {
   const app = useOptionalAppNavigation();
@@ -43,14 +43,18 @@ export function Money({
   const displayUsd = signed ? Math.abs(usd) : usd;
   return (
     <span className={`inline-flex flex-col leading-none ${className}`}>
-      <span className={`${s.primary} font-extrabold tracking-tight ${toneClass}`}>
+      <span
+        className={`${s.primary} font-extrabold tracking-tight ${toneClass} ${primaryClassName} ${
+          nowrap ? "whitespace-nowrap" : ""
+        }`}
+      >
         {sign}
-        {formatUsdAsCurrency(displayUsd, currency)}
+        {formatUsdAsCurrency(displayUsd, currency, { compact })}
       </span>
       {currency !== "USD" && (
         <span className={`${s.sub} mt-1 font-medium text-muted-foreground`}>
           ≈ {sign}
-          {fmtUSD(displayUsd)}
+          {formatCurrencyValue(displayUsd, "USD", { compact })}
         </span>
       )}
     </span>

@@ -38,20 +38,36 @@ export function currencyAdornment(currency: CurrencyCode) {
   };
 }
 
+type FormatCurrencyOptions = {
+  signed?: boolean;
+  maximumFractionDigits?: number;
+  compact?: boolean;
+};
+
 export function formatCurrencyValue(
   value: number,
   currency: CurrencyCode,
-  options: { signed?: boolean; maximumFractionDigits?: number } = {},
+  options: FormatCurrencyOptions = {},
 ) {
   const meta = currencyMeta[currency];
   const signed = options.signed ?? false;
   const amount = Number.isFinite(value) ? value : 0;
   const abs = Math.abs(amount);
+  const useCompact = options.compact === true && abs >= 1_000_000;
   const digits = options.maximumFractionDigits ?? currencyFractionDigits(currency);
-  const formatted = new Intl.NumberFormat("en-US", {
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-  }).format(abs);
+  const formatted = new Intl.NumberFormat(
+    "en-US",
+    useCompact
+      ? {
+          notation: "compact",
+          compactDisplay: "short",
+          maximumFractionDigits: options.maximumFractionDigits ?? 1,
+        }
+      : {
+          minimumFractionDigits: digits,
+          maximumFractionDigits: digits,
+        },
+  ).format(abs);
   const sign = signed ? (amount > 0 ? "+ " : amount < 0 ? "- " : "") : amount < 0 ? "-" : "";
 
   return `${sign}${meta.symbol}${formatted}${meta.suffix ?? ""}`;
@@ -60,7 +76,7 @@ export function formatCurrencyValue(
 export function formatUsdAsCurrency(
   usd: number,
   currency: CurrencyCode,
-  options: { signed?: boolean; maximumFractionDigits?: number } = {},
+  options: FormatCurrencyOptions = {},
 ) {
   const meta = currencyMeta[currency];
   return formatCurrencyValue((Number.isFinite(usd) ? usd : 0) * meta.rate, currency, options);

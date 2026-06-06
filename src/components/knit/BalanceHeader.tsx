@@ -1,5 +1,6 @@
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { Money } from "./Money";
+import { formatUsdAsCurrency } from "@/lib/currency";
 import { useAppNavigation } from "@/lib/navigation";
 import { BudgetModeToggle } from "./BudgetModeToggle";
 
@@ -22,7 +23,9 @@ export function BalanceHeader({
   spentUsd,
   interactive = true,
 }: Props) {
-  const { budgetMode, setBudgetMode } = useAppNavigation();
+  const { currency } = useAppNavigation();
+  const balanceText = formatUsdAsCurrency(balanceUsd, currency, { compact: true });
+  const balanceToggleVariant = balanceText.length >= 10 ? "vertical" : undefined;
 
   return (
     <div className="rounded-3xl bg-white shadow-[var(--shadow-soft)]">
@@ -31,9 +34,19 @@ export function BalanceHeader({
           {label}
         </p>
       </div>
-      <div className="mt-1 flex items-center justify-between">
-        <Money usd={balanceUsd} size="xl" />
-        <BudgetModeToggle className="scale-80 origin-right" variant="vertical" />
+      <div className="mt-1 flex items-center justify-between gap-2 [container-type:inline-size]">
+        <Money
+          usd={balanceUsd}
+          size="xl"
+          compact
+          nowrap
+          className="min-w-0"
+          primaryClassName="!text-[clamp(28px,9cqw,34px)]"
+        />
+        <BudgetModeToggle
+          className="shrink-0 scale-80 origin-right"
+          variant={balanceToggleVariant}
+        />
       </div>
       <div className="mt-4 grid grid-cols-2 gap-3">
         <Cell

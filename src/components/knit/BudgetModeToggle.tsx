@@ -24,7 +24,7 @@ export function BudgetModeToggle({
         <button
           key={mode}
           type="button"
-          onClick={() => setBudgetMode(mode)}
+          onClick={() => setBudgetMode(budgetMode === "personal" ? "family" : "personal")}
           className={`rounded-xl capitalize transition-all ${
             isVertical
               ? "w-full text-left px-4 py-2.5"
