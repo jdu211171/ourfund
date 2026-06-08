@@ -85,15 +85,15 @@ export function WalletScreen() {
         <section className="mt-4 rounded-3xl bg-white">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                Active containers
-              </p>
+              {/* <p className="text-[10px] uppercase tracking-widest text-muted-foreground"> */}
+              {/*   Active containers */}
+              {/* </p> */}
               <p className="mt-1 text-[18px] font-extrabold text-foreground">
                 {activeWallets.length} wallets
               </p>
-              <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
-                {primaryWallet ? `${primaryWallet.label} is primary` : "Create a wallet to start"}
-              </p>
+              {/* <p className="mt-0.5 truncate text-[11px] text-muted-foreground"> */}
+              {/*   {primaryWallet ? `${primaryWallet.label} is primary` : "Create a wallet to start"} */}
+              {/* </p> */}
             </div>
             <div className="text-right">
               <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Total</p>
@@ -106,7 +106,7 @@ export function WalletScreen() {
               onClick={() => navigate("transfer")}
               className="flex items-center gap-2 rounded-2xl bg-[var(--muted)] py-3 text-left"
             >
-              <span className="grid h-8 w-8 place-items-center rounded-xl bg-white text-[var(--primary)]">
+              <span className="grid h-8 w-8 place-items-center  rounded-xl bg-white text-[var(--primary)]">
                 <ArrowRightLeft className="h-4 w-4" strokeWidth={2.25} />
               </span>
               <span>

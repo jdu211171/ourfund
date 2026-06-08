@@ -25,7 +25,7 @@ export function BalanceHeader({
 }: Props) {
   const { currency } = useAppNavigation();
   const balanceText = formatUsdAsCurrency(balanceUsd, currency, { compact: true });
-  const balanceToggleVariant = balanceText.length >= 10 ? "vertical" : undefined;
+  const balanceToggleVariant = balanceText.length >= 14 ? "vertical" : undefined;
 
   return (
     <div className="rounded-3xl bg-white shadow-[var(--shadow-soft)]">
@@ -44,7 +44,7 @@ export function BalanceHeader({
           primaryClassName="!text-[clamp(28px,9cqw,34px)]"
         />
         <BudgetModeToggle
-          className="shrink-0 scale-80 origin-right"
+          className={`shrink-0 scale-80 ${balanceToggleVariant === "vertical" ? "origin-left" : "origin-right"}`} 
           variant={balanceToggleVariant}
         />
       </div>
