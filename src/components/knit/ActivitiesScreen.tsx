@@ -39,13 +39,13 @@ export function ActivitiesScreen({
     setReportPeriod,
     incomeUsd,
     spentUsd,
-    activeTransactions,
+    currentMonthTransactions,
     categories,
     categorySpentUsd,
   } = useAppNavigation();
   const tab = reportPeriod ?? initial;
-  const expenses = activeTransactions.filter((transaction) => transaction.usd < 0);
-  const incomeTransactions = activeTransactions.filter((transaction) => transaction.usd > 0);
+  const expenses = currentMonthTransactions.filter((transaction) => transaction.usd < 0);
+  const incomeTransactions = currentMonthTransactions.filter((transaction) => transaction.usd > 0);
   const chartData = labels[tab].map((label, index) => {
     const expense = expenses[index];
     const income = incomeTransactions[index];

@@ -9,14 +9,14 @@ export function AnalyticsScreen() {
   const {
     navigate,
     goBack,
-    activeTransactions,
+    currentMonthTransactions,
     categories,
     currency,
     categorySpentUsd,
     incomeUsd,
     spentUsd,
   } = useAppNavigation();
-  const expenses = activeTransactions.filter((transaction) => transaction.usd < 0);
+  const expenses = currentMonthTransactions.filter((transaction) => transaction.usd < 0);
   const pieData = (
     categories.length > 0
       ? categories.map((category) => ({
@@ -41,7 +41,7 @@ export function AnalyticsScreen() {
         )
   ).filter((item) => item.value > 0);
   const bars = ["1", "2", "3", "4", "5"].map((label, index) => {
-    const txn = activeTransactions[index];
+    const txn = currentMonthTransactions[index];
     return {
       m: label,
       income: txn && txn.usd > 0 ? txn.usd : 0,
@@ -168,7 +168,7 @@ export function AnalyticsScreen() {
                 maximumFractionDigits: 0,
               }),
             },
-            { l: "Entries", v: `${activeTransactions.length}` },
+            { l: "Entries", v: `${currentMonthTransactions.length}` },
           ].map((s) => (
             <div key={s.l} className="rounded-2xl bg-white py-3 shadow-[var(--shadow-soft)]">
               <p className="text-[10px] text-muted-foreground">{s.l}</p>

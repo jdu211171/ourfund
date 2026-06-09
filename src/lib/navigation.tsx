@@ -348,6 +348,7 @@ interface NavigationContextType {
   setCurrencyForMode: (mode: BudgetMode, currency: CurrencyCode) => void;
   transactions: Transaction[];
   activeTransactions: Transaction[];
+  currentMonthTransactions: Transaction[];
   addTransaction: (txn: Omit<Transaction, "id">) => Transaction;
   updateTransaction: (id: string, txn: Partial<Transaction>) => void;
   deleteTransaction: (id: string) => void;
@@ -522,6 +523,50 @@ function normalizeHistoryFiltersInput(value: unknown): HistoryFilters {
 function canMemberSeeGoal(goal: Pick<Goal, "contributors">, memberId: string | null) {
   if (!memberId || goal.contributors.length === 0) return true;
   return goal.contributors.includes(memberId);
+}
+
+function transactionDate(date: string, now: Date) {
+  const text = date.trim().toLowerCase();
+  if (text.includes("today") || text.includes("just now")) return now;
+  if (text.includes("yesterday")) return plusDays(now, -1);
+
+  const daysAgo = text.match(/^(\d+)\s+days?\s+ago/);
+  if (daysAgo) return plusDays(now, -Number(daysAgo[1]));
+
+  const iso = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]));
+
+  const monthNames = [
+    "jan",
+    "feb",
+    "mar",
+    "apr",
+    "may",
+    "jun",
+    "jul",
+    "aug",
+    "sep",
+    "oct",
+    "nov",
+    "dec",
+  ];
+  const monthDay = text.match(/^([a-z]{3})[a-z]*\.?\s+(\d{1,2})/);
+  if (monthDay) {
+    const month = monthNames.indexOf(monthDay[1]);
+    if (month >= 0) return new Date(now.getFullYear(), month, Number(monthDay[2]));
+  }
+
+  const parsed = new Date(date);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function isCurrentMonthTransaction(transaction: Transaction, now: Date) {
+  const parsed = transactionDate(transaction.date, now);
+  return (
+    parsed !== null &&
+    parsed.getFullYear() === now.getFullYear() &&
+    parsed.getMonth() === now.getMonth()
+  );
 }
 
 export function AppNavigationProvider({ children }: { children: ReactNode }) {
@@ -811,6 +856,10 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     const activeWalletLabels = new Set(activeWallets.map((wallet) => wallet.label));
     return transactions.filter((transaction) => activeWalletLabels.has(transaction.wallet));
   }, [activeWallets, transactions]);
+  const currentMonthTransactions = useMemo(() => {
+    const now = new Date();
+    return activeTransactions.filter((transaction) => isCurrentMonthTransaction(transaction, now));
+  }, [activeTransactions]);
 
   const visibleGoals = useMemo(
     () => goals.filter((goal) => canMemberSeeGoal(goal, viewedMemberId)),
@@ -825,9 +874,11 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     return (wallet?.startingBalanceUsd ?? 0) + txTotal;
   };
 
-  const incomeUsd = activeTransactions.filter((t) => t.usd > 0).reduce((sum, t) => sum + t.usd, 0);
+  const incomeUsd = currentMonthTransactions
+    .filter((t) => t.usd > 0)
+    .reduce((sum, t) => sum + t.usd, 0);
   const spentUsd = Math.abs(
-    activeTransactions.filter((t) => t.usd < 0).reduce((sum, t) => sum + t.usd, 0),
+    currentMonthTransactions.filter((t) => t.usd < 0).reduce((sum, t) => sum + t.usd, 0),
   );
   const balanceUsd = activeWallets.reduce((sum, wallet) => sum + walletBalanceUsd(wallet.label), 0);
 
@@ -1189,7 +1240,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   const categorySpentUsd = (label: string) => {
     const aliases = categoryAliases(label);
     return Math.abs(
-      activeTransactions
+      currentMonthTransactions
         .filter(
           (t) =>
             t.usd < 0 &&
@@ -1912,6 +1963,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         setCurrencyForMode,
         transactions,
         activeTransactions,
+        currentMonthTransactions,
         addTransaction,
         updateTransaction,
         deleteTransaction,
