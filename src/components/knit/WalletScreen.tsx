@@ -104,7 +104,7 @@ export function WalletScreen() {
             <button
               type="button"
               onClick={() => navigate("transfer")}
-              className="flex items-center gap-2 rounded-2xl bg-[var(--muted)] py-3 text-left"
+              className="flex items-center gap-2 rounded-2xl bg-[var(--muted)] px-3 py-3 text-left"
             >
               <span className="grid h-8 w-8 place-items-center  rounded-xl bg-white text-[var(--primary)]">
                 <ArrowRightLeft className="h-4 w-4" strokeWidth={2.25} />
@@ -117,7 +117,7 @@ export function WalletScreen() {
             <button
               type="button"
               onClick={() => navigate("new_wallet")}
-              className="flex items-center gap-2 rounded-2xl bg-[var(--muted)] py-3 text-left"
+              className="flex items-center gap-2 rounded-2xl bg-[var(--muted)] px-3 py-3 text-left"
             >
               <span className="grid h-8 w-8 place-items-center rounded-xl bg-white text-[var(--primary)]">
                 <WalletCards className="h-4 w-4" strokeWidth={2.25} />
