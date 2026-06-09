@@ -110,16 +110,18 @@ export function HomeScreen() {
           />
         </div>
 
-        <div className="mt-3 flex items-center justify-between">
-          <p className="text-[13px] font-bold text-foreground">Today</p>
-          <button
-            type="button"
-            onClick={() => navigate("subscriptions")}
-            className="text-[11px] font-bold text-[var(--primary)]"
-          >
-            View bills
-          </button>
-        </div>
+        {showUpcoming && (
+          <div className="mt-3 flex items-center justify-between">
+            <p className="text-[13px] font-bold text-foreground">Today</p>
+            <button
+              type="button"
+              onClick={() => navigate("subscriptions")}
+              className="text-[11px] font-bold text-[var(--primary)]"
+            >
+              View bills
+            </button>
+          </div>
+        )}
 
         {(showUpcoming || showForecast) && (
           <div

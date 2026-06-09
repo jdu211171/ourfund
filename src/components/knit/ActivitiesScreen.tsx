@@ -161,7 +161,7 @@ export function ActivitiesScreen({
           </div>
         </section>
 
-        <section className="rounded-3xl bg-white p-4">
+        <section className="rounded-3xl bg-white mt-4">
           <div className="flex items-end justify-between gap-3">
             <div>
               <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
@@ -175,6 +175,7 @@ export function ActivitiesScreen({
               peak {peak?.m ?? "-"}
             </span>
           </div>
+
           <div className="-mx-2 mt-3 h-[128px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ top: 6, right: 8, left: 8, bottom: 0 }}>
@@ -206,7 +207,7 @@ export function ActivitiesScreen({
           </div>
         </section>
 
-        <div className="mt-3 grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           {[
             { label: "Deep dive", Icon: BarChart3, screen: "analytics" },
             { label: "Filter", Icon: SlidersHorizontal, screen: "filter_sort" },
@@ -239,7 +240,7 @@ export function ActivitiesScreen({
               key={row.name}
               type="button"
               onClick={() => navigate("categories")}
-              className="w-full rounded-2xl bg-white px-3 py-2.5 text-left"
+              className="w-full rounded-2xl bg-white py-2.5 text-left"
             >
               <div className="flex items-center gap-3">
                 <div
@@ -280,7 +281,7 @@ export function ActivitiesScreen({
 
         <p className="mt-5 text-[13px] font-bold text-[oklch(0.2_0.08_265)]">Insights</p>
         <div className="mt-2 space-y-2">
-          <div className="flex items-center gap-3 rounded-2xl bg-white px-3 py-3">
+          <div className="flex items-center gap-3 rounded-2xl bg-white py-3">
             <span className="grid h-10 w-10 place-items-center rounded-xl bg-[oklch(0.95_0.04_265)] text-[var(--primary)]">
               <BarChart3 className="h-4 w-4" strokeWidth={2.25} />
             </span>
@@ -293,7 +294,7 @@ export function ActivitiesScreen({
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3 rounded-2xl bg-white px-3 py-3">
+          <div className="flex items-center gap-3 rounded-2xl bg-white py-3">
             <span
               className={`grid h-10 w-10 place-items-center rounded-xl ${
                 riskyCategories.length > 0

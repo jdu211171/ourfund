@@ -145,7 +145,7 @@ export function WalletScreen() {
           </button>
         </div>
 
-        <div className="mt-2">
+        <div>
           {sortedWallets.map((wallet) => (
             <div key={wallet.id} className="flex items-center gap-3 rounded-2xl bg-white py-3">
               <div
@@ -180,7 +180,7 @@ export function WalletScreen() {
           )}
         </div>
 
-        <section className="mt-3">
+        <section>
           <div className="flex items-center justify-between">
             <p className="text-[13px] font-bold text-[oklch(0.2_0.08_265)]">Scheduled cashflow</p>
             <button
@@ -191,7 +191,7 @@ export function WalletScreen() {
               Manage
             </button>
           </div>
-          <div className="mt-2 grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
               onClick={() => navigate("recurring_income")}
@@ -235,7 +235,7 @@ export function WalletScreen() {
               </span>
             </button>
           </div>
-          <div className="mt-2 flex items-center gap-3 rounded-2xl bg-white p-3 shadow-[var(--shadow-soft)]">
+          <div className="mt-2 flex items-center gap-3 rounded-2xl bg-white shadow-[var(--shadow-soft)]">
             <span className="grid h-9 w-9 place-items-center rounded-xl bg-[var(--muted)] text-[var(--primary)]">
               <CalendarClock className="h-4 w-4" strokeWidth={2.25} />
             </span>
