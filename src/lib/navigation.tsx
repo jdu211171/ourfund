@@ -24,6 +24,7 @@ import {
   syncMutationServerFn,
   validateInviteCodeServerFn,
 } from "./server-fns";
+import { setCompactMoneyMode as setCompactMoneyFormatterMode } from "./currency";
 import { formatISODate, makeScheduleMeta, nextDateFromWeekday } from "./schedules";
 
 export type ScreenName =
@@ -308,6 +309,7 @@ export interface AppSeed {
   historyFilters: HistoryFilters;
   passcode: string;
   faceIdEnabled: boolean;
+  compactMoneyMode: boolean;
 }
 
 interface NavigationContextType {
@@ -420,6 +422,8 @@ interface NavigationContextType {
   setPasscode: (passcode: string) => void;
   faceIdEnabled: boolean;
   setFaceIdEnabled: (enabled: boolean) => void;
+  compactMoneyMode: boolean;
+  setCompactMoneyMode: (enabled: boolean) => void;
 }
 
 const NavigationContext = createContext<NavigationContextType | undefined>(undefined);
@@ -566,6 +570,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   );
   const [passcode, setPasscodeState] = useState(initialSeed.passcode);
   const [faceIdEnabled, setFaceIdEnabledState] = useState(initialSeed.faceIdEnabled);
+  const [compactMoneyMode, setCompactMoneyModeState] = useState(initialSeed.compactMoneyMode);
   const didMountRef = useRef(false);
 
   const applySeed = useCallback((seed: AppSeed) => {
@@ -596,6 +601,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     setHistoryFilterState(seed.historyFilters);
     setPasscodeState(seed.passcode);
     setFaceIdEnabledState(seed.faceIdEnabled);
+    setCompactMoneyModeState(seed.compactMoneyMode);
   }, []);
 
   const logout = useCallback(async () => {
@@ -645,6 +651,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
       historyFilters,
       passcode,
       faceIdEnabled,
+      compactMoneyMode,
     });
   }, [
     budgetMode,
@@ -671,6 +678,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     historyFilters,
     passcode,
     faceIdEnabled,
+    compactMoneyMode,
   ]);
 
   // Parse URL query params for reset token
@@ -710,6 +718,13 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     // Persist to DB in background
     syncMutationServerFn({
       data: { type: "setPasscode", data: { passcode, faceIdEnabled: enabled } },
+    }).catch(console.error);
+  };
+
+  const setCompactMoneyMode = (enabled: boolean) => {
+    setCompactMoneyModeState(enabled);
+    syncMutationServerFn({
+      data: { type: "setCompactMoneyMode", data: { compactMoneyMode: enabled } },
     }).catch(console.error);
   };
 
@@ -1780,6 +1795,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
       setHistoryFilterState(normalizeHistoryFiltersInput(data.user.historyFilters));
       setPasscodeState(data.user.passcode ?? "");
       setFaceIdEnabledState(data.user.faceIdEnabled);
+      setCompactMoneyModeState(Boolean(data.user.compactMoneyMode));
 
       if (data.household) {
         setBudgetModeState(normalizeBudgetModeInput(data.user.budgetMode));
@@ -1856,6 +1872,8 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
       setIsAuthReady(true);
     }
   }, []);
+
+  setCompactMoneyFormatterMode(compactMoneyMode);
 
   // Fire syncDataAfterLogin once on mount if already authenticated
   useEffect(() => {
@@ -1964,6 +1982,8 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         setPasscode,
         faceIdEnabled,
         setFaceIdEnabled,
+        compactMoneyMode,
+        setCompactMoneyMode,
         resetToken,
         setResetToken,
       }}

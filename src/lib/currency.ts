@@ -41,8 +41,13 @@ export function currencyAdornment(currency: CurrencyCode) {
 type FormatCurrencyOptions = {
   signed?: boolean;
   maximumFractionDigits?: number;
-  compact?: boolean;
 };
+
+let compactMoneyMode = false;
+
+export function setCompactMoneyMode(enabled: boolean) {
+  compactMoneyMode = enabled;
+}
 
 export function formatCurrencyValue(
   value: number,
@@ -53,7 +58,7 @@ export function formatCurrencyValue(
   const signed = options.signed ?? false;
   const amount = Number.isFinite(value) ? value : 0;
   const abs = Math.abs(amount);
-  const useCompact = options.compact === true && abs >= 1_000_000;
+  const useCompact = compactMoneyMode && abs >= 1_000;
   const digits = options.maximumFractionDigits ?? currencyFractionDigits(currency);
   const formatted = new Intl.NumberFormat(
     "en-US",

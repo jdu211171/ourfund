@@ -10,7 +10,12 @@ import {
   X,
 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { currencyAdornment, currencyValueToUsd, usdToCurrencyValue } from "@/lib/currency";
+import {
+  currencyAdornment,
+  currencyValueToUsd,
+  formatUsdAsCurrency,
+  usdToCurrencyValue,
+} from "@/lib/currency";
 import { useAppNavigation, type LoanDirection, type LoanEntry } from "@/lib/navigation";
 import { PhoneFrame } from "./PhoneFrame";
 import { Money } from "./Money";
@@ -549,9 +554,8 @@ function Group({
   onToggleSelect: (id: string) => void;
   onMarkPaid: (id: string) => void;
 }) {
-  if (rows.length === 0) return null;
   const { currency } = useAppNavigation();
-  const { prefix, suffix } = currencyAdornment(currency);
+  if (rows.length === 0) return null;
 
   return (
     <div>
@@ -601,7 +605,7 @@ function Group({
                   {row.note} · {row.due}
                   {row.status !== "paid" && row.paidAmountUsd > 0 && (
                     <span className="font-semibold text-emerald-600">
-                      {` · ${prefix}${Math.round(usdToCurrencyValue(row.paidAmountUsd, currency))}${suffix} paid`}
+                      {` · ${formatUsdAsCurrency(row.paidAmountUsd, currency)} paid`}
                     </span>
                   )}
                 </p>

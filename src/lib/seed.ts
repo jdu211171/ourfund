@@ -536,6 +536,7 @@ const emptySeed: AppSeed = {
   historyFilters: defaultHistoryFilters,
   passcode: "",
   faceIdEnabled: true,
+  compactMoneyMode: false,
 };
 
 const demoSeed: AppSeed = {
@@ -575,6 +576,7 @@ const demoSeed: AppSeed = {
   historyFilters: defaultHistoryFilters,
   passcode: "",
   faceIdEnabled: true,
+  compactMoneyMode: false,
 };
 
 export const knownInvites: HouseholdInvite[] = import.meta.env.DEV

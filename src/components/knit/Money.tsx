@@ -15,7 +15,6 @@ export function Money({
   size = "md",
   tone = "default",
   signed = false,
-  compact = false,
   nowrap = false,
   primaryClassName = "",
   className = "",
@@ -24,7 +23,6 @@ export function Money({
   size?: Size;
   tone?: "default" | "success" | "danger";
   signed?: boolean;
-  compact?: boolean;
   nowrap?: boolean;
   primaryClassName?: string;
   className?: string;
@@ -49,12 +47,12 @@ export function Money({
         }`}
       >
         {sign}
-        {formatUsdAsCurrency(displayUsd, currency, { compact })}
+        {formatUsdAsCurrency(displayUsd, currency)}
       </span>
       {currency !== "USD" && (
         <span className={`${s.sub} mt-1 font-medium text-muted-foreground`}>
           ≈ {sign}
-          {formatCurrencyValue(displayUsd, "USD", { compact })}
+          {formatCurrencyValue(displayUsd, "USD")}
         </span>
       )}
     </span>

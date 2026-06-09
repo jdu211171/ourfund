@@ -532,6 +532,7 @@ export const getAppDataServerFn = createServerFn({ method: "GET" }).handler(asyn
       historyFilters: normalizeHistoryFilters(user.historyFilters),
       passcode: user.passcode || "",
       faceIdEnabled: user.faceIdEnabled,
+      compactMoneyMode: user.compactMoneyMode,
     },
     currencies: {
       personal: user.personalCurrency,
@@ -933,6 +934,14 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
         await prisma.user.update({
           where: { id: user.id },
           data: { historyFilters: normalizeHistoryFilters(payload.historyFilters) },
+        });
+        break;
+      }
+
+      case "setCompactMoneyMode": {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { compactMoneyMode: Boolean(payload.compactMoneyMode) },
         });
         break;
       }

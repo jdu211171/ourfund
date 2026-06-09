@@ -1,4 +1,13 @@
-import { ArrowLeft, Moon, Bell, Globe, Fingerprint, ChevronRight, Camera } from "lucide-react";
+import {
+  ArrowLeft,
+  Moon,
+  Bell,
+  Globe,
+  Fingerprint,
+  ChevronRight,
+  Camera,
+  Banknote,
+} from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { ComingSoonBadge } from "./ComingSoonBadge";
 import { useState } from "react";
@@ -13,6 +22,8 @@ export function SettingsScreen() {
     currencies,
     setCurrencyTarget,
     faceIdEnabled,
+    compactMoneyMode,
+    setCompactMoneyMode,
     logout,
   } = useAppNavigation();
   const [themeIdx, setThemeIdx] = useState(1);
@@ -106,6 +117,14 @@ export function SettingsScreen() {
               comingSoon: false,
             },
             {
+              Icon: Banknote,
+              label: "Compact Money Mode",
+              value: compactMoneyMode ? "On" : "Off",
+              screen: "settings" as const,
+              comingSoon: false,
+              toggle: true,
+            },
+            {
               Icon: Bell,
               label: "Notifications",
               value: "All admins",
@@ -131,6 +150,10 @@ export function SettingsScreen() {
               <button
                 onClick={() => {
                   if (r.comingSoon) return;
+                  if ("toggle" in r) {
+                    setCompactMoneyMode(!compactMoneyMode);
+                    return;
+                  }
                   if (r.label === "Quiet hours") {
                     setQuietHours((prev) => !prev);
                     return;
@@ -170,7 +193,21 @@ export function SettingsScreen() {
                     {r.comingSoon ? "Coming soon" : r.value}
                   </p>
                 </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" strokeWidth={2.25} />
+                {"toggle" in r ? (
+                  <span
+                    className={`relative h-5 w-9 rounded-full transition-colors ${
+                      compactMoneyMode ? "bg-[var(--primary)]" : "bg-input"
+                    }`}
+                  >
+                    <span
+                      className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${
+                        compactMoneyMode ? "translate-x-[18px]" : "translate-x-0.5"
+                      }`}
+                    />
+                  </span>
+                ) : (
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" strokeWidth={2.25} />
+                )}
               </button>
               {r.comingSoon && <ComingSoonBadge />}
             </div>

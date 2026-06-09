@@ -25,6 +25,7 @@ model User {
   historyFilters    Json     @default("{\"kind\":\"All\",\"member\":\"Anyone\",\"categories\":[],\"sort\":\"Newest\",\"minUsd\":0,\"maxUsd\":5000}")
   passcode          String?
   faceIdEnabled     Boolean  @default(true)
+  compactMoneyMode  Boolean  @default(false)
   passwordResetTokenHash      String?
   passwordResetTokenExpiresAt DateTime?
   createdAt         DateTime @default(now())

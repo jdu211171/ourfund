@@ -1,0 +1,1 @@
+ALTER TABLE "User" ADD COLUMN "compactMoneyMode" BOOLEAN NOT NULL DEFAULT false;
