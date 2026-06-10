@@ -43,7 +43,7 @@ export function BalanceHeader({
           primaryClassName="!text-[clamp(28px,9cqw,34px)]"
         />
         <BudgetModeToggle
-          className={`shrink-0 scale-80 ${balanceToggleVariant === "vertical" ? "origin-left" : "origin-right"}`}
+          className={`shrink-0 scale-90 ${balanceToggleVariant === "vertical" ? "origin-left" : "origin-right"}`}
           variant={balanceToggleVariant}
         />
       </div>

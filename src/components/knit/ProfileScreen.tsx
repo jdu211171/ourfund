@@ -172,7 +172,7 @@ export function ProfileScreen() {
             <button
               key={label}
               onClick={() => navigate(screen)}
-              className="flex w-full items-center gap-3 rounded-2xl bg-white py-1 text-left shadow-[var(--shadow-soft)] hover:bg-slate-50 transition-colors cursor-pointer"
+              className="-mx-3 flex w-[calc(100%+1.5rem)] items-center gap-3 rounded-2xl bg-white px-3 py-1 text-left shadow-[var(--shadow-soft)] hover:bg-slate-50 transition-colors cursor-pointer"
             >
               <div className="grid h-10 w-10 place-items-center rounded-xl bg-[oklch(0.95_0.04_265)] text-[var(--primary)]">
                 <Icon className="h-4 w-4" strokeWidth={2.25} />
