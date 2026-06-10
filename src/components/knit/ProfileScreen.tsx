@@ -116,7 +116,7 @@ export function ProfileScreen() {
                     setBudgetMode("personal");
                     navigate("wallet");
                   }}
-                  className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                  className="-m-2 flex min-w-0 flex-1 items-center gap-3 rounded-2xl p-2 text-left"
                 >
                   <div
                     className="grid h-10 w-10 place-items-center rounded-full text-white text-[12px] font-bold"
