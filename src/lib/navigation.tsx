@@ -48,6 +48,7 @@ export type ScreenName =
   | "recurring_income"
   | "new_goal"
   | "goal_detail"
+  | "monthly_history"
   | "edit_goal"
   | "goal_withdraw"
   | "goal_achieved"

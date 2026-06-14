@@ -207,16 +207,17 @@ export function ActivitiesScreen({
           </div>
         </section>
 
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-4 gap-2">
           {[
             { label: "Deep dive", Icon: BarChart3, screen: "analytics" },
             { label: "Filter", Icon: SlidersHorizontal, screen: "filter_sort" },
             { label: "Search", Icon: Search, screen: "history_search" },
+            { label: "Months", Icon: Landmark, screen: "monthly_history" },
           ].map(({ label, Icon, screen }) => (
             <button
               key={label}
               type="button"
-              onClick={() => navigate(screen)}
+              onClick={() => navigate(screen as any)}
               className="flex flex-col items-center gap-2 rounded-2xl bg-white px-2 py-3"
             >
               <span className="grid h-8 w-8 place-items-center rounded-xl bg-[oklch(0.95_0.04_265)] text-[var(--primary)]">

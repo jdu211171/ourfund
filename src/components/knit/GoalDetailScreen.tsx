@@ -13,6 +13,72 @@ import { useState } from "react";
 import { currencyAdornment, currencyValueToUsd, formatUsdAsCurrency } from "@/lib/currency";
 import { GoalIcon, normalizeGoalIconName } from "./goalIconOptions";
 import { OptionSelect } from "./OptionSelect";
+import { motion, AnimatePresence, useAnimation, PanInfo } from "framer-motion";
+
+function ContributionItem({ 
+  h, 
+  currency, 
+  canDelete, 
+  onDelete 
+}: { 
+  h: any, 
+  currency: any, 
+  canDelete: boolean, 
+  onDelete: () => void 
+}) {
+  const controls = useAnimation();
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDragEnd = async (e: any, info: PanInfo) => {
+    if (!canDelete) {
+      controls.start({ x: 0 });
+      return;
+    }
+
+    const threshold = -80; // Distance to trigger delete
+
+    if (info.offset.x < threshold) {
+      setIsDeleting(true);
+      await controls.start({ x: -500, opacity: 0, transition: { duration: 0.2 } });
+      onDelete();
+    } else {
+      controls.start({ x: 0, transition: { type: "spring", stiffness: 300, damping: 30 } });
+    }
+  };
+
+  return (
+    <div className="relative mb-2 w-full overflow-hidden rounded-2xl bg-[var(--danger)]">
+      {canDelete && (
+        <div className="absolute right-0 top-0 bottom-0 flex w-20 items-center justify-center text-white">
+          <Trash2 className="h-5 w-5" />
+        </div>
+      )}
+      <motion.div
+        drag={canDelete && !isDeleting ? "x" : false}
+        dragConstraints={{ left: -100, right: 0 }}
+        dragElastic={0.1}
+        onDragEnd={handleDragEnd}
+        animate={controls}
+        initial={{ x: 0, opacity: 1 }}
+        className="relative z-10 flex w-full items-center gap-3 rounded-2xl bg-white px-3 py-2 text-left shadow-[var(--shadow-soft)]"
+      >
+        <div
+          className="grid h-9 w-9 place-items-center rounded-full text-white text-[11px] font-bold"
+          style={{ background: "linear-gradient(135deg, oklch(0.65 0.22 265), oklch(0.45 0.24 265))" }}
+        >
+          {h.initials}
+        </div>
+        <div className="flex-1 leading-tight">
+          <p className="text-[12px] font-bold text-foreground">{h.who}</p>
+          <p className="text-[10px] text-muted-foreground">{h.date}</p>
+        </div>
+        <p className={`text-[12px] font-bold ${h.amountUsd >= 0 ? "text-[var(--success)]" : "text-[var(--danger)]"}`}>
+          {formatUsdAsCurrency(h.amountUsd, currency, { signed: true })}
+        </p>
+      </motion.div>
+    </div>
+  );
+}
 
 export function GoalDetailScreen() {
   const {
@@ -194,62 +260,26 @@ export function GoalDetailScreen() {
         </p>
 
         <div className="mt-2 flex-1 space-y-2 overflow-hidden">
-          {goal.history.map((h) => (
-            <button
-              key={h.id}
-              type="button"
-              onClick={() => setSelectedContributionId(h.id)}
-              className={`flex w-full items-center gap-3 rounded-2xl bg-white px-3 py-2 text-left shadow-[var(--shadow-soft)] cursor-pointer transition-all ${
-                selectedContributionId === h.id
-                  ? "ring-2 ring-[var(--primary)]"
-                  : "hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]"
-              }`}
-            >
-              <div
-                className={`grid h-9 w-9 place-items-center rounded-full text-white text-[11px] font-bold ${
-                  selectedContributionId === h.id ? "bg-[var(--primary)]" : ""
-                }`}
-                style={
-                  selectedContributionId !== h.id
-                    ? {
-                        background:
-                          "linear-gradient(135deg, oklch(0.65 0.22 265), oklch(0.45 0.24 265))",
-                      }
-                    : undefined
-                }
+          <AnimatePresence>
+            {goal.history.map((h) => (
+              <motion.div
+                key={h.id}
+                layout
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9, height: 0, marginBottom: 0 }}
+                transition={{ duration: 0.2 }}
               >
-                {selectedContributionId === h.id ? (
-                  <CheckCircle2 className="h-5 w-5" strokeWidth={2.5} />
-                ) : (
-                  h.initials
-                )}
-              </div>
-              <div className="flex-1 leading-tight">
-                <p className="text-[12px] font-bold text-foreground">{h.who}</p>
-                <p className="text-[10px] text-muted-foreground">{h.date}</p>
-              </div>
-              <p
-                className={`text-[12px] font-bold ${h.amountUsd >= 0 ? "text-[var(--success)]" : "text-[var(--danger)]"}`}
-              >
-                {formatUsdAsCurrency(h.amountUsd, currency, { signed: true })}
-              </p>
-            </button>
-          ))}
+                <ContributionItem
+                  h={h}
+                  currency={currency}
+                  canDelete={canDeleteContribution(h)}
+                  onDelete={() => deleteContributionFromGoal(goal.id, h.id)}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
-
-        {canDeleteSelectedContribution ? (
-          <button
-            onClick={() => {
-              if (!selectedContribution) return;
-              deleteContributionFromGoal(goal.id, selectedContribution.id);
-              setSelectedContributionId(null);
-            }}
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-[var(--danger)] py-4 text-[15px] font-semibold text-white active:scale-95 transition-all cursor-pointer"
-          >
-            <Trash2 className="h-4 w-4" strokeWidth={2.5} />
-            Delete selected contribution
-          </button>
-        ) : null}
 
         <div className="mt-3 rounded-2xl bg-white py-3 shadow-[var(--shadow-soft)]">
           <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">

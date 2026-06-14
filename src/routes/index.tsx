@@ -39,6 +39,7 @@ import { PasscodeScreen } from "@/components/knit/PasscodeScreen";
 import { NotificationPreferencesScreen } from "@/components/knit/NotificationPreferencesScreen";
 import { CurrencyPickerScreen } from "@/components/knit/CurrencyPickerScreen";
 import { EmptyHistoryScreen } from "@/components/knit/EmptyHistoryScreen";
+import { MonthlyHistoryScreen } from "@/components/knit/MonthlyHistoryScreen";
 import { JoinFamilyErrorScreen } from "@/components/knit/JoinFamilyErrorScreen";
 import { GoalAchievedScreen } from "@/components/knit/GoalAchievedScreen";
 import { RemoveMemberScreen } from "@/components/knit/RemoveMemberScreen";
@@ -180,6 +181,8 @@ function AppRouter() {
       return <ReceiptScreen />;
     case "history_search":
       return <TransactionHistoryScreen />;
+    case "monthly_history":
+      return <MonthlyHistoryScreen />;
     case "lend_borrow":
       return <LendBorrowScreen />;
     case "product_tracker":
@@ -234,6 +237,7 @@ function Index() {
         { label: "Product Tracker", node: <ProductTrackerScreen /> },
         { label: "Lend & Borrow", node: <LendBorrowScreen /> },
         { label: "History & Search", node: <TransactionHistoryScreen /> },
+        { label: "Monthly History", node: <MonthlyHistoryScreen /> },
         { label: "Filter & Sort", node: <FilterSortScreen /> },
       ],
     },
