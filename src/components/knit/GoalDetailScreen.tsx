@@ -5,7 +5,8 @@ import {
   Pencil,
   Plus,
   Trash2,
-  CheckCircle2,
+  Check,
+  X,
 } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { useAppNavigation } from "@/lib/navigation";
@@ -13,24 +14,30 @@ import { useState } from "react";
 import { currencyAdornment, currencyValueToUsd, formatUsdAsCurrency } from "@/lib/currency";
 import { GoalIcon, normalizeGoalIconName } from "./goalIconOptions";
 import { OptionSelect } from "./OptionSelect";
-import { motion, AnimatePresence, useAnimation, PanInfo } from "framer-motion";
+import { motion, useAnimation, PanInfo, AnimatePresence } from "framer-motion";
 
-function ContributionItem({ 
-  h, 
-  currency, 
-  canDelete, 
-  onDelete 
-}: { 
-  h: any, 
-  currency: any, 
-  canDelete: boolean, 
-  onDelete: () => void 
+function ContributionItem({
+  h,
+  currency,
+  canDelete,
+  onDelete,
+  selectMode,
+  isSelected,
+  onToggleSelect,
+}: {
+  h: any;
+  currency: any;
+  canDelete: boolean;
+  onDelete: () => void;
+  selectMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: () => void;
 }) {
   const controls = useAnimation();
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDragEnd = async (e: any, info: PanInfo) => {
-    if (!canDelete) {
+    if (!canDelete || selectMode) {
       controls.start({ x: 0 });
       return;
     }
@@ -47,14 +54,19 @@ function ContributionItem({
   };
 
   return (
-    <div className="relative mb-2 w-full overflow-hidden rounded-2xl bg-[var(--danger)]">
-      {canDelete && (
+    <div
+      className={`relative mb-2 w-full overflow-hidden rounded-2xl bg-[var(--danger)] transition-all ${
+        selectMode && canDelete ? "cursor-pointer" : ""
+      } ${isSelected ? "ring-2 ring-[var(--primary)] ring-offset-1" : ""}`}
+      onClick={selectMode && canDelete ? onToggleSelect : undefined}
+    >
+      {canDelete && !selectMode && (
         <div className="absolute right-0 top-0 bottom-0 flex w-20 items-center justify-center text-white">
           <Trash2 className="h-5 w-5" />
         </div>
       )}
       <motion.div
-        drag={canDelete && !isDeleting ? "x" : false}
+        drag={canDelete && !isDeleting && !selectMode ? "x" : false}
         dragConstraints={{ left: -100, right: 0 }}
         dragElastic={0.1}
         onDragEnd={handleDragEnd}
@@ -62,17 +74,35 @@ function ContributionItem({
         initial={{ x: 0, opacity: 1 }}
         className="relative z-10 flex w-full items-center gap-3 rounded-2xl bg-white px-3 py-2 text-left shadow-[var(--shadow-soft)]"
       >
+        {/* Checkbox — only shown for deletable rows in select mode */}
+        {selectMode && (
+          <div
+            className={`flex-shrink-0 h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all ${
+              canDelete
+                ? isSelected
+                  ? "bg-[var(--primary)] border-[var(--primary)]"
+                  : "border-muted-foreground bg-transparent"
+                : "border-muted-foreground/30 bg-transparent opacity-30"
+            }`}
+          >
+            {isSelected && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
+          </div>
+        )}
         <div
-          className="grid h-9 w-9 place-items-center rounded-full text-white text-[11px] font-bold"
-          style={{ background: "linear-gradient(135deg, oklch(0.65 0.22 265), oklch(0.45 0.24 265))" }}
+          className="grid h-9 w-9 place-items-center rounded-full text-white text-[11px] font-bold flex-shrink-0"
+          style={{
+            background: "linear-gradient(135deg, oklch(0.65 0.22 265), oklch(0.45 0.24 265))",
+          }}
         >
           {h.initials}
         </div>
-        <div className="flex-1 leading-tight">
-          <p className="text-[12px] font-bold text-foreground">{h.who}</p>
-          <p className="text-[10px] text-muted-foreground">{h.date}</p>
+        <div className="flex-1 leading-tight min-w-0">
+          <p className="truncate text-[12px] font-bold text-foreground">{h.who}</p>
+          <p className="truncate text-[10px] text-muted-foreground">{h.date}</p>
         </div>
-        <p className={`text-[12px] font-bold ${h.amountUsd >= 0 ? "text-[var(--success)]" : "text-[var(--danger)]"}`}>
+        <p
+          className={`text-[12px] font-bold flex-shrink-0 ${h.amountUsd >= 0 ? "text-[var(--success)]" : "text-[var(--danger)]"}`}
+        >
           {formatUsdAsCurrency(h.amountUsd, currency, { signed: true })}
         </p>
       </motion.div>
@@ -102,13 +132,35 @@ export function GoalDetailScreen() {
   const { prefix, suffix } = currencyAdornment(currency);
   const currentMember = members.find((member) => member.id === currentMemberId);
   const currentMemberFirstName = currentMember?.name.split(" ")[0]?.trim().toLowerCase() ?? "";
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) newSet.delete(id);
+      else newSet.add(id);
+      return newSet;
+    });
+  };
+
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedIds.size === 0) return;
+    selectedIds.forEach((id) => deleteContributionFromGoal(goal.id, id));
+    exitSelectMode();
+  };
 
   const canDeleteContribution = (entry: (typeof goal.history)[number]) => {
     if (entry.memberId) return entry.memberId === currentMemberId;
     if (!currentMemberFirstName) return false;
     return entry.who.trim().toLowerCase() === currentMemberFirstName;
   };
-  const selectedContribution = goal.history.find((entry) => entry.id === selectedContributionId);
+  const selectedContribution = goal?.history?.find((entry) => entry.id === selectedContributionId);
   const canDeleteSelectedContribution =
     selectedContribution && canDeleteContribution(selectedContribution);
 
@@ -177,30 +229,67 @@ export function GoalDetailScreen() {
     <PhoneFrame>
       <div className="flex-1 overflow-y-auto flex flex-col px-7 pt-10 pb-7 min-h-0">
         <header className="flex items-center justify-between">
-          <button
-            onClick={goBack}
-            className="grid h-9 w-9 place-items-center rounded-full text-foreground hover:bg-slate-50 transition-colors cursor-pointer"
-            aria-label="Back"
-          >
-            <ArrowLeft className="h-5 w-5" strokeWidth={2.25} />
-          </button>
-          <h2 className="text-[17px] font-bold tracking-tight">Goal Details</h2>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => navigate("edit_goal")}
-              className="grid h-9 w-9 place-items-center rounded-full text-foreground hover:bg-slate-50 transition-colors cursor-pointer"
-              aria-label="Edit goal"
-            >
-              <Pencil className="h-4 w-4" strokeWidth={2.25} />
-            </button>
-            <button
-              onClick={() => navigate("goal_withdraw")}
-              className="grid h-9 w-9 place-items-center rounded-full text-foreground hover:bg-slate-50 transition-colors cursor-pointer"
-              aria-label="Withdraw options"
-            >
-              <MoreHorizontal className="h-5 w-5" strokeWidth={2.25} />
-            </button>
-          </div>
+          {selectMode ? (
+            <>
+              <button
+                onClick={exitSelectMode}
+                className="grid h-9 w-9 place-items-center rounded-full text-foreground"
+                aria-label="Cancel selection"
+              >
+                <X className="h-5 w-5" strokeWidth={2.25} />
+              </button>
+              <span className="text-[14px] font-bold text-foreground">
+                {selectedIds.size > 0 ? `${selectedIds.size} selected` : "Select entries"}
+              </span>
+              <button
+                onClick={handleDeleteSelected}
+                disabled={selectedIds.size === 0}
+                className="grid h-9 w-9 place-items-center rounded-full bg-red-50 text-red-500 disabled:opacity-30"
+                aria-label="Delete selected"
+              >
+                <Trash2 className="h-4 w-4" strokeWidth={2.5} />
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={goBack}
+                className="grid h-9 w-9 place-items-center rounded-full text-foreground hover:bg-slate-50 transition-colors cursor-pointer"
+                aria-label="Back"
+              >
+                <ArrowLeft className="h-5 w-5" strokeWidth={2.25} />
+              </button>
+              <h2 className="text-[17px] font-bold tracking-tight">Goal Details</h2>
+              <div className="flex items-center gap-2">
+                {goal.history.length > 0 && (
+                  <button
+                    onClick={() => {
+                      setSelectMode(true);
+                      setSelectedIds(new Set());
+                    }}
+                    className="grid h-9 w-9 place-items-center rounded-full bg-[var(--muted)] text-muted-foreground hover:bg-slate-100 transition-colors cursor-pointer"
+                    aria-label="Select contributions"
+                  >
+                    <Trash2 className="h-4 w-4" strokeWidth={2.25} />
+                  </button>
+                )}
+                <button
+                  onClick={() => navigate("edit_goal")}
+                  className="grid h-9 w-9 place-items-center rounded-full text-foreground hover:bg-slate-50 transition-colors cursor-pointer"
+                  aria-label="Edit goal"
+                >
+                  <Pencil className="h-4 w-4" strokeWidth={2.25} />
+                </button>
+                <button
+                  onClick={() => navigate("goal_withdraw")}
+                  className="grid h-9 w-9 place-items-center rounded-full text-foreground hover:bg-slate-50 transition-colors cursor-pointer"
+                  aria-label="Withdraw options"
+                >
+                  <MoreHorizontal className="h-5 w-5" strokeWidth={2.25} />
+                </button>
+              </div>
+            </>
+          )}
         </header>
 
         <div
@@ -275,6 +364,9 @@ export function GoalDetailScreen() {
                   currency={currency}
                   canDelete={canDeleteContribution(h)}
                   onDelete={() => deleteContributionFromGoal(goal.id, h.id)}
+                  selectMode={selectMode}
+                  isSelected={selectedIds.has(h.id)}
+                  onToggleSelect={() => toggleSelect(h.id)}
                 />
               </motion.div>
             ))}

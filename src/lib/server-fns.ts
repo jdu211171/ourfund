@@ -1137,7 +1137,36 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
         // Authorization: verify this transaction belongs to the user's household
         const txn = await prisma.transaction.findUnique({ where: { id: payload.id } });
         if (!txn || txn.householdId !== householdId) throw new Error("Forbidden");
+
         await prisma.transaction.delete({ where: { id: payload.id } });
+
+        // Clean up goal history entries referring to this transaction
+        const goals = await prisma.goal.findMany({
+          where: { householdId },
+        });
+
+        for (const goal of goals) {
+          const history = Array.isArray(goal.history) ? (goal.history as any[]) : [];
+          const matches = history.filter((entry) => entry && entry.transactionId === payload.id);
+          if (matches.length > 0) {
+            const amountUsd = matches.reduce(
+              (sum, entry) => sum + (Number(entry.amountUsd) || 0),
+              0,
+            );
+            const updatedHistory = history.filter(
+              (entry) => !entry || entry.transactionId !== payload.id,
+            );
+            const updatedSavedUsd = Math.max(0, goal.savedUsd - amountUsd);
+
+            await prisma.goal.update({
+              where: { id: goal.id },
+              data: {
+                savedUsd: updatedSavedUsd,
+                history: updatedHistory,
+              },
+            });
+          }
+        }
         break;
       }
 

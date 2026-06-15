@@ -28,7 +28,11 @@ export function MonthlyHistoryScreen() {
     <PhoneFrame>
       <div className="flex h-full flex-col px-7 pt-10 pb-7">
         <header className="flex items-center justify-between">
-          <button onClick={goBack} className="grid h-9 w-9 place-items-center rounded-full text-foreground" aria-label="Back">
+          <button
+            onClick={goBack}
+            className="grid h-9 w-9 place-items-center rounded-full text-foreground"
+            aria-label="Back"
+          >
             <ArrowLeft className="h-5 w-5" strokeWidth={2.25} />
           </button>
           <h2 className="text-[17px] font-bold tracking-tight">Monthly history</h2>
@@ -37,17 +41,22 @@ export function MonthlyHistoryScreen() {
 
         {/* Carry-forward / net wallet */}
         <div className="mt-4 rounded-3xl bg-white p-5 shadow-[var(--shadow-soft)]">
-          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Net balance carried forward</p>
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+            Net balance carried forward
+          </p>
           <div className="mt-1">
             <Money usd={carryNow} size="lg" />
           </div>
           <p className="mt-2 text-[11px] text-muted-foreground">
-            Each new month begins with <span className="font-bold text-foreground">0 income</span> and{" "}
-            <span className="font-bold text-foreground">0 expense</span>. Only this balance carries over.
+            Each new month begins with <span className="font-bold text-foreground">0 income</span>{" "}
+            and <span className="font-bold text-foreground">0 expense</span>. Only this balance
+            carries over.
           </p>
         </div>
 
-        <p className="mt-5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Past months</p>
+        <p className="mt-5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+          Past months
+        </p>
 
         <div className="mt-2 flex-1 space-y-2 overflow-hidden">
           {months.map((m, i) => {
@@ -73,12 +82,23 @@ export function MonthlyHistoryScreen() {
                 </div>
                 <div className="flex-1 leading-tight">
                   <p className="text-[12px] font-bold text-foreground">
-                    {m.label} {i === 0 && <span className="ml-1 text-[9px] font-bold uppercase tracking-widest text-[var(--primary)]">· now</span>}
+                    {m.label}{" "}
+                    {i === 0 && (
+                      <span className="ml-1 text-[9px] font-bold uppercase tracking-widest text-[var(--primary)]">
+                        · now
+                      </span>
+                    )}
                   </p>
                   <p className="mt-0.5 text-[10px] text-muted-foreground">
-                    In <span className="font-semibold text-[var(--success)]">${m.incomeUsd.toLocaleString()}</span>
+                    In{" "}
+                    <span className="font-semibold text-[var(--success)]">
+                      ${m.incomeUsd.toLocaleString()}
+                    </span>
                     {"  ·  "}
-                    Out <span className="font-semibold text-[var(--danger)]">${m.expenseUsd.toLocaleString()}</span>
+                    Out{" "}
+                    <span className="font-semibold text-[var(--danger)]">
+                      ${m.expenseUsd.toLocaleString()}
+                    </span>
                   </p>
                 </div>
                 <div className="flex items-center gap-1">
