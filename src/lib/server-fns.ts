@@ -1170,6 +1170,55 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
         break;
       }
 
+      case "deleteContributions": {
+        if (!householdId) throw new Error("No household linked");
+        const { goalId, contributionIds, transactionIds } = payload;
+
+        if (Array.isArray(transactionIds) && transactionIds.length > 0) {
+          const txns = await prisma.transaction.findMany({
+            where: { id: { in: transactionIds }, householdId },
+          });
+          if (txns.length !== transactionIds.length) throw new Error("Forbidden");
+          await prisma.transaction.deleteMany({
+            where: { id: { in: transactionIds } },
+          });
+        }
+
+        const goal = await prisma.goal.findUnique({ where: { id: goalId } });
+        if (!goal || goal.householdId !== householdId) throw new Error("Forbidden");
+
+        const history = Array.isArray(goal.history) ? (goal.history as any[]) : [];
+        const remainingHistory = history.filter((entry) => {
+          if (!entry) return false;
+          if (contributionIds.includes(entry.id)) return false;
+          if (entry.transactionId && transactionIds.includes(entry.transactionId)) return false;
+          return true;
+        });
+
+        const removedEntries = history.filter((entry) => {
+          if (!entry) return false;
+          return (
+            contributionIds.includes(entry.id) ||
+            (entry.transactionId && transactionIds.includes(entry.transactionId))
+          );
+        });
+
+        const removedSavedUsd = removedEntries.reduce(
+          (sum, entry) => sum + (Number(entry.amountUsd) || 0),
+          0,
+        );
+        const updatedSavedUsd = Math.max(0, goal.savedUsd - removedSavedUsd);
+
+        await prisma.goal.update({
+          where: { id: goalId },
+          data: {
+            savedUsd: updatedSavedUsd,
+            history: remainingHistory,
+          },
+        });
+        break;
+      }
+
       case "recordTransfer": {
         if (!householdId) throw new Error("No household linked");
         const transferTransactions = Array.isArray(payload.transactions)
@@ -1514,6 +1563,19 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
         const item = await prisma.scheduleItem.findUnique({ where: { id: payload.id } });
         if (!item || item.householdId !== householdId) throw new Error("Forbidden");
         await prisma.scheduleItem.delete({ where: { id: payload.id } });
+        break;
+      }
+
+      case "removeScheduleItems": {
+        if (!householdId) throw new Error("No household linked");
+        const ids = payload.ids as string[];
+        const items = await prisma.scheduleItem.findMany({
+          where: { id: { in: ids }, householdId },
+        });
+        if (items.length !== ids.length) throw new Error("Forbidden");
+        await prisma.scheduleItem.deleteMany({
+          where: { id: { in: ids } },
+        });
         break;
       }
 

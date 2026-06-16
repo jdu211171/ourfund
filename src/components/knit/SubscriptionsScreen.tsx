@@ -1,4 +1,17 @@
-import { ArrowLeft, Home, Music, Pencil, Plus, Tag, Trash2, Tv, Wifi, Zap } from "lucide-react";
+import {
+  ArrowLeft,
+  Home,
+  Music,
+  Pencil,
+  Plus,
+  Tag,
+  Trash2,
+  Tv,
+  Wifi,
+  Zap,
+  Check,
+  X,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { PhoneFrame } from "./PhoneFrame";
 import { useAppNavigation } from "@/lib/navigation";
@@ -32,6 +45,7 @@ export function SubscriptionsScreen() {
     categories,
     updateScheduleItem,
     deleteScheduleItem,
+    deleteScheduleItems,
   } = useAppNavigation();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -39,6 +53,30 @@ export function SubscriptionsScreen() {
   const [amount, setAmount] = useState("");
   const [frequency, setFrequency] = useState<ScheduleFrequency>("monthly");
   const [nextDate, setNextDate] = useState(defaultNextScheduleDate);
+
+  // Select mode
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedIds.size === 0) return;
+    deleteScheduleItems([...selectedIds]);
+    exitSelectMode();
+  };
   const categoryOptions = useMemo(
     () => [
       ...categories.map((category) => ({
@@ -123,21 +161,60 @@ export function SubscriptionsScreen() {
     <PhoneFrame>
       <div className="flex h-full flex-col px-7 pt-10 pb-7">
         <header className="flex items-center justify-between">
-          <button
-            onClick={goBack}
-            className="grid h-9 w-9 place-items-center rounded-full text-foreground"
-            aria-label="Back"
-          >
-            <ArrowLeft className="h-5 w-5" strokeWidth={2.25} />
-          </button>
-          <h2 className="text-[17px] font-bold tracking-tight">Recurring</h2>
-          <button
-            onClick={beginCreate}
-            className="grid h-9 w-9 place-items-center rounded-full bg-[var(--muted)]"
-            aria-label="Add subscription"
-          >
-            <Plus className="h-4 w-4" strokeWidth={2.5} />
-          </button>
+          {selectMode ? (
+            <>
+              <button
+                onClick={exitSelectMode}
+                className="grid h-9 w-9 place-items-center rounded-full text-foreground"
+                aria-label="Cancel selection"
+              >
+                <X className="h-5 w-5" strokeWidth={2.25} />
+              </button>
+              <span className="text-[14px] font-bold text-foreground">
+                {selectedIds.size > 0 ? `${selectedIds.size} selected` : "Select entries"}
+              </span>
+              <button
+                onClick={handleDeleteSelected}
+                disabled={selectedIds.size === 0}
+                className="grid h-9 w-9 place-items-center rounded-full bg-red-50 text-red-500 disabled:opacity-30"
+                aria-label="Delete selected"
+              >
+                <Trash2 className="h-4 w-4" strokeWidth={2.5} />
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={goBack}
+                className="grid h-9 w-9 place-items-center rounded-full text-foreground"
+                aria-label="Back"
+              >
+                <ArrowLeft className="h-5 w-5" strokeWidth={2.25} />
+              </button>
+              <h2 className="text-[17px] font-bold tracking-tight">Recurring</h2>
+              <div className="flex items-center gap-1.5">
+                {subscriptions.length > 0 && (
+                  <button
+                    onClick={() => {
+                      setSelectMode(true);
+                      setShowForm(false);
+                    }}
+                    className="grid h-9 w-9 place-items-center rounded-full bg-[var(--muted)] text-muted-foreground"
+                    aria-label="Select entries"
+                  >
+                    <Trash2 className="h-4 w-4" strokeWidth={2.25} />
+                  </button>
+                )}
+                <button
+                  onClick={beginCreate}
+                  className="grid h-9 w-9 place-items-center rounded-full bg-[var(--muted)]"
+                  aria-label="Add subscription"
+                >
+                  <Plus className="h-4 w-4" strokeWidth={2.5} />
+                </button>
+              </div>
+            </>
+          )}
         </header>
 
         <div className="mt-3 flex items-center justify-between">
@@ -243,41 +320,58 @@ export function SubscriptionsScreen() {
           {scheduleRows.map(({ item: s, info }, index) => {
             const Icon = icons[index % icons.length];
             const soon = info.daysUntil !== null && info.daysUntil <= 5;
+            const isSelected = selectedIds.has(s.id);
             return (
               <div
                 key={s.id}
-                className="flex items-center gap-3 rounded-2xl bg-white px-3 py-2.5 shadow-[var(--shadow-soft)]"
+                onClick={selectMode ? () => toggleSelect(s.id) : undefined}
+                className={`flex items-center gap-3 rounded-2xl bg-white px-3 py-2.5 shadow-[var(--shadow-soft)] transition-all ${
+                  selectMode ? "cursor-pointer" : ""
+                } ${isSelected ? "ring-2 ring-[var(--primary)] ring-offset-1" : ""}`}
               >
+                {selectMode && (
+                  <div
+                    className={`flex-shrink-0 h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                      isSelected
+                        ? "bg-[var(--primary)] border-[var(--primary)]"
+                        : "border-[var(--muted-foreground)] bg-transparent"
+                    }`}
+                  >
+                    {isSelected && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
+                  </div>
+                )}
                 <div className="grid h-10 w-10 place-items-center rounded-xl bg-[oklch(0.95_0.04_265)] text-[var(--primary)]">
                   <Icon className="h-4 w-4" strokeWidth={2.25} />
                 </div>
-                <div className="flex-1 leading-tight">
-                  <p className="text-[12px] font-bold text-foreground">{s.label}</p>
+                <div className="flex-1 leading-tight min-w-0">
+                  <p className="text-[12px] font-bold text-foreground truncate">{s.label}</p>
                   <p
-                    className={`text-[10px] ${soon ? "text-[var(--danger)] font-semibold" : "text-muted-foreground"}`}
+                    className={`text-[10px] truncate ${soon ? "text-[var(--danger)] font-semibold" : "text-muted-foreground"}`}
                   >
                     {formatScheduleSubtext(info, { includeCategory: true })}
                   </p>
                 </div>
                 <Money usd={s.amountUsd} size="sm" />
-                <div className="flex shrink-0 items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => beginEdit(s)}
-                    className="grid h-8 w-8 place-items-center rounded-full bg-[var(--muted)] text-foreground"
-                    aria-label={`Edit ${s.label}`}
-                  >
-                    <Pencil className="h-3.5 w-3.5" strokeWidth={2.4} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => removeSchedule(s.id)}
-                    className="grid h-8 w-8 place-items-center rounded-full bg-[oklch(0.96_0.05_25)] text-[var(--danger)]"
-                    aria-label={`Delete ${s.label}`}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" strokeWidth={2.4} />
-                  </button>
-                </div>
+                {!selectMode && (
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => beginEdit(s)}
+                      className="grid h-8 w-8 place-items-center rounded-full bg-[var(--muted)] text-foreground"
+                      aria-label={`Edit ${s.label}`}
+                    >
+                      <Pencil className="h-3.5 w-3.5" strokeWidth={2.4} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeSchedule(s.id)}
+                      className="grid h-8 w-8 place-items-center rounded-full bg-[oklch(0.96_0.05_25)] text-[var(--danger)]"
+                      aria-label={`Delete ${s.label}`}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" strokeWidth={2.4} />
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })}

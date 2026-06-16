@@ -354,6 +354,7 @@ interface NavigationContextType {
   updateTransaction: (id: string, txn: Partial<Transaction>) => void;
   deleteTransaction: (id: string) => void;
   deleteContributionFromGoal: (goalId: string, contributionId: string) => void;
+  deleteContributionsFromGoal: (goalId: string, contributionIds: string[]) => void;
   recordTransfer: (amountUsd: number, fromWallet: string, toWallet: string, note: string) => void;
   balanceUsd: number;
   incomeUsd: number;
@@ -406,6 +407,7 @@ interface NavigationContextType {
   addSubscription: (item?: Partial<ScheduleItem>) => void;
   updateScheduleItem: (id: string, updates: Partial<Omit<ScheduleItem, "id">>) => void;
   deleteScheduleItem: (id: string) => void;
+  deleteScheduleItems: (ids: string[]) => void;
   loanEntries: LoanEntry[];
   addLoanEntry: (
     entry: Omit<LoanEntry, "id" | "createdAt" | "paidAmountUsd"> & { paidAmountUsd?: number },
@@ -1126,40 +1128,56 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  const deleteContributionFromGoal = (goalId: string, contributionId: string) => {
+  const deleteContributionsFromGoal = (goalId: string, contributionIds: string[]) => {
     const goal = goals.find((g) => g.id === goalId);
     if (!goal) return;
 
-    const contribution = goal.history.find((h) => h.id === contributionId);
-    if (!contribution) return;
+    const transactionIds: string[] = [];
+    let removedUsd = 0;
 
-    // If the contribution has a transactionId, delete the transaction too
-    if (contribution.transactionId) {
-      deleteTransaction(contribution.transactionId);
-    } else {
-      // Otherwise just remove it from goal history
-      const amountUsd = contribution.amountUsd;
-      setGoals((prev) =>
-        prev.map((g) => {
-          if (g.id !== goalId) return g;
-          return {
-            ...g,
-            savedUsd: Math.max(0, g.savedUsd - amountUsd),
-            history: g.history.filter((h) => h.id !== contributionId),
-          };
-        }),
-      );
-      syncMutationServerFn({
-        data: {
-          type: "updateGoalSavings",
-          data: {
-            id: goalId,
-            savedUsd: Math.max(0, goal.savedUsd - amountUsd),
-            history: goal.history.filter((h) => h.id !== contributionId),
-          },
-        },
-      }).catch(console.error);
+    contributionIds.forEach((id) => {
+      const contribution = goal.history.find((h) => h.id === id);
+      if (contribution) {
+        removedUsd += contribution.amountUsd;
+        if (contribution.transactionId) {
+          transactionIds.push(contribution.transactionId);
+        }
+      }
+    });
+
+    if (transactionIds.length > 0) {
+      setTransactions((prev) => prev.filter((t) => !transactionIds.includes(t.id)));
     }
+
+    setGoals((prev) =>
+      prev.map((g) => {
+        if (g.id !== goalId) return g;
+        return {
+          ...g,
+          savedUsd: Math.max(0, g.savedUsd - removedUsd),
+          history: g.history.filter(
+            (h) =>
+              !contributionIds.includes(h.id) &&
+              (!h.transactionId || !transactionIds.includes(h.transactionId)),
+          ),
+        };
+      }),
+    );
+
+    syncMutationServerFn({
+      data: {
+        type: "deleteContributions",
+        data: {
+          goalId,
+          contributionIds,
+          transactionIds,
+        },
+      },
+    }).catch(console.error);
+  };
+
+  const deleteContributionFromGoal = (goalId: string, contributionId: string) => {
+    deleteContributionsFromGoal(goalId, [contributionId]);
   };
 
   const recordTransfer = (
@@ -1636,12 +1654,16 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  const deleteScheduleItem = (id: string) => {
-    setRecurringIncome((prev) => prev.filter((item) => item.id !== id));
-    setSubscriptions((prev) => prev.filter((item) => item.id !== id));
-    syncMutationServerFn({ data: { type: "removeScheduleItem", data: { id } } }).catch(
+  const deleteScheduleItems = (ids: string[]) => {
+    setRecurringIncome((prev) => prev.filter((item) => !ids.includes(item.id)));
+    setSubscriptions((prev) => prev.filter((item) => !ids.includes(item.id)));
+    syncMutationServerFn({ data: { type: "removeScheduleItems", data: { ids } } }).catch(
       console.error,
     );
+  };
+
+  const deleteScheduleItem = (id: string) => {
+    deleteScheduleItems([id]);
   };
 
   const addLoanEntry = (
@@ -1969,6 +1991,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         updateTransaction,
         deleteTransaction,
         deleteContributionFromGoal,
+        deleteContributionsFromGoal,
         recordTransfer,
         balanceUsd,
         incomeUsd,
@@ -2019,6 +2042,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         addSubscription,
         updateScheduleItem,
         deleteScheduleItem,
+        deleteScheduleItems,
         loanEntries,
         addLoanEntry,
         updateLoanEntry,

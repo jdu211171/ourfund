@@ -14,13 +14,12 @@ import { useState } from "react";
 import { currencyAdornment, currencyValueToUsd, formatUsdAsCurrency } from "@/lib/currency";
 import { GoalIcon, normalizeGoalIconName } from "./goalIconOptions";
 import { OptionSelect } from "./OptionSelect";
-import { motion, useAnimation, PanInfo, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 function ContributionItem({
   h,
   currency,
   canDelete,
-  onDelete,
   selectMode,
   isSelected,
   onToggleSelect,
@@ -33,79 +32,44 @@ function ContributionItem({
   isSelected?: boolean;
   onToggleSelect?: () => void;
 }) {
-  const controls = useAnimation();
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  const handleDragEnd = async (e: any, info: PanInfo) => {
-    if (!canDelete || selectMode) {
-      controls.start({ x: 0 });
-      return;
-    }
-
-    const threshold = -80; // Distance to trigger delete
-
-    if (info.offset.x < threshold) {
-      setIsDeleting(true);
-      await controls.start({ x: -500, opacity: 0, transition: { duration: 0.2 } });
-      onDelete();
-    } else {
-      controls.start({ x: 0, transition: { type: "spring", stiffness: 300, damping: 30 } });
-    }
-  };
-
   return (
     <div
-      className={`relative mb-2 w-full overflow-hidden rounded-2xl bg-[var(--danger)] transition-all ${
+      className={`relative mb-2 w-full overflow-hidden rounded-2xl bg-white px-3 py-2 flex items-center gap-3 shadow-[var(--shadow-soft)] text-left transition-all ${
         selectMode && canDelete ? "cursor-pointer" : ""
       } ${isSelected ? "ring-2 ring-[var(--primary)] ring-offset-1" : ""}`}
       onClick={selectMode && canDelete ? onToggleSelect : undefined}
     >
-      {canDelete && !selectMode && (
-        <div className="absolute right-0 top-0 bottom-0 flex w-20 items-center justify-center text-white">
-          <Trash2 className="h-5 w-5" />
+      {/* Checkbox — only shown for deletable rows in select mode */}
+      {selectMode && (
+        <div
+          className={`flex-shrink-0 h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all ${
+            canDelete
+              ? isSelected
+                ? "bg-[var(--primary)] border-[var(--primary)]"
+                : "border-muted-foreground bg-transparent"
+              : "border-muted-foreground/30 bg-transparent opacity-30"
+          }`}
+        >
+          {isSelected && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
         </div>
       )}
-      <motion.div
-        drag={canDelete && !isDeleting && !selectMode ? "x" : false}
-        dragConstraints={{ left: -100, right: 0 }}
-        dragElastic={0.1}
-        onDragEnd={handleDragEnd}
-        animate={controls}
-        initial={{ x: 0, opacity: 1 }}
-        className="relative z-10 flex w-full items-center gap-3 rounded-2xl bg-white px-3 py-2 text-left shadow-[var(--shadow-soft)]"
+      <div
+        className="grid h-9 w-9 place-items-center rounded-full text-white text-[11px] font-bold flex-shrink-0"
+        style={{
+          background: "linear-gradient(135deg, oklch(0.65 0.22 265), oklch(0.45 0.24 265))",
+        }}
       >
-        {/* Checkbox — only shown for deletable rows in select mode */}
-        {selectMode && (
-          <div
-            className={`flex-shrink-0 h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all ${
-              canDelete
-                ? isSelected
-                  ? "bg-[var(--primary)] border-[var(--primary)]"
-                  : "border-muted-foreground bg-transparent"
-                : "border-muted-foreground/30 bg-transparent opacity-30"
-            }`}
-          >
-            {isSelected && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
-          </div>
-        )}
-        <div
-          className="grid h-9 w-9 place-items-center rounded-full text-white text-[11px] font-bold flex-shrink-0"
-          style={{
-            background: "linear-gradient(135deg, oklch(0.65 0.22 265), oklch(0.45 0.24 265))",
-          }}
-        >
-          {h.initials}
-        </div>
-        <div className="flex-1 leading-tight min-w-0">
-          <p className="truncate text-[12px] font-bold text-foreground">{h.who}</p>
-          <p className="truncate text-[10px] text-muted-foreground">{h.date}</p>
-        </div>
-        <p
-          className={`text-[12px] font-bold flex-shrink-0 ${h.amountUsd >= 0 ? "text-[var(--success)]" : "text-[var(--danger)]"}`}
-        >
-          {formatUsdAsCurrency(h.amountUsd, currency, { signed: true })}
-        </p>
-      </motion.div>
+        {h.initials}
+      </div>
+      <div className="flex-1 leading-tight min-w-0">
+        <p className="truncate text-[12px] font-bold text-foreground">{h.who}</p>
+        <p className="truncate text-[10px] text-muted-foreground">{h.date}</p>
+      </div>
+      <p
+        className={`text-[12px] font-bold flex-shrink-0 ${h.amountUsd >= 0 ? "text-[var(--success)]" : "text-[var(--danger)]"}`}
+      >
+        {formatUsdAsCurrency(h.amountUsd, currency, { signed: true })}
+      </p>
     </div>
   );
 }
@@ -122,6 +86,7 @@ export function GoalDetailScreen() {
     setSelectedGoalId,
     contributeToGoal,
     deleteContributionFromGoal,
+    deleteContributionsFromGoal,
     activeWallets,
   } = useAppNavigation();
   const goal = goals.find((g) => g.id === selectedGoalId) ?? goals[0];
@@ -151,7 +116,7 @@ export function GoalDetailScreen() {
 
   const handleDeleteSelected = () => {
     if (selectedIds.size === 0) return;
-    selectedIds.forEach((id) => deleteContributionFromGoal(goal.id, id));
+    deleteContributionsFromGoal(goal.id, [...selectedIds]);
     exitSelectMode();
   };
 

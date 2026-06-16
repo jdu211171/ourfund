@@ -1,4 +1,15 @@
-import { ArrowLeft, Briefcase, Gift, Pencil, Plus, Tag, Trash2, Wallet } from "lucide-react";
+import {
+  ArrowLeft,
+  Briefcase,
+  Gift,
+  Pencil,
+  Plus,
+  Tag,
+  Trash2,
+  Wallet,
+  Check,
+  X,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { PhoneFrame } from "./PhoneFrame";
 import { useAppNavigation } from "@/lib/navigation";
@@ -29,6 +40,7 @@ export function RecurringIncomeScreen() {
     recurringIncome,
     updateScheduleItem,
     deleteScheduleItem,
+    deleteScheduleItems,
   } = useAppNavigation();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -36,6 +48,30 @@ export function RecurringIncomeScreen() {
   const [amount, setAmount] = useState("");
   const [frequency, setFrequency] = useState<ScheduleFrequency>("monthly");
   const [nextDate, setNextDate] = useState(defaultNextScheduleDate);
+
+  // Select mode
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedIds.size === 0) return;
+    deleteScheduleItems([...selectedIds]);
+    exitSelectMode();
+  };
   const incomeCategories = useMemo(
     () => [
       { value: "Salary", label: "Salary" },
@@ -119,21 +155,60 @@ export function RecurringIncomeScreen() {
     <PhoneFrame>
       <div className="flex h-full flex-col px-7 pt-10 pb-7">
         <header className="flex items-center justify-between">
-          <button
-            onClick={goBack}
-            className="grid h-9 w-9 place-items-center rounded-full"
-            aria-label="Back"
-          >
-            <ArrowLeft className="h-5 w-5" strokeWidth={2.25} />
-          </button>
-          <h2 className="text-[17px] font-bold tracking-tight">Recurring income</h2>
-          <button
-            onClick={beginCreate}
-            className="grid h-9 w-9 place-items-center rounded-full bg-[var(--muted)]"
-            aria-label="Add"
-          >
-            <Plus className="h-4 w-4" strokeWidth={2.5} />
-          </button>
+          {selectMode ? (
+            <>
+              <button
+                onClick={exitSelectMode}
+                className="grid h-9 w-9 place-items-center rounded-full text-foreground"
+                aria-label="Cancel selection"
+              >
+                <X className="h-5 w-5" strokeWidth={2.25} />
+              </button>
+              <span className="text-[14px] font-bold text-foreground">
+                {selectedIds.size > 0 ? `${selectedIds.size} selected` : "Select entries"}
+              </span>
+              <button
+                onClick={handleDeleteSelected}
+                disabled={selectedIds.size === 0}
+                className="grid h-9 w-9 place-items-center rounded-full bg-red-50 text-red-500 disabled:opacity-30"
+                aria-label="Delete selected"
+              >
+                <Trash2 className="h-4 w-4" strokeWidth={2.5} />
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={goBack}
+                className="grid h-9 w-9 place-items-center rounded-full text-foreground"
+                aria-label="Back"
+              >
+                <ArrowLeft className="h-5 w-5" strokeWidth={2.25} />
+              </button>
+              <h2 className="text-[17px] font-bold tracking-tight">Recurring income</h2>
+              <div className="flex items-center gap-1.5">
+                {recurringIncome.length > 0 && (
+                  <button
+                    onClick={() => {
+                      setSelectMode(true);
+                      setShowForm(false);
+                    }}
+                    className="grid h-9 w-9 place-items-center rounded-full bg-[var(--muted)] text-muted-foreground"
+                    aria-label="Select entries"
+                  >
+                    <Trash2 className="h-4 w-4" strokeWidth={2.25} />
+                  </button>
+                )}
+                <button
+                  onClick={beginCreate}
+                  className="grid h-9 w-9 place-items-center rounded-full bg-[var(--muted)]"
+                  aria-label="Add"
+                >
+                  <Plus className="h-4 w-4" strokeWidth={2.5} />
+                </button>
+              </div>
+            </>
+          )}
         </header>
 
         <div className="mt-3 flex items-center justify-between">
@@ -232,44 +307,61 @@ export function RecurringIncomeScreen() {
         <div className="mt-2 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
           {scheduleRows.map(({ item: it, info }, index) => {
             const Icon = index === 2 ? Gift : index === 3 ? Wallet : Briefcase;
+            const isSelected = selectedIds.has(it.id);
             return (
               <div
                 key={it.id}
-                className="flex items-center gap-3 rounded-2xl bg-white px-3 py-3 shadow-[var(--shadow-soft)]"
+                onClick={selectMode ? () => toggleSelect(it.id) : undefined}
+                className={`flex items-center gap-3 rounded-2xl bg-white px-3 py-3 shadow-[var(--shadow-soft)] transition-all ${
+                  selectMode ? "cursor-pointer" : ""
+                } ${isSelected ? "ring-2 ring-[var(--primary)] ring-offset-1" : ""}`}
               >
+                {selectMode && (
+                  <div
+                    className={`flex-shrink-0 h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                      isSelected
+                        ? "bg-[var(--primary)] border-[var(--primary)]"
+                        : "border-[var(--muted-foreground)] bg-transparent"
+                    }`}
+                  >
+                    {isSelected && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
+                  </div>
+                )}
                 <div
                   className="grid h-10 w-10 place-items-center rounded-xl text-white"
                   style={{ background: it.color }}
                 >
                   <Icon className="h-4 w-4" strokeWidth={2.25} />
                 </div>
-                <div className="flex-1 leading-tight">
-                  <p className="text-[12px] font-bold text-foreground">{it.label}</p>
-                  <p className="text-[10px] text-muted-foreground">
+                <div className="flex-1 leading-tight min-w-0">
+                  <p className="text-[12px] font-bold text-foreground truncate">{it.label}</p>
+                  <p className="text-[10px] text-muted-foreground truncate">
                     {formatScheduleSubtext(info, { includeCategory: true })}
                   </p>
                 </div>
-                <p className="text-[12px] font-extrabold text-[var(--success)]">
+                <p className="text-[12px] font-extrabold text-[var(--success)] flex-shrink-0">
                   {formatUsdAsCurrency(it.amountUsd, currency, { signed: true })}
                 </p>
-                <div className="flex shrink-0 items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => beginEdit(it)}
-                    className="grid h-8 w-8 place-items-center rounded-full bg-[var(--muted)] text-foreground"
-                    aria-label={`Edit ${it.label}`}
-                  >
-                    <Pencil className="h-3.5 w-3.5" strokeWidth={2.4} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => removeSchedule(it.id)}
-                    className="grid h-8 w-8 place-items-center rounded-full bg-[oklch(0.96_0.05_25)] text-[var(--danger)]"
-                    aria-label={`Delete ${it.label}`}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" strokeWidth={2.4} />
-                  </button>
-                </div>
+                {!selectMode && (
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => beginEdit(it)}
+                      className="grid h-8 w-8 place-items-center rounded-full bg-[var(--muted)] text-foreground"
+                      aria-label={`Edit ${it.label}`}
+                    >
+                      <Pencil className="h-3.5 w-3.5" strokeWidth={2.4} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeSchedule(it.id)}
+                      className="grid h-8 w-8 place-items-center rounded-full bg-[oklch(0.96_0.05_25)] text-[var(--danger)]"
+                      aria-label={`Delete ${it.label}`}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" strokeWidth={2.4} />
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })}
