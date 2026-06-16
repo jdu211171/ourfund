@@ -1176,12 +1176,17 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
 
         if (Array.isArray(transactionIds) && transactionIds.length > 0) {
           const txns = await prisma.transaction.findMany({
-            where: { id: { in: transactionIds }, householdId },
-          });
-          if (txns.length !== transactionIds.length) throw new Error("Forbidden");
-          await prisma.transaction.deleteMany({
             where: { id: { in: transactionIds } },
           });
+          const hasUnauthorizedTxn = txns.some((t) => t.householdId !== householdId);
+          if (hasUnauthorizedTxn) throw new Error("Forbidden");
+
+          const existingIds = txns.map((t) => t.id);
+          if (existingIds.length > 0) {
+            await prisma.transaction.deleteMany({
+              where: { id: { in: existingIds } },
+            });
+          }
         }
 
         const goal = await prisma.goal.findUnique({ where: { id: goalId } });
