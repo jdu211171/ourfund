@@ -24,6 +24,7 @@ import { TransactionHistoryScreen } from "@/components/knit/TransactionHistorySc
 import { AnalyticsScreen } from "@/components/knit/AnalyticsScreen";
 import { EditTransactionScreen } from "@/components/knit/EditTransactionScreen";
 import { ConfirmDeleteScreen } from "@/components/knit/ConfirmDeleteScreen";
+import { ConfirmDeleteGoalScreen } from "@/components/knit/ConfirmDeleteGoalScreen";
 import { FilterSortScreen } from "@/components/knit/FilterSortScreen";
 import { ReceiptScreen } from "@/components/knit/ReceiptScreen";
 import { IncomeDetailScreen } from "@/components/knit/IncomeDetailScreen";
@@ -175,6 +176,8 @@ function AppRouter() {
       return <EditTransactionScreen />;
     case "delete_confirm":
       return <ConfirmDeleteScreen />;
+    case "delete_goal_confirm":
+      return <ConfirmDeleteGoalScreen />;
     case "filter_sort":
       return <FilterSortScreen />;
     case "receipt":

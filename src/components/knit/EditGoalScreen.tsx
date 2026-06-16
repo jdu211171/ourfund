@@ -1,4 +1,4 @@
-import { ArrowLeft, Check } from "lucide-react";
+import { ArrowLeft, Check, Trash2 } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { useEffect, useMemo, useState } from "react";
 import { useAppNavigation } from "@/lib/navigation";
@@ -109,7 +109,13 @@ export function EditGoalScreen() {
             <ArrowLeft className="h-5 w-5" strokeWidth={2.25} />
           </button>
           <h2 className="text-[17px] font-bold tracking-tight">Edit Goal</h2>
-          <span className="h-9 w-9" />
+          <button
+            className="grid h-9 w-9 place-items-center rounded-full text-[var(--danger)] hover:bg-slate-50 transition-colors cursor-pointer"
+            aria-label="Delete"
+            onClick={() => navigate("delete_goal_confirm")}
+          >
+            <Trash2 className="h-4 w-4" strokeWidth={2.25} />
+          </button>
         </header>
 
         <div className="mt-6 flex flex-col items-center">

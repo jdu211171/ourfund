@@ -75,6 +75,7 @@ export type ScreenName =
   | "income_detail"
   | "edit_expense"
   | "delete_confirm"
+  | "delete_goal_confirm"
   | "filter_sort"
   | "receipt"
   | "history_search"
@@ -378,6 +379,7 @@ interface NavigationContextType {
   setSelectedGoalId: (id: string | null) => void;
   addGoal: (goal: Omit<Goal, "id" | "savedUsd" | "history"> & { savedUsd?: number }) => Goal;
   updateGoal: (goalId: string, updates: Partial<Omit<Goal, "id" | "history" | "savedUsd">>) => void;
+  deleteGoal: (goalId: string) => void;
   contributeToGoal: (goalId: string, amountUsd: number, who?: string, walletId?: string) => void;
   withdrawFromGoal: (goalId: string, amountUsd: number, wallet: string) => void;
   members: FamilyMember[];
@@ -1293,6 +1295,14 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     }).catch(console.error);
   };
 
+  const deleteGoal = (goalId: string) => {
+    setGoals((prev) => prev.filter((goal) => goal.id !== goalId));
+    setSelectedGoalId(null);
+    syncMutationServerFn({
+      data: { type: "deleteGoal", data: { id: goalId } },
+    }).catch(console.error);
+  };
+
   const contributeToGoal = (
     goalId: string,
     amountUsd: number,
@@ -2013,6 +2023,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         setSelectedGoalId,
         addGoal,
         updateGoal,
+        deleteGoal,
         contributeToGoal,
         withdrawFromGoal,
         members,

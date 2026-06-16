@@ -1430,6 +1430,14 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
         break;
       }
 
+      case "deleteGoal": {
+        if (!householdId) throw new Error("No household linked");
+        const goal = await prisma.goal.findUnique({ where: { id: payload.id } });
+        if (!goal || goal.householdId !== householdId) throw new Error("Forbidden");
+        await prisma.goal.delete({ where: { id: payload.id } });
+        break;
+      }
+
       // ── Family members ─────────────────────────────────────────────────────
       case "inviteMember": {
         if (!householdId) throw new Error("No household linked");
