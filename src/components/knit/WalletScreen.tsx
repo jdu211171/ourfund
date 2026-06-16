@@ -33,9 +33,9 @@ export function WalletScreen() {
     selectedMemberId,
     goals,
     setSelectedGoalId,
-    linkedBanks,
     subscriptions,
     recurringIncome,
+    setSelectedDetailWalletId,
   } = useAppNavigation();
   const viewedMember = members.find((member) => member.id === selectedMemberId);
 
@@ -147,7 +147,14 @@ export function WalletScreen() {
 
         <div>
           {sortedWallets.map((wallet) => (
-            <div key={wallet.id} className="flex items-center gap-3 rounded-2xl bg-white py-3">
+            <button
+              key={wallet.id}
+              onClick={() => {
+                setSelectedDetailWalletId(wallet.id);
+                navigate("wallet_detail");
+              }}
+              className="flex w-full items-center gap-3 rounded-2xl bg-white py-3 text-left transition-transform active:scale-[0.99] cursor-pointer"
+            >
               <div
                 className="grid h-11 w-11 place-items-center rounded-2xl"
                 style={{ background: "oklch(0.96 0.05 265)", color: wallet.color }}
@@ -165,7 +172,7 @@ export function WalletScreen() {
                 <p className="text-[10px] text-muted-foreground">{wallet.sub}</p>
               </div>
               <Money usd={walletBalanceUsd(wallet.label)} size="sm" />
-            </div>
+            </button>
           ))}
           {sortedWallets.length === 0 && (
             <button

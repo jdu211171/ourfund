@@ -39,6 +39,8 @@ export type ScreenName =
   | "more"
   | "wallet"
   | "new_wallet"
+  | "wallet_switcher"
+  | "wallet_detail"
   | "connect_bank"
   | "plaid_connecting"
   | "plaid_success"
@@ -369,6 +371,14 @@ interface NavigationContextType {
   addWallet: (
     wallet: Omit<WalletAccount, "id" | "startingBalanceUsd"> & { startingBalanceUsd?: number },
   ) => WalletAccount;
+  updateWallet: (walletId: string, updates: Partial<Omit<WalletAccount, "id">>) => void;
+  deleteWallet: (walletId: string) => void;
+  selectedWalletId: string | null;
+  setSelectedWalletId: (id: string | null) => void;
+  selectedDetailWalletId: string | null;
+  setSelectedDetailWalletId: (id: string | null) => void;
+  theme: "light" | "dark" | "system";
+  setTheme: (theme: "light" | "dark" | "system") => void;
   walletBalanceUsd: (walletLabel: string) => number;
   categories: BudgetCategory[];
   addCategory: (category: Omit<BudgetCategory, "id">) => BudgetCategory;
@@ -599,6 +609,14 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
   const [selectedMonthHistory, setSelectedMonthHistory] = useState<{ year: number; month: number } | null>(null);
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(initialSeed.selectedGoalId);
+  const [selectedWalletId, setSelectedWalletId] = useState<string | null>(null);
+  const [selectedDetailWalletId, setSelectedDetailWalletId] = useState<string | null>(null);
+  const [theme, setThemeState] = useState<"light" | "dark" | "system">(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem("theme") as "light" | "dark" | "system") || "system";
+    }
+    return "system";
+  });
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(
     initialSeed.selectedMemberId,
   );
@@ -1233,6 +1251,71 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     return newWallet;
   };
 
+  const updateWallet = (
+    walletId: string,
+    updates: Partial<Omit<WalletAccount, "id">>
+  ) => {
+    const existingWallet = wallets.find((w) => w.id === walletId);
+    setWallets((prev) =>
+      prev.map((w) => (w.id === walletId ? { ...w, ...updates } : w))
+    );
+    if (existingWallet && updates.label && existingWallet.label !== updates.label) {
+      setTransactions((prev) =>
+        prev.map((t) =>
+          t.wallet === existingWallet.label ? { ...t, wallet: updates.label! } : t
+        )
+      );
+    }
+    syncMutationServerFn({
+      data: { type: "updateWallet", data: { id: walletId, ...updates } },
+    }).catch(console.error);
+  };
+
+  const deleteWallet = (walletId: string) => {
+    const existingWallet = wallets.find((w) => w.id === walletId);
+    setWallets((prev) => prev.filter((w) => w.id !== walletId));
+    if (existingWallet) {
+      setTransactions((prev) =>
+        prev.filter((t) => t.wallet !== existingWallet.label)
+      );
+    }
+    syncMutationServerFn({
+      data: { type: "deleteWallet", data: { id: walletId } },
+    }).catch(console.error);
+    if (selectedWalletId === walletId) {
+      setSelectedWalletId(null);
+    }
+  };
+
+  const setTheme = (nextTheme: "light" | "dark" | "system") => {
+    setThemeState(nextTheme);
+    localStorage.setItem("theme", nextTheme);
+  };
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+    const applyTheme = () => {
+      const isDark =
+        theme === "dark" ||
+        (theme === "system" && mediaQuery.matches);
+
+      if (isDark) {
+        root.classList.add("dark");
+      } else {
+        root.classList.remove("dark");
+      }
+    };
+
+    applyTheme();
+
+    if (theme === "system") {
+      mediaQuery.addEventListener("change", applyTheme);
+      return () => mediaQuery.removeEventListener("change", applyTheme);
+    }
+  }, [theme]);
+
   const addCategory = (category: Omit<BudgetCategory, "id">) => {
     const newCategory = { ...category, id: makeId("category") };
     setCategories((prev) => [newCategory, ...prev]);
@@ -1586,7 +1669,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
 
   const toggleNotificationPref = (key: string) => {
     setNotificationPrefs((prev) => {
-      const next = { ...prev, [key]: !prev[key] };
+      const next: Record<string, boolean> = { ...prev, [key]: !prev[key] };
       syncMutationServerFn({
         data: { type: "setNotificationPrefs", data: { notificationPrefs: next } },
       }).catch(console.error);
@@ -1878,7 +1961,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
       setNotificationPrefs((prev) => ({
         ...prev,
         ...asRecord(data.user.notificationPrefs),
-      }));
+      } as Record<string, boolean>));
       setHistoryFilterState(normalizeHistoryFiltersInput(data.user.historyFilters));
       setPasscodeState(data.user.passcode ?? "");
       setFaceIdEnabledState(data.user.faceIdEnabled);
@@ -2016,6 +2099,14 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         wallets,
         activeWallets,
         addWallet,
+        updateWallet,
+        deleteWallet,
+        selectedWalletId,
+        setSelectedWalletId,
+        selectedDetailWalletId,
+        setSelectedDetailWalletId,
+        theme,
+        setTheme,
         walletBalanceUsd,
         categories,
         addCategory,

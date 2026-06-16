@@ -60,6 +60,9 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-slate-50: var(--slate-50);
+  --color-slate-100: var(--slate-100);
+  --color-white: var(--white);
   --font-display: "DM Serif Display", ui-serif, Georgia, serif;
   --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
 }
@@ -90,6 +93,9 @@
   --danger: oklch(0.6 0.22 25);
   --phone-bg: oklch(1 0 0);
   --canvas: oklch(0.95 0.003 250);
+  --slate-50: oklch(0.98 0.005 250);
+  --slate-100: oklch(0.96 0.005 250);
+  --white: oklch(1 0 0);
 
   /* Borderless system: flat tonal surfaces only. No button/card rings,
      outlines, or faux-border shadows. */
@@ -147,6 +153,11 @@
   --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.551 0.027 264.364);
+  --slate-50: oklch(0.23 0.04 260);
+  --slate-100: oklch(0.25 0.04 260);
+  --white: oklch(0.208 0.042 265.755);
+  --phone-bg: oklch(0.129 0.042 264.695);
+  --canvas: oklch(0.08 0.02 265);
 }
 
 @layer base {

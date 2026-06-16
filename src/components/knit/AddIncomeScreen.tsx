@@ -9,12 +9,15 @@ import { OptionSelect } from "./OptionSelect";
 const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "del"] as const;
 
 export function AddIncomeScreen() {
-  const { navigate, goBack, currency, addTransaction, activeWallets } = useAppNavigation();
+  const { navigate, goBack, currency, addTransaction, activeWallets, selectedWalletId } = useAppNavigation();
   const [amount, setAmount] = useState("0");
   const amountUsd = currencyValueToUsd(parseFloat(amount || "0"), currency);
   const sources = ["Monthly salary", "Freelance invoice", "Allowance", "Gift"];
   const [source, setSource] = useState(sources[0]);
-  const [walletId, setWalletId] = useState(activeWallets[0]?.id ?? "");
+  const defaultWalletId = selectedWalletId && activeWallets.some((w) => w.id === selectedWalletId)
+    ? selectedWalletId
+    : (activeWallets[0]?.id ?? "");
+  const [walletId, setWalletId] = useState(defaultWalletId);
   const wallet = activeWallets.find((item) => item.id === walletId) ?? activeWallets[0];
   const hasWallet = Boolean(wallet);
 

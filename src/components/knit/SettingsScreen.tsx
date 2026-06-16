@@ -25,8 +25,11 @@ export function SettingsScreen() {
     compactMoneyMode,
     setCompactMoneyMode,
     logout,
+    theme,
+    setTheme,
   } = useAppNavigation();
-  const [themeIdx, setThemeIdx] = useState(1);
+  const themes = ["light", "dark", "system"] as const;
+  const themeIdx = themes.indexOf(theme);
   const [quietHours, setQuietHours] = useState(false);
 
   return (
@@ -82,7 +85,7 @@ export function SettingsScreen() {
             {["Light", "Dark", "System"].map((m, i) => (
               <button
                 key={m}
-                onClick={() => setThemeIdx(i)}
+                onClick={() => setTheme(themes[i])}
                 className={`flex-1 rounded-xl py-2 text-[12px] font-semibold active:scale-95 transition-all cursor-pointer ${
                   i === themeIdx
                     ? "bg-[var(--primary)] text-white shadow-sm"
@@ -158,7 +161,7 @@ export function SettingsScreen() {
                     setQuietHours((prev) => !prev);
                     return;
                   }
-                  if ("target" in r) setCurrencyTarget(r.target);
+                  if ("target" in r && r.target) setCurrencyTarget(r.target as any);
                   navigate(r.screen);
                 }}
                 disabled={r.comingSoon}

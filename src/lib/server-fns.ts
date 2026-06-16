@@ -240,7 +240,15 @@ async function getHouseholdUsers(householdId: string) {
 
 async function createNotificationsForUsers(
   userIds: string[],
-  data: Omit<Parameters<typeof prisma.appNotification.createMany>[0]["data"][number], "userId">,
+  data: {
+    title: string;
+    desc: string;
+    time: string;
+    group: string;
+    tone: string;
+    read?: boolean;
+    screen: string;
+  },
 ) {
   if (userIds.length === 0) return;
   await prisma.appNotification.createMany({
@@ -625,6 +633,7 @@ export const getAppDataServerFn = createServerFn({ method: "GET" }).handler(asyn
       note: entry.note,
       due: entry.due,
       amountUsd: entry.amountUsd,
+      paidAmountUsd: entry.paidAmountUsd,
       direction: entry.direction,
       status: entry.status,
       createdAt: entry.createdAt.toLocaleDateString(),
@@ -1233,8 +1242,8 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
           throw new Error("Transfer requires two transaction legs");
         }
         const amounts = transferTransactions.map((txn: any) => Number(txn.usd));
-        const outgoing = amounts.filter((amount) => amount < 0);
-        const incoming = amounts.filter((amount) => amount > 0);
+        const outgoing = amounts.filter((amount: number) => amount < 0);
+        const incoming = amounts.filter((amount: number) => amount > 0);
         if (
           outgoing.length !== 1 ||
           incoming.length !== 1 ||
@@ -1247,7 +1256,7 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
         ).filter(Boolean);
         if (walletLabels.length !== 2) throw new Error("Transfer requires two wallets");
         const transferWallets = await prisma.walletAccount.findMany({
-          where: { householdId, label: { in: walletLabels } },
+          where: { householdId, label: { in: walletLabels as string[] } },
         });
         if (transferWallets.length !== walletLabels.length) throw new Error("Forbidden");
 
@@ -1301,6 +1310,49 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
         });
         break;
       }
+
+      case "updateWallet": {
+        if (!householdId) throw new Error("No household linked");
+        const existingWallet = await prisma.walletAccount.findFirst({
+          where: { id: payload.id, householdId }
+        });
+        await prisma.walletAccount.update({
+          where: { id: payload.id },
+          data: {
+            label: payload.label,
+            sub: payload.sub,
+            type: payload.type,
+            currency: payload.currency,
+            members: payload.members,
+            color: payload.color,
+            startingBalanceUsd: payload.startingBalanceUsd ?? undefined,
+          },
+        });
+        if (existingWallet && payload.label && existingWallet.label !== payload.label) {
+          await prisma.transaction.updateMany({
+            where: { householdId, wallet: existingWallet.label },
+            data: { wallet: payload.label },
+          });
+        }
+        break;
+      }
+
+      case "deleteWallet": {
+        if (!householdId) throw new Error("No household linked");
+        const existingWallet = await prisma.walletAccount.findFirst({
+          where: { id: payload.id, householdId }
+        });
+        await prisma.walletAccount.delete({
+          where: { id: payload.id }
+        });
+        if (existingWallet) {
+          await prisma.transaction.deleteMany({
+            where: { householdId, wallet: existingWallet.label }
+          });
+        }
+        break;
+      }
+
 
       case "setCurrencyForMode": {
         const currency = payload.currency;

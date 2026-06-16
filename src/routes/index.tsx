@@ -52,6 +52,8 @@ import { ScanReceiptScreen } from "@/components/knit/ScanReceiptScreen";
 import { ResetPasswordScreen } from "@/components/knit/ResetPasswordScreen";
 import { MoreScreen } from "@/components/knit/MoreScreen";
 import { PhoneFrame } from "@/components/knit/PhoneFrame";
+import { WalletSwitcherScreen } from "@/components/knit/WalletSwitcherScreen";
+import { WalletDetailScreen } from "@/components/knit/WalletDetailScreen";
 
 import { useState } from "react";
 import { AppNavigationProvider, useAppNavigation } from "@/lib/navigation";
@@ -192,6 +194,10 @@ function AppRouter() {
       return <ProductTrackerScreen />;
     case "scan_receipt":
       return <ScanReceiptScreen />;
+    case "wallet_switcher":
+      return <WalletSwitcherScreen />;
+    case "wallet_detail":
+      return <WalletDetailScreen />;
     default:
       return <OnboardingScreen />;
   }
@@ -308,7 +314,7 @@ function Index() {
           <button
             onClick={() => setViewMode("showcase")}
             className={`text-xs font-bold px-3 py-1.5 rounded-full transition-all ${
-              viewMode === "showcase"
+              (viewMode as string) === "showcase"
                 ? "bg-[var(--primary)] text-white shadow-sm"
                 : "text-slate-600 hover:bg-slate-100"
             }`}
@@ -329,7 +335,7 @@ function Index() {
         <button
           onClick={() => setViewMode("app")}
           className={`text-xs font-bold px-3 py-1.5 rounded-full transition-all ${
-            viewMode === "app"
+            (viewMode as string) === "app"
               ? "bg-[var(--primary)] text-white shadow-sm"
               : "text-slate-600 hover:bg-slate-100"
           }`}

@@ -6,6 +6,9 @@ import {
   Clock,
   Plus,
   TrendingUp,
+  ChevronDown,
+  Lock,
+  Users,
 } from "lucide-react";
 import { useEffect } from "react";
 import { PhoneFrame } from "./PhoneFrame";
@@ -37,6 +40,8 @@ export function HomeScreen() {
     categories,
     categorySpentUsd,
     notifications,
+    activeWallets,
+    selectedWalletId,
   } = useAppNavigation();
 
   useEffect(() => {
@@ -78,6 +83,7 @@ export function HomeScreen() {
     .sort((a, b) => b.pct - a.pct)
     .slice(0, 2);
   const recentTransactions = activeTransactions.slice(0, 3);
+  const activeWallet = activeWallets.find((w) => w.id === selectedWalletId) ?? activeWallets[0];
 
   return (
     <PhoneFrame className="z-10">
@@ -101,6 +107,29 @@ export function HomeScreen() {
           </button>
         </header>
 
+        {activeWallet && (
+          <div className="mt-5 flex flex-col gap-1 items-start">
+            <button
+              onClick={() => navigate("wallet_switcher")}
+              className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 shadow-[var(--shadow-soft)] transition-transform active:scale-95 cursor-pointer"
+            >
+              <span
+                className="grid h-5 w-5 place-items-center rounded-full"
+                style={{ background: "oklch(0.96 0.05 265)", color: activeWallet.color }}
+              >
+                {activeWallet.type === "private" ? (
+                  <Lock className="h-3 w-3" strokeWidth={2.5} />
+                ) : (
+                  <Users className="h-3 w-3" strokeWidth={2.5} />
+                )}
+              </span>
+              <span className="text-[11px] font-bold text-foreground">{activeWallet.label}</span>
+              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={2.5} />
+            </button>
+            <p className="text-[10px] text-muted-foreground">Active wallet · tap to switch</p>
+          </div>
+        )}
+
         <div className="mt-4">
           <BalanceHeader
             balanceUsd={balanceUsd}
@@ -110,18 +139,16 @@ export function HomeScreen() {
           />
         </div>
 
-        {showUpcoming && (
-          <div className="mt-3 flex items-center justify-between">
-            <p className="text-[13px] font-bold text-foreground">Today</p>
-            <button
-              type="button"
-              onClick={() => navigate("subscriptions")}
-              className="text-[11px] font-bold text-[var(--primary)]"
-            >
-              View bills
-            </button>
-          </div>
-        )}
+        <div className="mt-3 flex items-center justify-between">
+          <p className="text-[13px] font-bold text-foreground">Today</p>
+          <button
+            type="button"
+            onClick={() => navigate("subscriptions")}
+            className="text-[11px] font-bold text-[var(--primary)]"
+          >
+            View bills
+          </button>
+        </div>
 
         {(showUpcoming || showForecast) && (
           <div
