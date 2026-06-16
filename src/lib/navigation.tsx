@@ -362,6 +362,8 @@ interface NavigationContextType {
   spentUsd: number;
   selectedTransactionId: string | null;
   setSelectedTransactionId: (id: string | null) => void;
+  selectedMonthHistory: { year: number; month: number } | null;
+  setSelectedMonthHistory: (val: { year: number; month: number } | null) => void;
   wallets: WalletAccount[];
   activeWallets: WalletAccount[];
   addWallet: (
@@ -530,7 +532,7 @@ function canMemberSeeGoal(goal: Pick<Goal, "contributors">, memberId: string | n
   return goal.contributors.includes(memberId);
 }
 
-function transactionDate(date: string, now: Date) {
+export function transactionDate(date: string, now: Date) {
   const text = date.trim().toLowerCase();
   if (text.includes("today") || text.includes("just now")) return now;
   if (text.includes("yesterday")) return plusDays(now, -1);
@@ -595,6 +597,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   const [goals, setGoals] = useState<Goal[]>(initialSeed.goals);
   const [members, setMembers] = useState<FamilyMember[]>(initialSeed.members);
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
+  const [selectedMonthHistory, setSelectedMonthHistory] = useState<{ year: number; month: number } | null>(null);
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(initialSeed.selectedGoalId);
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(
     initialSeed.selectedMemberId,
@@ -2008,6 +2011,8 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         spentUsd,
         selectedTransactionId,
         setSelectedTransactionId,
+        selectedMonthHistory,
+        setSelectedMonthHistory,
         wallets,
         activeWallets,
         addWallet,
