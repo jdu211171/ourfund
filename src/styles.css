@@ -121,43 +121,52 @@
 }
 
 .dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
-  --slate-50: oklch(0.23 0.04 260);
-  --slate-100: oklch(0.25 0.04 260);
-  --white: oklch(0.208 0.042 265.755);
-  --phone-bg: oklch(0.129 0.042 264.695);
-  --canvas: oklch(0.08 0.02 265);
+  /* Unified dark palette — one blue scale, no competing tones. */
+  --background: oklch(0.16 0.022 265);
+  --foreground: oklch(0.97 0.005 250);
+  --card: oklch(0.235 0.028 265);
+  --card-foreground: oklch(0.97 0.005 250);
+  --popover: oklch(0.235 0.028 265);
+  --popover-foreground: oklch(0.97 0.005 250);
+  /* Keep brand purple as primary in dark too. */
+  --primary: oklch(0.66 0.22 265);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.3 0.03 265);
+  --secondary-foreground: oklch(0.97 0.005 250);
+  --muted: oklch(0.3 0.03 265);
+  --muted-foreground: oklch(0.74 0.02 260);
+  --accent: oklch(0.34 0.04 265);
+  --accent-foreground: oklch(0.97 0.005 250);
+  --destructive: oklch(0.7 0.2 25);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(1 0 0 / 8%);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.66 0.22 265);
+  --chart-1: oklch(0.66 0.22 265);
+  --chart-2: oklch(0.72 0.18 145);
+  --chart-3: oklch(0.78 0.18 70);
+  --chart-4: oklch(0.7 0.22 25);
+  --chart-5: oklch(0.65 0.24 305);
+  --sidebar: oklch(0.235 0.028 265);
+  --sidebar-foreground: oklch(0.97 0.005 250);
+  --sidebar-primary: oklch(0.66 0.22 265);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.3 0.03 265);
+  --sidebar-accent-foreground: oklch(0.97 0.005 250);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: oklch(0.66 0.22 265);
+
+  --slate-50: oklch(0.3 0.03 265);
+  --slate-100: oklch(0.34 0.04 265);
+  --white: oklch(0.235 0.028 265);
+  --canvas: oklch(0.16 0.022 265);
+  /* phone-bg matches card so the mockup chrome reads as one surface. */
+  --phone-bg: oklch(0.235 0.028 265);
+  --success: oklch(0.72 0.18 145);
+  --danger: oklch(0.7 0.22 25);
+  --shadow-phone: 0 42px 90px -34px oklch(0.02 0.03 265 / 0.8);
+  --shadow-soft: none;
+  --shadow-tile: none;
 }
 
 @layer base {
@@ -268,4 +277,78 @@ button:not(:disabled):not([aria-disabled="true"]):active::before {
   button:not(:disabled):not([aria-disabled="true"]):active {
     transform: none;
   }
+}
+
+/* ============================================================
+   Dark-mode surface normalization.
+   Map hard-coded oklch tints used across screens to the unified palette. */
+
+/* Light surfaces → card */
+html.dark .bg-white {
+  background-color: var(--card) !important;
+}
+
+/* Light accent tints (soft blue chips, pale borders) → muted */
+html.dark [class*="bg-[oklch(0.96_0.05_265)]"],
+html.dark [class*="bg-[oklch(0.96_0.04_265)]"],
+html.dark [class*="bg-[oklch(0.95_0.04_265)]"],
+html.dark [class*="bg-[oklch(0.95_0.05_265)]"],
+html.dark [class*="bg-[oklch(0.94_0.01_265)]"] {
+  background-color: var(--muted) !important;
+}
+
+/* Pale danger tint */
+html.dark [class*="bg-[oklch(0.96_0.04_30)]"] {
+  background-color: color-mix(in oklab, var(--danger) 22%, var(--card)) !important;
+}
+
+/* Near-black surfaces (CTA pills painted dark navy) → primary brand */
+html.dark [class*="bg-[oklch(0.18_0.04_265)]"],
+html.dark [class*="bg-[oklch(0.22_"],
+html.dark .bg-black {
+  background-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+}
+
+/* Text colours hard-coded as near-black blue → foreground */
+html.dark .text-black,
+html.dark [class*="text-[oklch(0.18_"],
+html.dark [class*="text-[oklch(0.2_0.08_265)]"],
+html.dark [class*="text-[oklch(0.22_0.1_265)]"] {
+  color: var(--foreground) !important;
+}
+html.dark .text-white {
+  color: var(--primary-foreground) !important;
+}
+
+/* Pale borders */
+html.dark [class*="border-[oklch(0.94_"],
+html.dark [class*="border-[oklch(0.95_"],
+html.dark [class*="border-[oklch(0.96_"] {
+  border-color: var(--border) !important;
+}
+
+/* Beautiful custom scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--muted-foreground);
+  opacity: 0.4;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+/* Enable smooth inertia scrolling on iOS for all scroll elements */
+.overflow-y-auto {
+  -webkit-overflow-scrolling: touch;
 }
