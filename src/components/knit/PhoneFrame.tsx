@@ -1,7 +1,34 @@
-import type { ReactNode } from "react";
+import { createContext, useContext, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
+type FrameMode = "phone" | "web";
+const FrameContext = createContext<FrameMode>("phone");
+
+export function FrameProvider({ mode, children }: { mode: FrameMode; children: ReactNode }) {
+  return <FrameContext.Provider value={mode}>{children}</FrameContext.Provider>;
+}
+
+export function useFrameMode() {
+  return useContext(FrameContext);
+}
+
 export function PhoneFrame({ children, className }: { children: ReactNode; className?: string }) {
+  const mode = useFrameMode();
+
+  if (mode === "web") {
+    return (
+      <div
+        data-web-frame
+        className={cn(
+          "relative w-full rounded-3xl bg-[var(--phone-bg)] shadow-[var(--shadow-soft)]",
+          className,
+        )}
+      >
+        {children}
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(

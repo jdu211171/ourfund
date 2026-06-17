@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { SendMoneyScreen } from "@/components/knit/SendMoneyScreen";
 import { HomeScreen } from "@/components/knit/HomeScreen";
@@ -311,6 +311,12 @@ function Index() {
           >
             📱 Mobile App
           </button>
+          <Link
+            to="/app"
+            className="text-xs font-bold px-3 py-1.5 rounded-full text-slate-600 hover:bg-slate-100 transition-all"
+          >
+            💻 Web App
+          </Link>
           <button
             onClick={() => setViewMode("showcase")}
             className={`text-xs font-bold px-3 py-1.5 rounded-full transition-all ${
@@ -342,6 +348,12 @@ function Index() {
         >
           📱 Mobile App
         </button>
+        <Link
+          to="/app"
+          className="text-xs font-bold px-3 py-1.5 rounded-full text-slate-600 hover:bg-slate-100 transition-all"
+        >
+          💻 Web App
+        </Link>
         <button
           onClick={() => setViewMode("showcase")}
           className={`text-xs font-bold px-3 py-1.5 rounded-full transition-all ${

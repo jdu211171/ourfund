@@ -9,8 +9,10 @@ import {
   TrendingUp,
   Users,
   WalletCards,
+  Plus,
+  Clock,
 } from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
+import { PhoneFrame, useFrameMode } from "./PhoneFrame";
 import { ComingSoonBadge } from "./ComingSoonBadge";
 import { BottomNav } from "./BottomNav";
 import { BudgetModeToggle } from "./BudgetModeToggle";
@@ -21,6 +23,7 @@ import { GoalIcon, normalizeGoalIconName } from "./goalIconOptions";
 import { formatScheduleSubtext, getScheduleInfo } from "@/lib/schedules";
 
 export function WalletScreen() {
+  const mode = useFrameMode();
   const {
     navigate,
     budgetMode,
@@ -68,6 +71,246 @@ export function WalletScreen() {
   const scheduledNetUsd = scheduledIncomeUsd - scheduledExpenseUsd;
   const nextIncome = scheduledIncomeRows[0];
   const nextExpense = scheduledExpenseRows[0];
+
+  if (mode === "web") {
+    return (
+      <div className="space-y-6">
+        <header className="flex items-center justify-between">
+          <div>
+            <h2 className="font-display text-[32px] leading-tight tracking-tight text-foreground">Wallets</h2>
+            <p className="mt-1 text-[12px] text-muted-foreground font-semibold text-muted-foreground/85">Manage shared and private wallets across the household ({visibleOwner} map).</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <BudgetModeToggle className="scale-95 origin-right" />
+            <button
+              onClick={() => navigate("new_wallet")}
+              className="inline-flex items-center gap-2 rounded-xl bg-[var(--primary)] px-4 py-2.5 text-[12px] font-bold text-white shadow-[0_12px_30px_-12px_oklch(0.55_0.24_265/0.7)] transition hover:opacity-90 cursor-pointer"
+            >
+              <Plus className="h-4 w-4" strokeWidth={2.5} />
+              New wallet
+            </button>
+          </div>
+        </header>
+
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2 space-y-6">
+            {/* Balance banner */}
+            <div className="rounded-3xl bg-[var(--card)] p-6 border border-[var(--border)] relative overflow-hidden">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Combined balance</p>
+                  <div className="mt-2">
+                    <Money usd={balanceUsd} size="lg" />
+                  </div>
+                  <p className="mt-1 text-[12px] text-muted-foreground font-semibold">
+                    Active wallets: {activeWallets.length}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => navigate("transfer")}
+                    className="inline-flex items-center gap-2 rounded-xl bg-[var(--muted)] px-3.5 py-2 text-[12px] font-bold text-foreground transition hover:bg-[var(--accent)] cursor-pointer"
+                  >
+                    <ArrowRightLeft className="h-3.5 w-3.5 text-[var(--primary)]" /> Move money
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Wallets List */}
+            <section>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-3">
+                {budgetMode === "personal" && viewedMember
+                  ? `${viewedMember.name.split(" ")[0]}'s wallets`
+                  : "Household wallets"}
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {sortedWallets.map((wallet) => (
+                  <button
+                    key={wallet.id}
+                    onClick={() => {
+                      setSelectedDetailWalletId(wallet.id);
+                      navigate("wallet_detail");
+                    }}
+                    className="flex items-center gap-3 rounded-2xl bg-[var(--card)] p-4 text-left border border-[var(--border)] transition hover:-translate-y-0.5 cursor-pointer"
+                  >
+                    <div
+                      className="grid h-12 w-12 place-items-center rounded-2xl"
+                      style={{ background: wallet.color ? `color-mix(in oklab, ${wallet.color} 18%, transparent)` : "oklch(0.96 0.05 265)", color: wallet.color || "var(--primary)" }}
+                    >
+                      {wallet.type === "private" ? (
+                        <Lock className="h-5 w-5" strokeWidth={2.25} />
+                      ) : (
+                        <Users className="h-5 w-5" strokeWidth={2.25} />
+                      )}
+                    </div>
+                    <div className="flex-1 leading-tight min-w-0">
+                      <p className="text-[13px] font-bold text-foreground truncate">{wallet.label}</p>
+                      <p className="text-[11px] text-muted-foreground truncate">
+                        {wallet.type === "private" ? "Private wallet" : `${wallet.members.length} members`}
+                      </p>
+                    </div>
+                    <Money usd={walletBalanceUsd(wallet.label)} size="md" />
+                  </button>
+                ))}
+                <button
+                  onClick={() => navigate("new_wallet")}
+                  className="flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--border)] p-4 text-[12px] font-semibold text-[var(--primary)] transition hover:bg-[var(--muted)]/30 cursor-pointer sm:col-span-2"
+                >
+                  <Plus className="h-4 w-4" /> Add a wallet
+                </button>
+              </div>
+            </section>
+
+            {/* Scheduled Forecast */}
+            <section className="rounded-2xl bg-[var(--card)] p-6 border border-[var(--border)] space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground font-semibold">Recurring Schedule</p>
+                <div className="flex gap-2">
+                  <span className="inline-flex items-center gap-1 text-[11.5px] text-muted-foreground font-semibold">
+                    Income: <span className="font-bold text-[var(--success)]"><Money usd={scheduledIncomeUsd} size="sm" /></span>
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-[11.5px] text-muted-foreground font-semibold">
+                    Bills: <span className="font-bold text-[var(--danger)]"><Money usd={scheduledExpenseUsd} size="sm" /></span>
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="rounded-xl bg-[var(--muted)]/50 p-4 border border-[var(--border)]/10">
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-2">Next deposit</p>
+                  {nextIncome ? (
+                    <div onClick={() => navigate("recurring_income")} className="flex items-center justify-between cursor-pointer">
+                      <div>
+                        <p className="text-[13px] font-bold text-foreground truncate">{nextIncome.item.label}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {formatScheduleSubtext(nextIncome.info)}
+                        </p>
+                      </div>
+                      <Money usd={nextIncome.item.amountUsd} size="md" tone="success" />
+                    </div>
+                  ) : (
+                    <p className="text-[12px] text-muted-foreground py-1">No scheduled income.</p>
+                  )}
+                </div>
+
+                <div className="rounded-xl bg-[var(--muted)]/50 p-4 border border-[var(--border)]/10">
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-2">Next bill</p>
+                  {nextExpense ? (
+                    <div onClick={() => navigate("subscriptions")} className="flex items-center justify-between cursor-pointer">
+                      <div>
+                        <p className="text-[13px] font-bold text-foreground truncate">{nextExpense.item.label}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {formatScheduleSubtext(nextExpense.info)}
+                        </p>
+                      </div>
+                      <Money usd={nextExpense.item.amountUsd} size="md" tone="danger" />
+                    </div>
+                  ) : (
+                    <p className="text-[12px] text-muted-foreground py-1">No scheduled bills.</p>
+                  )}
+                </div>
+              </div>
+            </section>
+          </div>
+
+          {/* Right sidebar limits */}
+          <aside className="space-y-6">
+            <div className="rounded-2xl bg-[var(--card)] p-6 border border-[var(--border)]">
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Category limits</p>
+                <button
+                  onClick={() => navigate("categories")}
+                  className="text-[11px] font-semibold text-[var(--primary)] hover:opacity-80 cursor-pointer"
+                >
+                  Edit limits
+                </button>
+              </div>
+              <div className="space-y-4">
+                {categoryRows.map((cat) => {
+                  const IconComponent = categoryIconMap[cat.icon] || ShoppingBag;
+                  return (
+                    <div key={cat.id} className="rounded-xl bg-[var(--muted)]/40 p-3.5 border border-[var(--border)]/10">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="grid h-10 w-10 place-items-center rounded-xl"
+                          style={{ background: cat.color ? `color-mix(in oklab, ${cat.color} 18%, transparent)` : "oklch(0.96 0.04 265)", color: cat.color || "var(--primary)" }}
+                        >
+                          <IconComponent className="h-4.5 w-4.5" strokeWidth={2.25} />
+                        </div>
+                        <div className="flex-1 leading-tight min-w-0">
+                          <p className="text-[12px] font-bold text-foreground truncate">{cat.label}</p>
+                          <p className="text-[10px] text-muted-foreground font-semibold">{cat.pct}% of limit</p>
+                        </div>
+                        <div className="text-right">
+                          <Money usd={cat.usedUsd} size="sm" />
+                          <p className="text-[9px] text-muted-foreground">of <Money usd={cat.limitUsd} size="sm" /></p>
+                        </div>
+                      </div>
+                      <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-[var(--muted)]">
+                        <div
+                          className="h-full rounded-full"
+                          style={{ width: `${cat.pct}%`, background: cat.pct > 90 ? "var(--danger)" : "var(--primary)" }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+                {categoryRows.length === 0 && (
+                  <p className="text-[12px] text-muted-foreground text-center py-4">No limits set.</p>
+                )}
+              </div>
+            </div>
+
+            {/* Quick Goals Summary */}
+            <div className="rounded-2xl bg-[var(--card)] p-6 border border-[var(--border)]">
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground font-semibold">Goals</p>
+                <button
+                  onClick={() => navigate("new_goal")}
+                  className="text-[11px] font-semibold text-[var(--primary)] hover:opacity-80 cursor-pointer"
+                >
+                  All goals
+                </button>
+              </div>
+              <div className="space-y-3">
+                {goals.slice(0, 3).map((goal) => {
+                  const pct = Math.min(100, Math.round((goal.savedUsd / Math.max(goal.targetUsd, 1)) * 100));
+                  return (
+                    <div
+                      key={goal.id}
+                      onClick={() => {
+                        setSelectedGoalId(goal.id);
+                        navigate("goal_detail");
+                      }}
+                      className="flex items-center gap-3 rounded-xl bg-[var(--muted)]/40 p-3 cursor-pointer hover:bg-[var(--muted)]/60 transition border border-[var(--border)]/10"
+                    >
+                      <span className="grid h-8 w-8 place-items-center rounded-lg bg-white text-[var(--primary)] border border-[var(--border)]/20">
+                        <GoalIcon name={normalizeGoalIconName(goal.icon)} className="h-4.5 w-4.5" />
+                      </span>
+                      <div className="flex-1 leading-tight min-w-0">
+                        <p className="text-[12px] font-bold text-foreground truncate">{goal.name}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <div className="h-1 w-12 bg-slate-200 rounded-full overflow-hidden">
+                            <div className="h-full bg-[var(--primary)]" style={{ width: `${pct}%` }} />
+                          </div>
+                          <span className="text-[9px] text-muted-foreground font-semibold">{pct}%</span>
+                        </div>
+                      </div>
+                      <Money usd={goal.savedUsd} size="sm" />
+                    </div>
+                  );
+                })}
+                {goals.length === 0 && (
+                  <p className="text-[12px] text-muted-foreground text-center py-4">No goals defined.</p>
+                )}
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <PhoneFrame>

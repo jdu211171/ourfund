@@ -8,6 +8,7 @@ import {
   useRef,
   ReactNode,
 } from "react";
+import { useNavigate, useLocation } from "@tanstack/react-router";
 import {
   clearPersistedAppSeed,
   defaultHistoryFilters,
@@ -587,6 +588,10 @@ function isCurrentMonthTransaction(transaction: Transaction, now: Date) {
 }
 
 export function AppNavigationProvider({ children }: { children: ReactNode }) {
+  const routerNavigate = useNavigate();
+  const location = useLocation();
+  const isWebMode = location.pathname.startsWith("/app");
+
   const initialSeed = useMemo(() => getInitialSeed(), []);
   const [currentScreen, setCurrentScreen] = useState<ScreenName>("onboarding");
   const [history, setHistory] = useState<ScreenName[]>([]);
@@ -688,8 +693,12 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     setPendingInvite(null);
     setSignupHouseholdMode("new");
     setHistory([]);
-    setCurrentScreen("onboarding");
-  }, [applySeed]);
+    if (isWebMode) {
+      routerNavigate({ to: "/app/$screen", params: { screen: "onboarding" } }).catch(console.error);
+    } else {
+      setCurrentScreen("onboarding");
+    }
+  }, [applySeed, isWebMode, routerNavigate]);
 
   useEffect(() => {
     if (!didMountRef.current) {
@@ -758,9 +767,13 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     const token = params.get("reset");
     if (token) {
       setResetToken(token);
-      setCurrentScreen("reset_password");
+      if (isWebMode) {
+        routerNavigate({ to: "/app/$screen", params: { screen: "reset_password" } }).catch(console.error);
+      } else {
+        setCurrentScreen("reset_password");
+      }
     }
-  }, []);
+  }, [isWebMode, routerNavigate]);
 
   const setBudgetMode = useCallback((mode: BudgetMode) => {
     setBudgetModeState(mode);
@@ -800,21 +813,29 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   };
 
   const navigate = (screen: ScreenName) => {
-    setHistory((prev) => (screen === currentScreen ? prev : [...prev, currentScreen]));
-    setCurrentScreen(screen);
+    if (isWebMode) {
+      routerNavigate({ to: "/app/$screen", params: { screen } }).catch(console.error);
+    } else {
+      setHistory((prev) => (screen === currentScreen ? prev : [...prev, currentScreen]));
+      setCurrentScreen(screen);
+    }
   };
 
   const goBack = () => {
-    setHistory((prev) => {
-      if (prev.length === 0) {
-        setCurrentScreen("home");
-        return prev;
-      }
-      const nextHistory = [...prev];
-      const previous = nextHistory.pop();
-      setCurrentScreen(previous ?? "home");
-      return nextHistory;
-    });
+    if (isWebMode) {
+      window.history.back();
+    } else {
+      setHistory((prev) => {
+        if (prev.length === 0) {
+          setCurrentScreen("home");
+          return prev;
+        }
+        const nextHistory = [...prev];
+        const previous = nextHistory.pop();
+        setCurrentScreen(previous ?? "home");
+        return nextHistory;
+      });
+    }
   };
 
   const currentMemberId = useMemo(() => {
@@ -1941,9 +1962,16 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
       }
 
       setIsAuthenticated(true);
-      setCurrentScreen((screen) =>
-        screen === "onboarding" || screen === "login" || screen === "signup" ? "home" : screen,
-      );
+      if (isWebMode) {
+        const currentSlug = window.location.pathname.split("/").pop() ?? "home";
+        if (currentSlug === "login" || currentSlug === "signup" || currentSlug === "onboarding") {
+          routerNavigate({ to: "/app/$screen", params: { screen: "home" } }).catch(console.error);
+        }
+      } else {
+        setCurrentScreen((screen) =>
+          screen === "onboarding" || screen === "login" || screen === "signup" ? "home" : screen,
+        );
+      }
 
       setProfile({
         name: data.user.name,
