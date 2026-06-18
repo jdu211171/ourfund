@@ -3,7 +3,6 @@ import {
   ArrowDownLeft,
   ArrowUpRight,
   BarChart3,
-  Bell,
   Search,
   ShoppingBag,
   SlidersHorizontal,

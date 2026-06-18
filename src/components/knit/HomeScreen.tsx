@@ -16,7 +16,6 @@ import {
   MoreHorizontal,
   Wallet as WalletIcon,
   PiggyBank,
-  Briefcase,
   Receipt,
 } from "lucide-react";
 import { useEffect, useMemo } from "react";
@@ -509,7 +508,7 @@ export function HomeScreen() {
 
   return (
     <PhoneFrame className="z-10">
-      <div className="flex-1 overflow-y-auto flex flex-col px-7 pt-10 pb-28 min-h-0 overscroll-y-contain">
+      <div className="flex-1 overflow-y-auto flex flex-col px-7 pt-10 pb-28 min-h-0">
         <header className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[11px] text-muted-foreground">Good evening, {firstName}</p>

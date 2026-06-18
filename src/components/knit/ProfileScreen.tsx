@@ -226,7 +226,7 @@ export function ProfileScreen() {
 
   return (
     <PhoneFrame>
-      <div className="flex-1 overflow-y-auto flex flex-col px-7 pt-10 pb-28 min-h-0 overscroll-y-contain">
+      <div className="flex-1 overflow-y-auto flex flex-col px-7 pt-10 pb-28 min-h-0">
         <header className="flex items-center justify-between">
           <h2 className="text-[18px] font-extrabold tracking-tight text-[oklch(0.2_0.08_265)]">
             Family

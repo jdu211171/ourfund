@@ -10,10 +10,8 @@ import {
   Users,
   WalletCards,
   Plus,
-  Clock,
 } from "lucide-react";
 import { PhoneFrame, useFrameMode } from "./PhoneFrame";
-import { ComingSoonBadge } from "./ComingSoonBadge";
 import { BottomNav } from "./BottomNav";
 import { BudgetModeToggle } from "./BudgetModeToggle";
 import { Money } from "./Money";
@@ -48,7 +46,6 @@ export function WalletScreen() {
     }
     return a.type !== "private" ? -1 : 1;
   });
-  const primaryWallet = sortedWallets[0] ?? null;
   const visibleOwner =
     budgetMode === "personal" && viewedMember ? viewedMember.name.split(" ")[0] : "Household";
   const categoryRows = categories
