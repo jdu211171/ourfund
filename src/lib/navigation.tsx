@@ -83,6 +83,7 @@ export type ScreenName =
   | "receipt"
   | "history_search"
   | "lend_borrow"
+  | "calc_salary"
   | "product_tracker"
   | "scan_receipt";
 

@@ -1,6 +1,5 @@
 import {
   AlertCircle,
-  AlertTriangle,
   ArrowRightLeft,
   BarChart3,
   Bell,
@@ -59,6 +58,7 @@ const quickActions = [
   { label: "Scan", Icon: ScanLine, screen: "scan_receipt" as const },
   { label: "Products", Icon: ShoppingBag, screen: "product_tracker" as const },
   { label: "Lending", Icon: HandCoins, screen: "lend_borrow" as const },
+  { label: "Salary Calculator", Icon: Landmark, screen: "calc_salary" as const },
 ] as const;
 
 function parseTodo(text: string) {
@@ -165,6 +165,8 @@ function screenForLabel(label: string): ScreenName | null {
   if (text.includes("passcode") || text.includes("pin")) return "passcode";
   if (text.includes("currency")) return "currency";
   if (text.includes("lend") || text.includes("borrow")) return "lend_borrow";
+  if (text.includes("tax") || text.includes("salary") || text.includes("income calculator"))
+    return "calc_salary";
   if (text.includes("product")) return "product_tracker";
   if (text.includes("login")) return "login";
   if (text.includes("sign up")) return "signup";

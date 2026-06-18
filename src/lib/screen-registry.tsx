@@ -46,6 +46,7 @@ import { RemoveMemberScreen } from "@/components/knit/RemoveMemberScreen";
 import { PlaidConnectingScreen } from "@/components/knit/PlaidConnectingScreen";
 import { PlaidSuccessScreen } from "@/components/knit/PlaidSuccessScreen";
 import { LendBorrowScreen } from "@/components/knit/LendBorrowScreen";
+import { SalaryCalculatorScreen } from "@/components/knit/SalaryCalculatorScreen";
 import { ProductTrackerScreen } from "@/components/knit/ProductTrackerScreen";
 import { ScanReceiptScreen } from "@/components/knit/ScanReceiptScreen";
 import { ResetPasswordScreen } from "@/components/knit/ResetPasswordScreen";
@@ -79,6 +80,7 @@ export const SCREENS: ScreenEntry[] = [
   { slug: "monthly_history", label: "Monthly History", group: "Daily", render: () => <MonthlyHistoryScreen /> },
   { slug: "filter_sort", label: "Filter & Sort", group: "Daily", render: () => <FilterSortScreen /> },
   { slug: "lend_borrow", label: "Lend & Borrow", group: "Daily", render: () => <LendBorrowScreen /> },
+  { slug: "calc_salary", label: "Salary Calculator", group: "Daily", render: () => <SalaryCalculatorScreen /> },
   { slug: "product_tracker", label: "Product Tracker", group: "Daily", render: () => <ProductTrackerScreen /> },
   { slug: "scan_receipt", label: "Scan Receipt", group: "Daily", render: () => <ScanReceiptScreen /> },
   

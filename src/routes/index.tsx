@@ -47,6 +47,7 @@ import { RemoveMemberScreen } from "@/components/knit/RemoveMemberScreen";
 import { PlaidConnectingScreen } from "@/components/knit/PlaidConnectingScreen";
 import { PlaidSuccessScreen } from "@/components/knit/PlaidSuccessScreen";
 import { LendBorrowScreen } from "@/components/knit/LendBorrowScreen";
+import { SalaryCalculatorScreen } from "@/components/knit/SalaryCalculatorScreen";
 import { ProductTrackerScreen } from "@/components/knit/ProductTrackerScreen";
 import { ScanReceiptScreen } from "@/components/knit/ScanReceiptScreen";
 import { ResetPasswordScreen } from "@/components/knit/ResetPasswordScreen";
@@ -190,6 +191,8 @@ function AppRouter() {
       return <MonthlyHistoryScreen />;
     case "lend_borrow":
       return <LendBorrowScreen />;
+    case "calc_salary":
+      return <SalaryCalculatorScreen />;
     case "product_tracker":
       return <ProductTrackerScreen />;
     case "scan_receipt":
@@ -245,6 +248,7 @@ function Index() {
         { label: "Scan Receipt", node: <ScanReceiptScreen /> },
         { label: "Product Tracker", node: <ProductTrackerScreen /> },
         { label: "Lend & Borrow", node: <LendBorrowScreen /> },
+        { label: "Salary Calculator", node: <SalaryCalculatorScreen /> },
         { label: "History & Search", node: <TransactionHistoryScreen /> },
         { label: "Monthly History", node: <MonthlyHistoryScreen /> },
         { label: "Filter & Sort", node: <FilterSortScreen /> },
