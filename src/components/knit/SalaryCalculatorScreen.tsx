@@ -7,6 +7,7 @@ import {
   calculate,
   defaultInsurance,
   getEngine,
+  type DeductionCategory,
   type InsuranceKey,
   type Period,
 } from "@/lib/salary/tax-engines";
@@ -45,15 +46,23 @@ export function SalaryCalculatorScreen() {
   const gross = period === "monthly" ? amount : amount;
   const net = period === "monthly" ? result.netMonthly : result.netAnnual;
   const totalDed = period === "monthly" ? result.totalDeductions / 12 : result.totalDeductions;
-  const social =
-    period === "monthly"
-      ? result.deductions.socialInsurance / 12
-      : result.deductions.socialInsurance;
-  const tax = period === "monthly" ? result.deductions.incomeTax / 12 : result.deductions.incomeTax;
-  const resident =
-    period === "monthly" ? result.deductions.residentTax / 12 : result.deductions.residentTax;
+  const factor = period === "monthly" ? 12 : 1;
+  const social = result.deductions.socialInsurance / factor;
+  const tax = result.deductions.incomeTax / factor;
+  const resident = result.deductions.residentTax / factor;
+  const other = (result.deductions.other ?? 0) / factor;
+  const itemizedDeductions = result.deductions.items.map((item) => ({
+    ...item,
+    amount: item.amount / factor,
+  }));
 
   const pct = (v: number) => (gross > 0 ? (v / gross) * 100 : 0);
+  const toneFor = (category: DeductionCategory) => {
+    if (category === "social") return "warn";
+    if (category === "tax") return "danger";
+    if (category === "local") return "success";
+    return "muted";
+  };
 
   return (
     <PhoneFrame>
@@ -161,16 +170,19 @@ export function SalaryCalculatorScreen() {
             {resident > 0 && (
               <div className="bg-[oklch(0.75_0.18_145)]" style={{ width: `${pct(resident)}%` }} />
             )}
+            {other > 0 && (
+              <div className="bg-[oklch(0.7_0.08_285)]" style={{ width: `${pct(other)}%` }} />
+            )}
           </div>
         </div>
 
-        {/* Insurance selectors */}
+        {/* Deduction selectors */}
         <p className="mt-5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-          Insurance
+          Included deductions
         </p>
         <div className="mt-2 space-y-2">
           {engine.insuranceOptions.map((opt) => {
-            const on = insurance[opt.key];
+            const on = insurance[opt.key] ?? false;
             return (
               <button
                 key={opt.key}
@@ -199,21 +211,21 @@ export function SalaryCalculatorScreen() {
         </p>
         <div className="mt-2 space-y-1.5 rounded-2xl bg-white p-3 shadow-[var(--shadow-soft)]">
           <Row label="Gross" value={fmt(gross)} bold />
-          <Row label="Social insurance" value={`− ${fmt(social)}`} tone="warn" />
-          <Row label="Income tax" value={`− ${fmt(tax)}`} tone="danger" />
-          {resident > 0 && (
+          {itemizedDeductions.map((item) => (
             <Row
-              label={country === "JP" ? "Resident tax (Jūmin-zei)" : "Local tax"}
-              value={`− ${fmt(resident)}`}
-              tone="success"
+              key={item.key}
+              label={item.label}
+              value={`− ${fmt(item.amount)}`}
+              tone={toneFor(item.category)}
             />
-          )}
+          ))}
           <div className="my-1 h-px bg-[var(--muted)]" />
           <Row label="Net" value={fmt(net)} bold tone="primary" />
         </div>
 
         <p className="mt-3 text-[10px] leading-relaxed text-muted-foreground">
-          Estimate only. Actual deductions vary by age, dependents, prefecture and employer plan.
+          Estimate only. Actual deductions vary by age, dependents, region, filing status and
+          employer plan.
         </p>
       </div>
     </PhoneFrame>
@@ -229,7 +241,7 @@ function Row({
   label: string;
   value: string;
   bold?: boolean;
-  tone?: "warn" | "danger" | "success" | "primary";
+  tone?: "warn" | "danger" | "success" | "primary" | "muted";
 }) {
   const color =
     tone === "warn"
@@ -240,7 +252,9 @@ function Row({
           ? "text-[var(--success)]"
           : tone === "primary"
             ? "text-[var(--primary)]"
-            : "text-foreground";
+            : tone === "muted"
+              ? "text-muted-foreground"
+              : "text-foreground";
   return (
     <div className="flex items-center justify-between px-1 py-1">
       <span
