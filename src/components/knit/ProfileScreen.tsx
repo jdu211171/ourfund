@@ -226,7 +226,7 @@ export function ProfileScreen() {
 
   return (
     <PhoneFrame>
-      <div className="flex-1 overflow-y-auto flex flex-col px-7 pt-10 pb-28 min-h-0">
+      <div className="flex-1 overflow-y-auto px-7 pt-10 pb-28 min-h-0">
         <header className="flex items-center justify-between">
           <h2 className="text-[18px] font-extrabold tracking-tight text-[oklch(0.2_0.08_265)]">
             Family
@@ -367,7 +367,7 @@ export function ProfileScreen() {
         <button
           onClick={() => navigate("remove_member")}
           disabled={selectedMemberIds.length === 0}
-          className="mt-4 flex items-center justify-center gap-2 rounded-full bg-[var(--muted)] py-3 text-[13px] font-semibold text-[var(--danger)] disabled:opacity-50"
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-[var(--muted)] py-3 text-[13px] font-semibold text-[var(--danger)] disabled:opacity-50"
         >
           <LogOut className="h-4 w-4" strokeWidth={2.25} />
           {selectedMemberIds.length > 0
