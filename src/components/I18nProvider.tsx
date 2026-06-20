@@ -18,49 +18,63 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     }
 
     const translateText = (text: string): string => {
+      let result = text;
+      
       const trimmed = text.trim();
       if (!trimmed) return text;
 
-      // 1. Exact match
-      if (translations[trimmed] !== undefined) {
-        return text.replace(trimmed, translations[trimmed]);
-      }
-
-      // 2. Exact match after stripping trailing symbols
+      // 1. Case-insensitive exact match of full trimmed text
       const cleanText = trimmed.replace(/[:.·,，。、\s]+$/, "").trim();
       const suffix = trimmed.slice(cleanText.length);
-      if (translations[cleanText] !== undefined) {
-        return text.replace(trimmed, translations[cleanText] + suffix);
+      const lowerClean = cleanText.toLowerCase();
+
+      if (lowercaseMap.has(lowerClean)) {
+        return text.replace(trimmed, lowercaseMap.get(lowerClean)! + suffix);
       }
 
-      // 3. Case-insensitive exact match
+      // 2. Case-insensitive exact match of trimmed text
       const lowerTrimmed = trimmed.toLowerCase();
       if (lowercaseMap.has(lowerTrimmed)) {
         return text.replace(trimmed, lowercaseMap.get(lowerTrimmed)!);
       }
 
-      // 4. Case-insensitive match after stripping trailing symbols
-      const cleanLower = cleanText.toLowerCase();
-      if (lowercaseMap.has(cleanLower)) {
-        return text.replace(trimmed, lowercaseMap.get(cleanLower)! + suffix);
-      }
-
-      // 5. Dynamic possessive matches (e.g. "John's household", "Morgans' wallets")
-      if (trimmed.includes("'s ") || trimmed.includes("'s") || trimmed.includes("' ")) {
-        const possessiveRegex = /([a-zA-Z0-9_-]+)(?:'s|'|’s|’)\s*([a-zA-Z0-9\s_&-]+)/gi;
-        let matched = false;
-        const replaced = trimmed.replace(possessiveRegex, (match, name, item) => {
-          const lowerItem = item.trim().toLowerCase();
-          const translatedItem = lowercaseMap.get(lowerItem) || item;
-          matched = true;
-          return `${name}の${translatedItem}`;
-        });
-        if (matched) {
-          return text.replace(trimmed, replaced);
+      // 3. Substring replacement for individual keys (longer keys replaced first)
+      const sortedKeys = Array.from(lowercaseMap.keys()).sort((a, b) => b.length - a.length);
+      for (const key of sortedKeys) {
+        if (key.length <= 2) continue; // skip very short words to avoid matching parts of syllables
+        
+        // Escape regex special chars
+        const escapedKey = key.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+        
+        // Match word boundaries for alphanumeric keys
+        if (/^[a-zA-Z0-9\s]+$/.test(key)) {
+          const regex = new RegExp(`\\b${escapedKey}\\b`, 'gi');
+          if (regex.test(result)) {
+            result = result.replace(regex, () => lowercaseMap.get(key)!);
+          }
+        } else {
+          // Direct replace for keys with special characters (e.g. middot, colons, possessives)
+          if (result.toLowerCase().includes(key)) {
+            const index = result.toLowerCase().indexOf(key);
+            if (index !== -1) {
+              const originalPart = result.substring(index, index + key.length);
+              result = result.replace(originalPart, lowercaseMap.get(key)!);
+            }
+          }
         }
       }
 
-      return text;
+      // 4. Dynamic possessive matches (e.g. "John's wallets", "Morgans' household")
+      if (result.includes("'s ") || result.includes("'s") || result.includes("' ") || result.includes("’s")) {
+        const possessiveRegex = /([a-zA-Z0-9_-]+)(?:'s|'|’s|’)\s*([a-zA-Z0-9\s_&-]+)/gi;
+        result = result.replace(possessiveRegex, (match, name, item) => {
+          const lowerItem = item.trim().toLowerCase();
+          const translatedItem = lowercaseMap.get(lowerItem) || item;
+          return `${name}の${translatedItem}`;
+        });
+      }
+
+      return result;
     };
 
     const translateDOM = () => {
