@@ -11,6 +11,12 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const nodesToRestore = useRef<Set<Node>>(new Set());
 
   useEffect(() => {
+    // Generate a lowercase lookup map of translations for case-insensitive lookup
+    const lowercaseMap = new Map<string, string>();
+    for (const key in translations) {
+      lowercaseMap.set(key.toLowerCase(), translations[key]);
+    }
+
     const translateText = (text: string): string => {
       const trimmed = text.trim();
       if (!trimmed) return text;
@@ -20,11 +26,38 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
         return text.replace(trimmed, translations[trimmed]);
       }
 
-      // 2. Exact match after stripping trailing colons/dots/spaces
-      const cleanText = trimmed.replace(/[:.·]+$/, "").trim();
+      // 2. Exact match after stripping trailing symbols
+      const cleanText = trimmed.replace(/[:.·,，。、\s]+$/, "").trim();
       const suffix = trimmed.slice(cleanText.length);
       if (translations[cleanText] !== undefined) {
         return text.replace(trimmed, translations[cleanText] + suffix);
+      }
+
+      // 3. Case-insensitive exact match
+      const lowerTrimmed = trimmed.toLowerCase();
+      if (lowercaseMap.has(lowerTrimmed)) {
+        return text.replace(trimmed, lowercaseMap.get(lowerTrimmed)!);
+      }
+
+      // 4. Case-insensitive match after stripping trailing symbols
+      const cleanLower = cleanText.toLowerCase();
+      if (lowercaseMap.has(cleanLower)) {
+        return text.replace(trimmed, lowercaseMap.get(cleanLower)! + suffix);
+      }
+
+      // 5. Dynamic possessive matches (e.g. "John's household", "Morgans' wallets")
+      if (trimmed.includes("'s ") || trimmed.includes("'s") || trimmed.includes("' ")) {
+        const possessiveRegex = /([a-zA-Z0-9_-]+)(?:'s|'|’s|’)\s*([a-zA-Z0-9\s_&-]+)/gi;
+        let matched = false;
+        const replaced = trimmed.replace(possessiveRegex, (match, name, item) => {
+          const lowerItem = item.trim().toLowerCase();
+          const translatedItem = lowercaseMap.get(lowerItem) || item;
+          matched = true;
+          return `${name}の${translatedItem}`;
+        });
+        if (matched) {
+          return text.replace(trimmed, replaced);
+        }
       }
 
       return text;
