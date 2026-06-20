@@ -20,6 +20,7 @@ import { SCREENS } from "@/lib/screen-registry";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { FrameProvider } from "@/components/knit/PhoneFrame";
 import { AppNavigationProvider, useAppNavigation } from "@/lib/navigation";
+import { I18nProvider } from "@/components/I18nProvider";
 
 export const Route = createFileRoute("/app")({
   component: AppLayout,
@@ -56,7 +57,9 @@ const NAV_SECTIONS: { title: string; items: { slug: string; label: string; Icon:
 function AppLayout() {
   return (
     <AppNavigationProvider>
-      <AppLayoutContent />
+      <I18nProvider>
+        <AppLayoutContent />
+      </I18nProvider>
     </AppNavigationProvider>
   );
 }

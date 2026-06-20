@@ -27,6 +27,8 @@ export function SettingsScreen() {
     logout,
     theme,
     setTheme,
+    language,
+    setLanguage,
   } = useAppNavigation();
   const themes = ["light", "dark", "system"] as const;
   const themeIdx = themes.indexOf(theme);
@@ -93,6 +95,30 @@ export function SettingsScreen() {
                 }`}
               >
                 {m}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <p className="mt-5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+          Language
+        </p>
+        <div className="mt-2 rounded-2xl bg-white p-1 shadow-[var(--shadow-soft)]">
+          <div className="flex">
+            {[
+              { code: "en", label: "English" },
+              { code: "ja", label: "日本語" },
+            ].map((lang) => (
+              <button
+                key={lang.code}
+                onClick={() => setLanguage(lang.code as "en" | "ja")}
+                className={`flex-1 rounded-xl py-2 text-[12px] font-semibold active:scale-95 transition-all cursor-pointer ${
+                  language === lang.code
+                    ? "bg-[var(--primary)] text-white shadow-sm"
+                    : "text-muted-foreground hover:bg-slate-50"
+                }`}
+              >
+                {lang.label}
               </button>
             ))}
           </div>

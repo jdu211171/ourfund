@@ -58,6 +58,7 @@ import { WalletDetailScreen } from "@/components/knit/WalletDetailScreen";
 
 import { useState } from "react";
 import { AppNavigationProvider, useAppNavigation } from "@/lib/navigation";
+import { I18nProvider } from "@/components/I18nProvider";
 
 export const Route = createFileRoute("/")({
   component: IndexWrapper,
@@ -76,7 +77,9 @@ export const Route = createFileRoute("/")({
 function IndexWrapper() {
   return (
     <AppNavigationProvider>
-      <Index />
+      <I18nProvider>
+        <Index />
+      </I18nProvider>
     </AppNavigationProvider>
   );
 }

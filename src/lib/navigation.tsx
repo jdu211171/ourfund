@@ -190,6 +190,7 @@ export interface ScheduleItem {
 
 export interface LoanEntry {
   id: string;
+  ownerMemberId: string;
   counterpartyMemberId?: string | null;
   counterpartyName: string;
   note: string;
@@ -381,6 +382,8 @@ interface NavigationContextType {
   setSelectedDetailWalletId: (id: string | null) => void;
   theme: "light" | "dark" | "system";
   setTheme: (theme: "light" | "dark" | "system") => void;
+  language: "en" | "ja";
+  setLanguage: (lang: "en" | "ja") => void;
   walletBalanceUsd: (walletLabel: string) => number;
   categories: BudgetCategory[];
   addCategory: (category: Omit<BudgetCategory, "id">) => BudgetCategory;
@@ -622,6 +625,12 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
       return (localStorage.getItem("theme") as "light" | "dark" | "system") || "system";
     }
     return "system";
+  });
+  const [language, setLanguageState] = useState<"en" | "ja">(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem("language") as "en" | "ja") || "en";
+    }
+    return "en";
   });
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(
     initialSeed.selectedMemberId,
@@ -1312,6 +1321,11 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   const setTheme = (nextTheme: "light" | "dark" | "system") => {
     setThemeState(nextTheme);
     localStorage.setItem("theme", nextTheme);
+  };
+
+  const setLanguage = (nextLang: "en" | "ja") => {
+    setLanguageState(nextLang);
+    localStorage.setItem("language", nextLang);
   };
 
   useEffect(() => {
@@ -2136,6 +2150,8 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         setSelectedDetailWalletId,
         theme,
         setTheme,
+        language,
+        setLanguage,
         walletBalanceUsd,
         categories,
         addCategory,
