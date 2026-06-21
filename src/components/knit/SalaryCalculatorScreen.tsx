@@ -18,6 +18,12 @@ export function SalaryCalculatorScreen() {
   const [period, setPeriod] = useState<Period>("monthly");
   const engine = getEngine(country);
   const [amount, setAmount] = useState<number>(Math.round(engine.defaultGrossAnnual / 12));
+  // Raw text the user is typing, kept SEPARATE from the numeric `amount`.
+  // This is the actual fix: the <input> below is bound to this string, so it
+  // can be genuinely empty while editing instead of snapping back to "0".
+  const [amountInput, setAmountInput] = useState<string>(
+    String(Math.round(engine.defaultGrossAnnual / 12)),
+  );
   const [insurance, setInsurance] = useState(defaultInsurance(engine));
   const [pickerOpen, setPickerOpen] = useState(false);
 
@@ -37,11 +43,23 @@ export function SalaryCalculatorScreen() {
     const e = getEngine(code);
     setCountry(code);
     setInsurance(defaultInsurance(e));
-    setAmount(period === "monthly" ? Math.round(e.defaultGrossAnnual / 12) : e.defaultGrossAnnual);
+    const next = period === "monthly" ? Math.round(e.defaultGrossAnnual / 12) : e.defaultGrossAnnual;
+    setAmount(next);
+    setAmountInput(String(next));
     setPickerOpen(false);
   };
 
   const toggleIns = (k: InsuranceKey) => setInsurance((s) => ({ ...s, [k]: !s[k] }));
+
+  const handleAmountChange = (raw: string) => {
+    const cleaned = raw.replace(/[^0-9]/g, "");
+    setAmountInput(cleaned);
+    setAmount(cleaned === "" ? 0 : Math.max(0, Number(cleaned)));
+  };
+
+  const handleAmountBlur = () => {
+    setAmountInput(String(amount));
+  };
 
   const gross = period === "monthly" ? amount : amount;
   const net = period === "monthly" ? result.netMonthly : result.netAnnual;
@@ -138,11 +156,12 @@ export function SalaryCalculatorScreen() {
               {engine.currencySymbol}
             </span>
             <input
-              type="number"
+              type="text"
               inputMode="numeric"
-              min={0}
-              value={Number.isFinite(amount) ? amount : 0}
-              onChange={(e) => setAmount(Math.max(0, Number(e.target.value) || 0))}
+              pattern="[0-9]*"
+              value={amountInput}
+              onChange={(e) => handleAmountChange(e.target.value)}
+              onBlur={handleAmountBlur}
               className="w-full bg-transparent text-[28px] font-bold text-foreground outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
             />
           </div>
