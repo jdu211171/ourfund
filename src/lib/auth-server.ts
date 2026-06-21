@@ -59,12 +59,12 @@ export async function verifyGoogleToken(idToken: string) {
     audience: GOOGLE_CLIENT_ID,
   });
   const payload = ticket.getPayload();
-  if (!payload) {
+  if (!payload || !payload.email || payload.email_verified === false) {
     throw new Error("Invalid Google token payload");
   }
   return {
     googleId: payload.sub,
-    email: payload.email!,
+    email: payload.email.toLowerCase(),
     name: payload.name || "Google User",
     picture: payload.picture,
   };

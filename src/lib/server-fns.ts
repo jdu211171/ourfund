@@ -264,7 +264,8 @@ async function createNotificationsForUsers(
 export const loginWithEmailServerFn = createServerFn({ method: "POST" })
   .inputValidator((d: { email: string; passwordHash: string }) => d)
   .handler(async ({ data }) => {
-    const { email, passwordHash: password } = data;
+    const email = data.email.trim().toLowerCase();
+    const { passwordHash: password } = data;
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user || !user.passwordHash) {
       throw new Error("Invalid email or password");
@@ -280,7 +281,9 @@ export const loginWithEmailServerFn = createServerFn({ method: "POST" })
 export const signUpWithEmailServerFn = createServerFn({ method: "POST" })
   .inputValidator((d: { email: string; name: string; passwordHash: string }) => d)
   .handler(async ({ data }) => {
-    const { email, name, passwordHash: password } = data;
+    const email = data.email.trim().toLowerCase();
+    const name = data.name.trim();
+    const { passwordHash: password } = data;
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
       throw new Error("Email already registered");
@@ -324,29 +327,12 @@ export const loginWithGoogleServerFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { credential } = data;
     const googleProfile = await verifyGoogleToken(credential);
-    let isNewUser = false;
     let user = await prisma.user.findUnique({
       where: { email: googleProfile.email },
     });
 
     if (!user) {
-      isNewUser = true;
-      const initials =
-        googleProfile.name
-          .split(" ")
-          .filter(Boolean)
-          .map((n) => n[0])
-          .join("")
-          .slice(0, 2)
-          .toUpperCase() || "G";
-      user = await prisma.user.create({
-        data: {
-          email: googleProfile.email,
-          name: googleProfile.name,
-          googleId: googleProfile.googleId,
-          initials,
-        },
-      });
+      throw new Error("No account found for this Google email. Create an account first.");
     } else if (!user.googleId) {
       // Link Google ID if they signed up with password previously
       user = await prisma.user.update({
@@ -356,20 +342,6 @@ export const loginWithGoogleServerFn = createServerFn({ method: "POST" })
     }
 
     createSessionCookie(user.id);
-    if (isNewUser) {
-      await prisma.appNotification.create({
-        data: {
-          userId: user.id,
-          title: "Welcome to Nest",
-          desc: "Your Google account is linked. Start your first household whenever you’re ready.",
-          time: "now",
-          group: "Today",
-          tone: "primary",
-          screen: "home",
-        },
-      });
-      await sendWelcomeEmail({ to: user.email, name: user.name });
-    }
     return { success: true };
   });
 
@@ -1056,31 +1028,56 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
         if (alreadyMember) break; // idempotent — already a member
 
         const personalCurrency = payload.personalCurrency || user.personalCurrency || "USD";
+        const memberName = payload.name || user.name;
+        const pendingMember = await prisma.familyMember.findFirst({
+          where: {
+            householdId: found.id,
+            userId: null,
+            email: { equals: user.email, mode: "insensitive" },
+          },
+        });
+        const role = pendingMember?.role || payload.role || "Adult";
+        const initials = payload.initials || user.initials;
+        const permissions = {
+          "Approve children's requests": role !== "Kid",
+          "Edit budget limits": role !== "Kid",
+          "Add or remove members": role === "Admin",
+          "View private wallets": role === "Admin" || role === "Adult",
+        };
+
         await prisma.user.update({
           where: { id: user.id },
           data: { personalCurrency, budgetMode: "family" },
         });
 
-        const familyMember = await prisma.familyMember.create({
-          data: {
-            userId: user.id,
-            householdId: found.id,
-            name: payload.name || user.name,
-            role: payload.role || "Adult",
-            initials: payload.initials || user.initials,
-            permissions: {
-              "Approve children's requests": payload.role !== "Kid",
-              "Edit budget limits": payload.role !== "Kid",
-              "Add or remove members": payload.role === "Admin",
-              "View private wallets": payload.role === "Admin" || payload.role === "Adult",
-            },
-          },
-        });
+        const familyMember = pendingMember
+          ? await prisma.familyMember.update({
+              where: { id: pendingMember.id },
+              data: {
+                userId: user.id,
+                name: memberName,
+                email: user.email,
+                role,
+                initials,
+                permissions,
+              },
+            })
+          : await prisma.familyMember.create({
+              data: {
+                userId: user.id,
+                householdId: found.id,
+                name: memberName,
+                email: user.email,
+                role,
+                initials,
+                permissions,
+              },
+            });
         // Give the new member a personal wallet
         await prisma.walletAccount.create({
           data: {
             householdId: found.id,
-            label: `${payload.name || user.name} · Personal`,
+            label: `${memberName} · Personal`,
             sub: "Private wallet",
             type: "private",
             currency: personalCurrency,
@@ -1094,7 +1091,7 @@ export const syncMutationServerFn = createServerFn({ method: "POST" })
           householdUsers.map((member) => member.id),
           {
             title: "New member joined",
-            desc: `${payload.name || user.name} joined ${found.name}.`,
+            desc: `${memberName} joined ${found.name}.`,
             time: "now",
             group: "Today",
             tone: "primary",

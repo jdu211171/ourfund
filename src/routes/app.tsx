@@ -104,7 +104,15 @@ function AppLayoutContent() {
   const groups = Array.from(new Set(SCREENS.map((s) => s.group)));
 
   // Auth screens render their own full-bleed layout without the app shell.
-  const isAuthScreen = currentSlug === "login" || currentSlug === "signup" || currentSlug === "onboarding";
+  const isAuthScreen = [
+    "login",
+    "signup",
+    "onboarding",
+    "reset_password",
+    "join_family",
+    "join_family_error",
+    "confirm_invite",
+  ].includes(currentSlug);
   if (isAuthScreen) {
     return (
       <div className="min-h-screen w-full bg-[var(--canvas)] text-foreground flex items-center justify-center p-4">

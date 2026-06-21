@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { getRequestHost, getRequestProtocol } from "@tanstack/react-start/server";
 
 type MailPayload = {
   to: string;
@@ -38,9 +39,40 @@ function normalizeBaseUrl(value: string) {
   return value.endsWith("/") ? value.slice(0, -1) : value;
 }
 
+function isLocalBaseUrl(value: string) {
+  try {
+    const host = new URL(value).hostname;
+    return host === "localhost" || host === "127.0.0.1";
+  } catch {
+    return false;
+  }
+}
+
 export function getAppBaseUrl() {
-  const baseUrl = process.env.APP_BASE_URL || "http://localhost:3000/ourfund";
-  return normalizeBaseUrl(baseUrl);
+  const configuredBaseUrl = process.env.APP_BASE_URL?.trim();
+  const isProduction = process.env.NODE_ENV === "production";
+
+  try {
+    const trustProxy = process.env.TRUST_PROXY === "true" || process.env.NODE_ENV === "production";
+    const host = getRequestHost({ xForwardedHost: trustProxy });
+    const protocol = getRequestProtocol({ xForwardedProto: trustProxy });
+    const requestBaseUrl = host ? normalizeBaseUrl(`${protocol}://${host}/ourfund`) : null;
+
+    if (
+      configuredBaseUrl &&
+      (!isProduction || !isLocalBaseUrl(configuredBaseUrl) || !requestBaseUrl)
+    ) {
+      return normalizeBaseUrl(configuredBaseUrl);
+    }
+
+    if (requestBaseUrl) return requestBaseUrl;
+  } catch {
+    // Server-side jobs without request context can still use the local fallback.
+  }
+
+  if (configuredBaseUrl) return normalizeBaseUrl(configuredBaseUrl);
+
+  return "http://localhost:3000/ourfund";
 }
 
 function getTransporter() {

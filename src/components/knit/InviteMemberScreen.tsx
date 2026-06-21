@@ -85,24 +85,25 @@ export function InviteMemberScreen() {
           </p>
         </div>
 
-        <p className="mt-5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-          Assign role
-        </p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {roles.map((r, i) => (
-            <button
-              key={r}
-              onClick={() => setSelectedRoleIdx(i)}
-              className={`rounded-full px-3 py-1.5 text-[11px] font-semibold transition-all cursor-pointer ${
-                i === selectedRoleIdx
-                  ? "bg-[var(--primary)] text-[var(--primary-foreground)] shadow-md scale-105"
-                  : "bg-[var(--card)] text-foreground shadow-[var(--shadow-soft)] hover:bg-[var(--muted)] active:scale-95"
-              }`}
-            >
-              {r}
-            </button>
-          ))}
-        </div>
+        {/* <p className="mt-5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground"> */}
+        {/*   Assign role */}
+        {/* </p> */}
+        {/* <div className="mt-2 flex flex-wrap gap-2"> */}
+        {/*   {roles.map((r, i) => ( */}
+        {/*     <button */}
+        {/*       key={r} */}
+        {/*       onClick={() => setSelectedRoleIdx(i)} */}
+        {/*       className={`rounded-full px-3 py-1.5 text-[11px] font-semibold transition-all cursor-pointer ${ */}
+        {/*         i === selectedRoleIdx */}
+        {/*           ? "bg-[var(--primary)] text-[var(--primary-foreground)] shadow-md scale-105" */}
+        {/*           : "bg-[var(--card)] text-foreground shadow-[var(--shadow-soft)] hover:bg-[var(--muted)] active:scale-95" */}
+        {/*       }`} */}
+        {/*     > */}
+        {/*       {r} */}
+        {/*     </button> */}
+        {/*   ))} */}
+        {/* </div> */}
+        {/**/}
 
         <p className="mt-5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
           Send via

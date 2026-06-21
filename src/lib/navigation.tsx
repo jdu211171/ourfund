@@ -658,6 +658,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   const [faceIdEnabled, setFaceIdEnabledState] = useState(initialSeed.faceIdEnabled);
   const [compactMoneyMode, setCompactMoneyModeState] = useState(initialSeed.compactMoneyMode);
   const didMountRef = useRef(false);
+  const handledQueryRef = useRef<string | null>(null);
 
   const applySeed = useCallback((seed: AppSeed) => {
     setBudgetModeState(seed.budgetMode);
@@ -770,20 +771,6 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     faceIdEnabled,
     compactMoneyMode,
   ]);
-
-  // Parse URL query params for reset token
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get("reset");
-    if (token) {
-      setResetToken(token);
-      if (isWebMode) {
-        routerNavigate({ to: "/app/$screen", params: { screen: "reset_password" } }).catch(console.error);
-      } else {
-        setCurrentScreen("reset_password");
-      }
-    }
-  }, [isWebMode, routerNavigate]);
 
   const setBudgetMode = useCallback((mode: BudgetMode) => {
     setBudgetModeState(mode);
@@ -1040,7 +1027,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     return nextHousehold;
   };
 
-  const validateInviteCode = async (code: string): Promise<HouseholdInvite | null> => {
+  const validateInviteCode = useCallback(async (code: string): Promise<HouseholdInvite | null> => {
     const normalized = code.trim().toUpperCase();
 
     // 1. Check if it matches the current user's own household
@@ -1073,10 +1060,69 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     const invite = currentInvite ?? seededInvite ?? dbInvite;
     setPendingInvite(invite);
     return invite;
-  };
+  }, [currencies.family, household, members.length, profile.name]);
+
+  // Parse email deep links for password resets and household invites.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const reset = params.get("reset");
+    const invite = params.get("invite");
+    const queryKey = reset ? `reset:${reset}` : invite ? `invite:${invite}` : null;
+    if (!queryKey || handledQueryRef.current === queryKey) return;
+
+    handledQueryRef.current = queryKey;
+    if (reset) {
+      setResetToken(reset);
+      if (isWebMode) {
+        routerNavigate({ to: "/app/$screen", params: { screen: "reset_password" } }).catch(console.error);
+      } else {
+        setCurrentScreen("reset_password");
+      }
+      return;
+    }
+
+    if (invite) {
+      validateInviteCode(invite)
+        .then((found) => {
+          const screen: ScreenName = found ? "confirm_invite" : "join_family_error";
+          if (isWebMode) {
+            routerNavigate({ to: "/app/$screen", params: { screen } }).catch(console.error);
+          } else {
+            setCurrentScreen(screen);
+          }
+        })
+        .catch(() => {
+          if (isWebMode) {
+            routerNavigate({ to: "/app/$screen", params: { screen: "join_family_error" } }).catch(console.error);
+          } else {
+            setCurrentScreen("join_family_error");
+          }
+        });
+    }
+  }, [isWebMode, routerNavigate, validateInviteCode]);
 
   const acceptInvite = async () => {
     if (!pendingInvite) return;
+
+    if (isAuthenticated) {
+      const invite = pendingInvite;
+      const cleanName = profile.name.trim() || "You";
+      await syncMutationServerFn({
+        data: {
+          type: "acceptInvite",
+          data: {
+            code: invite.code,
+            name: cleanName,
+            role: invite.role,
+            initials: initialsFor(cleanName),
+            personalCurrency: currencies.personal,
+          },
+        },
+      });
+      await syncDataAfterLogin();
+      setPendingInvite(null);
+      return;
+    }
 
     const cleanName = profile.name.trim() || "You";
     const memberId = makeId("member");

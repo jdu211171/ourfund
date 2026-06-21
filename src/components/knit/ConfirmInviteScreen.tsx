@@ -7,6 +7,7 @@ export function ConfirmInviteScreen() {
   const { navigate, goBack, pendingInvite, acceptInvite, isAuthenticated, setSignupHouseholdMode } =
     useAppNavigation();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const role = pendingInvite?.role ?? "Adult";
   const householdName = pendingInvite?.householdName ?? "No invite selected";
   const memberCount = pendingInvite?.memberCount ?? 0;
@@ -20,9 +21,12 @@ export function ConfirmInviteScreen() {
     }
 
     setLoading(true);
+    setError("");
     try {
       await acceptInvite();
       navigate("home");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not accept this invite.");
     } finally {
       setLoading(false);
     }
@@ -90,6 +94,10 @@ export function ConfirmInviteScreen() {
             the household admin.
           </p>
         </div>
+
+        {error && (
+          <p className="mt-3 text-center text-[11px] font-semibold text-[var(--danger)]">{error}</p>
+        )}
 
         <div className="mt-auto space-y-2">
           <button
