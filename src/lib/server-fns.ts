@@ -285,7 +285,7 @@ export const signUpWithEmailServerFn = createServerFn({ method: "POST" })
     const name = data.name.trim();
     const { passwordHash: password } = data;
     const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing) {
+    if (existing?.passwordHash) {
       throw new Error("Email already registered");
     }
     const hash = await bcrypt.hash(password, 10);
@@ -298,16 +298,25 @@ export const signUpWithEmailServerFn = createServerFn({ method: "POST" })
         .slice(0, 2)
         .toUpperCase() || "YO";
 
-    const user = await prisma.user.create({
-      data: {
-        email,
-        name,
-        passwordHash: hash,
-        initials,
-      },
-    });
+    const user = existing
+      ? await prisma.user.update({
+          where: { id: existing.id },
+          data: {
+            name: name || existing.name,
+            passwordHash: hash,
+            initials: initials || existing.initials,
+          },
+        })
+      : await prisma.user.create({
+          data: {
+            email,
+            name,
+            passwordHash: hash,
+            initials,
+          },
+        });
     createSessionCookie(user.id);
-    await prisma.appNotification.create({
+    if (!existing) await prisma.appNotification.create({
       data: {
         userId: user.id,
         title: "Welcome to Nest",
@@ -318,7 +327,7 @@ export const signUpWithEmailServerFn = createServerFn({ method: "POST" })
         screen: "home",
       },
     });
-    await sendWelcomeEmail({ to: user.email, name: user.name });
+    if (!existing) await sendWelcomeEmail({ to: user.email, name: user.name });
     return { success: true };
   });
 
@@ -349,12 +358,12 @@ export const checkEmailRegisteredServerFn = createServerFn({ method: "POST" })
   .inputValidator((d: { email: string }) => d)
   .handler(async ({ data }) => {
     const email = data.email.trim().toLowerCase();
-    if (!email) return { registered: false };
+    if (!email) return { registered: false, hasPassword: false };
     const user = await prisma.user.findUnique({
       where: { email },
-      select: { id: true },
+      select: { id: true, passwordHash: true },
     });
-    return { registered: Boolean(user) };
+    return { registered: Boolean(user), hasPassword: Boolean(user?.passwordHash) };
   });
 
 export const logoutServerFn = createServerFn({ method: "POST" }).handler(async () => {
@@ -363,7 +372,7 @@ export const logoutServerFn = createServerFn({ method: "POST" }).handler(async (
 });
 
 export const requestPasswordResetServerFn = createServerFn({ method: "POST" })
-  .inputValidator((d: { email: string }) => d)
+  .inputValidator((d: { email: string; inviteCode?: string; invitedEmail?: string }) => d)
   .handler(async ({ data }) => {
     const email = data.email.trim().toLowerCase();
     if (!email) throw new Error("Email is required");
@@ -384,7 +393,10 @@ export const requestPasswordResetServerFn = createServerFn({ method: "POST" })
       },
     });
 
-    const resetUrl = `${getAppBaseUrl()}/?reset=${encodeURIComponent(token)}`;
+    const resetParams = new URLSearchParams({ reset: token });
+    if (data.inviteCode) resetParams.set("invite", data.inviteCode);
+    if (data.invitedEmail) resetParams.set("email", data.invitedEmail.trim().toLowerCase());
+    const resetUrl = `${getAppBaseUrl()}/?${resetParams.toString()}`;
     await sendPasswordResetEmail({ to: user.email, name: user.name, resetUrl });
     await prisma.appNotification.create({
       data: {
@@ -468,6 +480,7 @@ export const getAppDataServerFn = createServerFn({ method: "GET" }).handler(asyn
   let loanEntries: any[] = [];
   let trackedProducts: any[] = [];
   let receiptScans: any[] = [];
+  let pendingInvite = null;
 
   if (householdId) {
     household = member.household;
@@ -498,6 +511,34 @@ export const getAppDataServerFn = createServerFn({ method: "GET" }).handler(asyn
       where: { householdId },
       orderBy: { createdAt: "desc" },
     });
+  }
+
+  if (!householdId) {
+    const pendingMember = await prisma.familyMember.findFirst({
+      where: {
+        userId: null,
+        email: { equals: user.email, mode: "insensitive" },
+      },
+      include: {
+        household: {
+          include: { members: true },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (pendingMember) {
+      pendingInvite = {
+        code: pendingMember.household.inviteCode,
+        householdName: pendingMember.household.name,
+        memberCount: pendingMember.household.members.length,
+        role: pendingMember.role,
+        inviter:
+          pendingMember.household.members.find((m) => m.role === "Admin")?.name || "Family Admin",
+        familyCurrency: pendingMember.household.familyCurrency,
+        invitedEmail: user.email,
+      };
+    }
   }
 
   const notifications = await prisma.appNotification.findMany({
@@ -539,6 +580,7 @@ export const getAppDataServerFn = createServerFn({ method: "GET" }).handler(asyn
           createdAt: household.createdAt.toLocaleDateString(),
         }
       : null,
+    pendingInvite,
     members: members.map((m) => ({
       id: m.id,
       name: m.name,

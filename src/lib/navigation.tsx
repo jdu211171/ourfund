@@ -1074,52 +1074,57 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     const reset = params.get("reset");
     const invite = params.get("invite");
     const invitedEmail = params.get("email")?.trim().toLowerCase() || undefined;
-    const queryKey = reset ? `reset:${reset}` : invite ? `invite:${invite}:${invitedEmail ?? ""}` : null;
+    const queryKey = reset || invite
+      ? `reset:${reset ?? ""}:invite:${invite ?? ""}:${invitedEmail ?? ""}`
+      : null;
     if (!queryKey || handledQueryRef.current === queryKey) return;
     if (invite && !isAuthReady) return;
 
     handledQueryRef.current = queryKey;
-    if (reset) {
-      setResetToken(reset);
+    if (reset) setResetToken(reset);
+
+    const routeTo = (screen: ScreenName) => {
       if (isWebMode) {
-        routerNavigate({ to: "/app/$screen", params: { screen: "reset_password" } }).catch(console.error);
+        routerNavigate({ to: "/app/$screen", params: { screen } }).catch(console.error);
       } else {
-        setCurrentScreen("reset_password");
+        setCurrentScreen(screen);
       }
+    };
+
+    if (!invite) {
+      if (reset) routeTo("reset_password");
       return;
     }
 
-    if (invite) {
-      validateInviteCode(invite, invitedEmail)
-        .then(async (found) => {
-          let screen: ScreenName = found ? "confirm_invite" : "join_family_error";
-          if (found && !isAuthenticated && found.invitedEmail) {
-            setSignupHouseholdMode("join");
-            try {
-              const result = await checkEmailRegisteredServerFn({
-                data: { email: found.invitedEmail },
-              });
-              screen = result.registered ? "login" : "signup";
-            } catch {
-              screen = "signup";
-            }
-          }
-          if (isWebMode) {
-            routerNavigate({ to: "/app/$screen", params: { screen } }).catch(console.error);
-          } else {
-            setCurrentScreen(screen);
-          }
-        })
-        .catch(() => {
-          if (isWebMode) {
-            routerNavigate({ to: "/app/$screen", params: { screen: "join_family_error" } }).catch(console.error);
-          } else {
-            setCurrentScreen("join_family_error");
-          }
-        });
-    }
-  }, [isAuthReady, isAuthenticated, isWebMode, routerNavigate, validateInviteCode]);
+    validateInviteCode(invite, invitedEmail)
+      .then(async (found) => {
+        if (reset) {
+          routeTo("reset_password");
+          return;
+        }
 
+        let screen: ScreenName = found ? "confirm_invite" : "join_family_error";
+        if (found && !isAuthenticated && found.invitedEmail) {
+          setSignupHouseholdMode("join");
+          try {
+            const result = await checkEmailRegisteredServerFn({
+              data: { email: found.invitedEmail },
+            });
+            screen = result.registered && result.hasPassword ? "login" : "signup";
+          } catch {
+            screen = "signup";
+          }
+        }
+        routeTo(screen);
+      })
+      .catch(() => {
+        if (reset) {
+          routeTo("reset_password");
+        } else {
+          routeTo("join_family_error");
+        }
+      });
+  }, [isAuthReady, isAuthenticated, isWebMode, routerNavigate, validateInviteCode]);
   const acceptInvite = async () => {
     if (!pendingInvite) return;
 
@@ -2042,14 +2047,34 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
       }
 
       setIsAuthenticated(true);
+      const restoredPendingInvite = data.pendingInvite as HouseholdInvite | null | undefined;
+      if (restoredPendingInvite) {
+        setPendingInvite(restoredPendingInvite);
+        setSignupHouseholdMode("join");
+      } else if (data.household) {
+        setPendingInvite(null);
+      }
+
       if (isWebMode) {
         const currentSlug = window.location.pathname.split("/").pop() ?? "home";
-        if (currentSlug === "login" || currentSlug === "signup" || currentSlug === "onboarding") {
-          routerNavigate({ to: "/app/$screen", params: { screen: "home" } }).catch(console.error);
+        if (
+          currentSlug === "login" ||
+          currentSlug === "signup" ||
+          currentSlug === "onboarding" ||
+          currentSlug === "reset_password"
+        ) {
+          routerNavigate({
+            to: "/app/$screen",
+            params: { screen: restoredPendingInvite ? "confirm_invite" : "home" },
+          }).catch(console.error);
         }
       } else {
         setCurrentScreen((screen) =>
-          screen === "onboarding" || screen === "login" || screen === "signup" ? "home" : screen,
+          screen === "onboarding" || screen === "login" || screen === "signup" || screen === "reset_password"
+            ? restoredPendingInvite
+              ? "confirm_invite"
+              : "home"
+            : screen,
         );
       }
 

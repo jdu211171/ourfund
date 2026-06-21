@@ -1,6 +1,6 @@
 import { Lock, Eye, ArrowLeft } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAppNavigation } from "@/lib/navigation";
 import { resetPasswordServerFn, requestPasswordResetServerFn } from "@/lib/server-fns";
 
@@ -9,9 +9,10 @@ function errorMessage(err: unknown, fallback: string) {
 }
 
 export function ResetPasswordScreen() {
-  const { navigate, resetToken } = useAppNavigation();
+  const { navigate, resetToken, pendingInvite } = useAppNavigation();
   const [phase, setPhase] = useState<"request" | "reset">(resetToken ? "reset" : "request");
-  const [email, setEmail] = useState("");
+  const invitedEmail = pendingInvite?.invitedEmail ?? "";
+  const [email, setEmail] = useState(invitedEmail);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -20,12 +21,22 @@ export function ResetPasswordScreen() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  useEffect(() => {
+    if (invitedEmail) setEmail(invitedEmail);
+  }, [invitedEmail]);
+
   const handleRequestReset = async () => {
     if (!email) return;
     setError("");
     setLoading(true);
     try {
-      await requestPasswordResetServerFn({ data: { email } });
+      await requestPasswordResetServerFn({
+        data: {
+          email,
+          inviteCode: pendingInvite?.code,
+          invitedEmail: pendingInvite?.invitedEmail,
+        },
+      });
       setSuccess(true);
       setEmail("");
       setTimeout(() => {

@@ -91,7 +91,7 @@ export function LoginScreen() {
       if (!restored) {
         throw new Error("Sign-in completed, but the session could not be restored.");
       }
-      navigate(pendingInvite ? "confirm_invite" : "home");
+      if (pendingInvite) navigate("confirm_invite");
     } catch (err: unknown) {
       setError(errorMessage(err, "Invalid credentials"));
     } finally {
@@ -107,7 +107,13 @@ export function LoginScreen() {
     setError("");
     setLoading(true);
     try {
-      await requestPasswordResetServerFn({ data: { email } });
+      await requestPasswordResetServerFn({
+        data: {
+          email,
+          inviteCode: pendingInvite?.code,
+          invitedEmail: pendingInvite?.invitedEmail,
+        },
+      });
       setResetSent(true);
       setTimeout(() => setResetSent(false), 3000);
     } catch (err: unknown) {
@@ -127,7 +133,7 @@ export function LoginScreen() {
         if (!restored) {
           throw new Error("Sign-in completed, but the session could not be restored.");
         }
-        navigate(pendingInvite ? "confirm_invite" : "home");
+        if (pendingInvite) navigate("confirm_invite");
       } catch (err: unknown) {
         setError(errorMessage(err, "Google sign-in failed"));
       } finally {
