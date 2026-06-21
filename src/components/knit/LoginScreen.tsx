@@ -68,13 +68,18 @@ function loadGsi(): Promise<GoogleAccountsClient | null> {
 
 export function LoginScreen() {
   const { navigate, profile, pendingInvite, syncDataAfterLogin } = useAppNavigation();
-  const [email, setEmail] = useState(profile.email);
+  const invitedEmail = pendingInvite?.invitedEmail ?? "";
+  const [email, setEmail] = useState(invitedEmail || profile.email);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [resetSent, setResetSent] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const googleBtnRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (invitedEmail) setEmail(invitedEmail);
+  }, [invitedEmail]);
 
   const handleSignIn = async () => {
     if (!email || !password) return;
@@ -185,6 +190,7 @@ export function LoginScreen() {
               <input
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                readOnly={Boolean(invitedEmail)}
                 className="w-full bg-transparent text-[13px] font-semibold text-foreground outline-none"
                 type="email"
               />

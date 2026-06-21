@@ -19,6 +19,7 @@ import {
   persistAppSeed,
 } from "./seed";
 import {
+  checkEmailRegisteredServerFn,
   getAppDataServerFn,
   logoutServerFn,
   scanReceiptServerFn,
@@ -284,6 +285,7 @@ export interface HouseholdInvite {
   role: MemberRole;
   inviter: string;
   familyCurrency: CurrencyCode;
+  invitedEmail?: string;
 }
 
 export interface CurrencySettings {
@@ -344,7 +346,7 @@ interface NavigationContextType {
     email: string;
     householdName: string;
   }) => Promise<Household>;
-  validateInviteCode: (code: string) => Promise<HouseholdInvite | null>;
+  validateInviteCode: (code: string, invitedEmail?: string) => Promise<HouseholdInvite | null>;
   acceptInvite: () => Promise<void>;
   syncDataAfterLogin: () => Promise<boolean>;
   currency: CurrencyCode;
@@ -1027,8 +1029,9 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     return nextHousehold;
   };
 
-  const validateInviteCode = useCallback(async (code: string): Promise<HouseholdInvite | null> => {
+  const validateInviteCode = useCallback(async (code: string, invitedEmail?: string): Promise<HouseholdInvite | null> => {
     const normalized = code.trim().toUpperCase();
+    const cleanInvitedEmail = invitedEmail?.trim().toLowerCase();
 
     // 1. Check if it matches the current user's own household
     const currentInvite: HouseholdInvite | null =
@@ -1057,7 +1060,10 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    const invite = currentInvite ?? seededInvite ?? dbInvite;
+    const foundInvite = currentInvite ?? seededInvite ?? dbInvite;
+    const invite = foundInvite && cleanInvitedEmail
+      ? { ...foundInvite, invitedEmail: cleanInvitedEmail }
+      : foundInvite;
     setPendingInvite(invite);
     return invite;
   }, [currencies.family, household, members.length, profile.name]);
@@ -1067,8 +1073,10 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     const params = new URLSearchParams(window.location.search);
     const reset = params.get("reset");
     const invite = params.get("invite");
-    const queryKey = reset ? `reset:${reset}` : invite ? `invite:${invite}` : null;
+    const invitedEmail = params.get("email")?.trim().toLowerCase() || undefined;
+    const queryKey = reset ? `reset:${reset}` : invite ? `invite:${invite}:${invitedEmail ?? ""}` : null;
     if (!queryKey || handledQueryRef.current === queryKey) return;
+    if (invite && !isAuthReady) return;
 
     handledQueryRef.current = queryKey;
     if (reset) {
@@ -1082,9 +1090,20 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     }
 
     if (invite) {
-      validateInviteCode(invite)
-        .then((found) => {
-          const screen: ScreenName = found ? "confirm_invite" : "join_family_error";
+      validateInviteCode(invite, invitedEmail)
+        .then(async (found) => {
+          let screen: ScreenName = found ? "confirm_invite" : "join_family_error";
+          if (found && !isAuthenticated && found.invitedEmail) {
+            setSignupHouseholdMode("join");
+            try {
+              const result = await checkEmailRegisteredServerFn({
+                data: { email: found.invitedEmail },
+              });
+              screen = result.registered ? "login" : "signup";
+            } catch {
+              screen = "signup";
+            }
+          }
           if (isWebMode) {
             routerNavigate({ to: "/app/$screen", params: { screen } }).catch(console.error);
           } else {
@@ -1099,7 +1118,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
           }
         });
     }
-  }, [isWebMode, routerNavigate, validateInviteCode]);
+  }, [isAuthReady, isAuthenticated, isWebMode, routerNavigate, validateInviteCode]);
 
   const acceptInvite = async () => {
     if (!pendingInvite) return;

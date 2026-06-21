@@ -147,7 +147,11 @@ export async function sendWelcomeEmail(payload: WelcomeMailPayload) {
 }
 
 export async function sendInviteEmail(payload: InviteMailPayload) {
-  const inviteUrl = `${getAppBaseUrl()}/?invite=${encodeURIComponent(payload.inviteCode)}`;
+  const params = new URLSearchParams({
+    invite: payload.inviteCode,
+    email: payload.to,
+  });
+  const inviteUrl = `${getAppBaseUrl()}/?${params.toString()}`;
   const subject = `You're invited to ${payload.householdName} on Nest`;
   const text = [
     `Hi,`,

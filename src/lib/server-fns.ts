@@ -345,6 +345,18 @@ export const loginWithGoogleServerFn = createServerFn({ method: "POST" })
     return { success: true };
   });
 
+export const checkEmailRegisteredServerFn = createServerFn({ method: "POST" })
+  .inputValidator((d: { email: string }) => d)
+  .handler(async ({ data }) => {
+    const email = data.email.trim().toLowerCase();
+    if (!email) return { registered: false };
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true },
+    });
+    return { registered: Boolean(user) };
+  });
+
 export const logoutServerFn = createServerFn({ method: "POST" }).handler(async () => {
   clearSessionCookie();
   return { success: true };

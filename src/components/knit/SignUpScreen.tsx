@@ -20,7 +20,8 @@ export function SignUpScreen() {
     pendingInvite,
   } = useAppNavigation();
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const invitedEmail = pendingInvite?.invitedEmail ?? "";
+  const [email, setEmail] = useState(invitedEmail);
   const [password, setPassword] = useState("");
   const [householdName, setHouseholdName] = useState("");
   const [householdMode, setHouseholdMode] = useState<"new" | "join">(signupHouseholdMode);
@@ -31,6 +32,14 @@ export function SignUpScreen() {
   useEffect(() => {
     setHouseholdMode(signupHouseholdMode);
   }, [signupHouseholdMode]);
+
+  useEffect(() => {
+    if (invitedEmail) {
+      setEmail(invitedEmail);
+      setHouseholdMode("join");
+      setSignupHouseholdMode("join");
+    }
+  }, [invitedEmail, setSignupHouseholdMode]);
 
   const createAccount = async () => {
     setError("");
@@ -49,7 +58,12 @@ export function SignUpScreen() {
         navigate(pendingInvite ? "confirm_invite" : "join_family");
       }
     } catch (err: unknown) {
-      setError(errorMessage(err, "Registration failed. Please try again."));
+      const message = errorMessage(err, "Registration failed. Please try again.");
+      if (householdMode === "join" && message.toLowerCase().includes("email already registered")) {
+        navigate("login");
+        return;
+      }
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -78,7 +92,9 @@ export function SignUpScreen() {
         <div className="mt-7 space-y-3">
           {[
             { Icon: User, label: "Full name", value: name, setValue: setName, type: "text" },
-            { Icon: Mail, label: "Email", value: email, setValue: setEmail, type: "email" },
+            ...(invitedEmail
+              ? []
+              : [{ Icon: Mail, label: "Email", value: email, setValue: setEmail, type: "email" }]),
             {
               Icon: Lock,
               label: "Password",
@@ -104,6 +120,16 @@ export function SignUpScreen() {
             </div>
           ))}
         </div>
+
+        {invitedEmail && (
+          <div className="mt-3 flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-[var(--shadow-soft)]">
+            <Mail className="h-4 w-4 text-muted-foreground" strokeWidth={2.25} />
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] text-muted-foreground">Invited email</p>
+              <p className="truncate text-[13px] font-semibold text-foreground">{invitedEmail}</p>
+            </div>
+          </div>
+        )}
 
         <p className="mt-6 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
           Household
