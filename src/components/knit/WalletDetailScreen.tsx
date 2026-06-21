@@ -3,7 +3,7 @@ import { useState } from "react";
 import { PhoneFrame } from "./PhoneFrame";
 import { Money } from "./Money";
 import { useAppNavigation } from "@/lib/navigation";
-import { formatUsdAsCurrency } from "@/lib/currency";
+import { currencyFractionDigits, currencyValueToUsd, formatUsdAsCurrency, usdToCurrencyValue } from "@/lib/currency";
 
 const COLOR_OPTIONS = [
   { name: "Purple", value: "oklch(0.55 0.24 265)" },
@@ -27,12 +27,15 @@ export function WalletDetailScreen() {
   } = useAppNavigation();
 
   const wallet = activeWallets.find((w) => w.id === selectedDetailWalletId);
+  const walletCurrency = wallet?.currency ?? currency;
+  const formatBalanceInput = (usd: number) =>
+    usdToCurrencyValue(usd, walletCurrency).toFixed(currencyFractionDigits(walletCurrency));
 
   // Editing state
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(wallet?.label ?? "");
   const [editColor, setEditColor] = useState(wallet?.color ?? COLOR_OPTIONS[0].value);
-  const [editStartingBalance, setEditStartingBalance] = useState(wallet?.startingBalanceUsd?.toString() ?? "0");
+  const [editStartingBalance, setEditStartingBalance] = useState(formatBalanceInput(wallet?.startingBalanceUsd ?? 0));
 
   // Adjust balance state
   const [adjustType, setAdjustType] = useState<"topup" | "withdraw" | null>(null);
@@ -66,7 +69,7 @@ export function WalletDetailScreen() {
     updateWallet(wallet.id, {
       label: editName.trim(),
       color: editColor,
-      startingBalanceUsd: balanceNum,
+      startingBalanceUsd: currencyValueToUsd(balanceNum, wallet.currency),
     });
     setIsEditing(false);
   };
@@ -75,7 +78,8 @@ export function WalletDetailScreen() {
     const amountNum = parseFloat(adjustAmount) || 0;
     if (amountNum <= 0) return;
 
-    const usdVal = adjustType === "topup" ? amountNum : -amountNum;
+    const amountUsd = currencyValueToUsd(amountNum, wallet.currency);
+    const usdVal = adjustType === "topup" ? amountUsd : -amountUsd;
     const defaultNote = adjustType === "topup" ? "Top up" : "Withdrawal";
 
     addTransaction({
@@ -116,7 +120,7 @@ export function WalletDetailScreen() {
               } else {
                 setEditName(wallet.label);
                 setEditColor(wallet.color);
-                setEditStartingBalance(wallet.startingBalanceUsd?.toString() ?? "0");
+                setEditStartingBalance(formatBalanceInput(wallet.startingBalanceUsd ?? 0));
                 setIsEditing(true);
               }
             }}
@@ -182,7 +186,7 @@ export function WalletDetailScreen() {
 
                 <div>
                   <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold block mb-1">
-                    Starting Balance ({currency})
+                    Starting Balance ({wallet.currency})
                   </label>
                   <input
                     type="number"
@@ -240,7 +244,7 @@ export function WalletDetailScreen() {
                 <Row label="Name" value={wallet.label} />
                 <Row label="Currency" value={wallet.currency} icon={<DollarSign className="h-4 w-4" strokeWidth={2.25} />} />
                 <Row label="Type" value={wallet.sub} />
-                <Row label="Starting balance" value={formatUsdAsCurrency(wallet.startingBalanceUsd ?? 0, currency)} />
+                <Row label="Starting balance" value={formatUsdAsCurrency(wallet.startingBalanceUsd ?? 0, wallet.currency)} />
               </div>
 
               {/* Adjust Balance Forms */}
@@ -253,7 +257,7 @@ export function WalletDetailScreen() {
                   <div className="space-y-3">
                     <div>
                       <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold block mb-1">
-                        Amount ({currency})
+                        Amount ({wallet.currency})
                       </label>
                       <input
                         type="number"
