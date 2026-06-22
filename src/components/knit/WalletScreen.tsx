@@ -573,7 +573,7 @@ export function WalletScreen() {
           </button>
         </div>
         <div className="mt-2">
-          {goals.slice(0, 2).map((goal) => {
+          {goals.map((goal) => {
             const pct = Math.min(
               100,
               Math.round((goal.savedUsd / Math.max(goal.targetUsd, 1)) * 100),
