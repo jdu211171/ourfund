@@ -1,63 +1,53 @@
-import {
-  ArrowLeft,
-  Camera,
-  Coffee,
-  Plus,
-  Search,
-  Shirt,
-  ShoppingBag,
-  Smartphone,
-  Zap,
-} from "lucide-react";
-import { useMemo, useState } from "react";
+import { ArrowLeft, Camera, Plus, Search, ShoppingBag } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { currencyAdornment, currencyValueToUsd, formatUsdAsCurrency } from "@/lib/currency";
-import { useAppNavigation, type ProductEntry } from "@/lib/navigation";
+import { useAppNavigation, type BudgetCategory, type ProductEntry } from "@/lib/navigation";
 import { PhoneFrame } from "./PhoneFrame";
 import { Money } from "./Money";
-
-const fallbackCategories = ["All", "Groceries", "Bills", "Electronics", "Dining", "Clothing"];
+import { categoryIconMap } from "./categoryOptions";
 
 function normalizedName(name: string) {
   return name.toLowerCase().replace(/[^a-z0-9\u3040-\u30ff\u3400-\u9fff]+/g, "");
 }
 
-function ProductIcon({ category }: { category: string }) {
-  const lower = category.toLowerCase();
-  const Icon = lower.includes("elect")
-    ? Smartphone
-    : lower.includes("bill")
-      ? Zap
-      : lower.includes("dining") || lower.includes("coffee")
-        ? Coffee
-        : lower.includes("cloth")
-          ? Shirt
-          : ShoppingBag;
+function ProductIcon({ category }: { category?: BudgetCategory }) {
+  const Icon = category ? (categoryIconMap[category.icon] ?? ShoppingBag) : ShoppingBag;
   return <Icon className="h-4 w-4" strokeWidth={2.25} />;
 }
 
 export function ProductTrackerScreen() {
-  const { navigate, goBack, trackedProducts, currency, addTrackedProduct } = useAppNavigation();
+  const { navigate, goBack, trackedProducts, currency, addTrackedProduct, categories } =
+    useAppNavigation();
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("All");
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
   const [store, setStore] = useState("");
   const [amount, setAmount] = useState("0");
-  const [manualCategory, setManualCategory] = useState("Groceries");
+  const [manualCategory, setManualCategory] = useState("");
   const { prefix, suffix } = currencyAdornment(currency);
 
-  const categories = useMemo(
-    () => [
-      "All",
-      ...Array.from(
-        new Set([
-          ...fallbackCategories.filter((item) => item !== "All"),
-          ...trackedProducts.map((product) => product.category),
-        ]),
-      ),
-    ],
-    [trackedProducts],
+  const categoryFilters = useMemo(
+    () => ["All", ...categories.map((item) => item.label)],
+    [categories],
   );
+  const categoryByLabel = useMemo(
+    () => new Map(categories.map((item) => [item.label, item])),
+    [categories],
+  );
+
+  useEffect(() => {
+    if (!manualCategory && categories[0]) {
+      setManualCategory(categories[0].label);
+    }
+  }, [categories, manualCategory]);
+
+  useEffect(() => {
+    if (category !== "All" && !categoryByLabel.has(category)) {
+      setCategory("All");
+    }
+  }, [category, categoryByLabel]);
+
   const visibleProducts = trackedProducts.filter((product) => {
     const text = `${product.name} ${product.store} ${product.category}`.toLowerCase();
     if (category !== "All" && product.category !== category) return false;
@@ -72,7 +62,7 @@ export function ProductTrackerScreen() {
     addTrackedProduct({
       name: name.trim(),
       store: store.trim() || "Manual entry",
-      category: manualCategory,
+      category: manualCategory || categories[0]?.label || "Uncategorized",
       amountUsd,
       quantity: 1,
       unitPriceUsd: amountUsd,
@@ -178,21 +168,32 @@ export function ProductTrackerScreen() {
               </div>
             </div>
             <div className="mt-2 flex gap-1 overflow-x-auto">
-              {fallbackCategories
-                .filter((item) => item !== "All")
-                .map((item) => (
+              {categories.map((item) => {
+                const Icon = categoryIconMap[item.icon] ?? ShoppingBag;
+                return (
                   <button
-                    key={item}
-                    onClick={() => setManualCategory(item)}
-                    className={`shrink-0 rounded-full px-3 py-1.5 text-[10px] font-semibold ${
-                      item === manualCategory
+                    key={item.id}
+                    onClick={() => setManualCategory(item.label)}
+                    className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-semibold ${
+                      item.label === manualCategory
                         ? "bg-[var(--primary)] text-white"
                         : "bg-[var(--muted)] text-foreground"
                     }`}
                   >
-                    {item}
+                    <Icon className="h-3 w-3" strokeWidth={2.25} />
+                    {item.label}
                   </button>
-                ))}
+                );
+              })}
+              {categories.length === 0 && (
+                <button
+                  type="button"
+                  onClick={() => navigate("new_category")}
+                  className="shrink-0 rounded-full bg-[var(--muted)] px-3 py-1.5 text-[10px] font-semibold text-foreground"
+                >
+                  Add category
+                </button>
+              )}
             </div>
             <button
               type="button"
@@ -215,16 +216,22 @@ export function ProductTrackerScreen() {
         </div>
 
         <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-          {categories.map((item) => (
+          {categoryFilters.map((item) => (
             <button
               key={item}
               onClick={() => setCategory(item)}
-              className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-semibold ${
+              className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold ${
                 item === category
                   ? "bg-[var(--primary)] text-white"
                   : "bg-[var(--muted)] text-foreground"
               }`}
             >
+              {item !== "All" &&
+                (() => {
+                  const Icon =
+                    categoryIconMap[categoryByLabel.get(item)?.icon ?? ""] ?? ShoppingBag;
+                  return <Icon className="h-3.5 w-3.5" strokeWidth={2.25} />;
+                })()}
               {item}
             </button>
           ))}
@@ -236,6 +243,7 @@ export function ProductTrackerScreen() {
               key={product.id}
               product={product}
               currency={currency}
+              categoryMeta={categoryByLabel.get(product.category)}
               previous={trackedProducts
                 .slice(trackedProducts.findIndex((item) => item.id === product.id) + 1)
                 .find((item) => normalizedName(item.name) === normalizedName(product.name))}
@@ -262,10 +270,12 @@ function ProductRow({
   product,
   previous,
   currency,
+  categoryMeta,
 }: {
   product: ProductEntry;
   previous?: ProductEntry;
   currency: Parameters<typeof formatUsdAsCurrency>[1];
+  categoryMeta?: BudgetCategory;
 }) {
   const currentUnit = product.unitPriceUsd ?? product.amountUsd / Math.max(product.quantity, 1);
   const previousUnit =
@@ -275,8 +285,11 @@ function ProductRow({
 
   return (
     <div className="flex items-center gap-3 rounded-2xl bg-white px-3 py-2.5 shadow-[var(--shadow-soft)]">
-      <div className="grid h-10 w-10 place-items-center rounded-xl bg-[oklch(0.95_0.04_265)] text-[var(--primary)]">
-        <ProductIcon category={product.category} />
+      <div
+        className="grid h-10 w-10 place-items-center rounded-xl text-white"
+        style={{ backgroundColor: categoryMeta?.color ?? "var(--primary)" }}
+      >
+        <ProductIcon category={categoryMeta} />
       </div>
       <div className="min-w-0 flex-1 leading-tight">
         <p className="truncate text-[12px] font-bold text-foreground">{product.name}</p>

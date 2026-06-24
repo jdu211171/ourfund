@@ -502,6 +502,53 @@ function categoryAliases(label: string) {
   return [lower];
 }
 
+function iconForCategoryLabel(label: string) {
+  const lower = label.toLowerCase();
+  if (lower.includes("rent") || lower.includes("housing") || lower.includes("home")) return "home";
+  if (lower.includes("utility") || lower.includes("bill") || lower.includes("electric")) {
+    return "utilities";
+  }
+  if (lower.includes("grocery") || lower.includes("market") || lower.includes("shopping")) {
+    return "shopping";
+  }
+  if (lower.includes("dining") || lower.includes("coffee") || lower.includes("cafe")) {
+    return "coffee";
+  }
+  if (lower.includes("restaurant") || lower.includes("food") || lower.includes("meal")) {
+    return "food";
+  }
+  if (lower.includes("transport") || lower.includes("bus") || lower.includes("train")) {
+    return "transport";
+  }
+  if (lower.includes("fuel") || lower.includes("gas")) return "fuel";
+  if (lower.includes("car") || lower.includes("auto")) return "car";
+  if (lower.includes("health") || lower.includes("medical") || lower.includes("doctor")) {
+    return "health";
+  }
+  if (lower.includes("gift")) return "gift";
+  if (lower.includes("travel") || lower.includes("flight") || lower.includes("hotel")) {
+    return "travel";
+  }
+  if (lower.includes("school") || lower.includes("education") || lower.includes("tuition")) {
+    return "education";
+  }
+  if (lower.includes("book")) return "books";
+  if (lower.includes("music")) return "music";
+  if (lower.includes("movie") || lower.includes("entertainment") || lower.includes("game")) {
+    return "entertainment";
+  }
+  if (lower.includes("fitness") || lower.includes("gym")) return "fitness";
+  if (lower.includes("clothing") || lower.includes("clothes") || lower.includes("apparel")) {
+    return "clothing";
+  }
+  if (lower.includes("work") || lower.includes("office")) return "work";
+  if (lower.includes("bank") || lower.includes("finance")) return "bank";
+  if (lower.includes("phone") || lower.includes("mobile") || lower.includes("internet")) {
+    return "phone";
+  }
+  return "shopping";
+}
+
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -1962,7 +2009,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         label: catName,
         limitUsd: 100,
         color: colors[colorIdx % colors.length],
-        icon: "Tag",
+        icon: iconForCategoryLabel(catName),
       });
       colorIdx++;
     });
