@@ -222,53 +222,53 @@ export function MoreScreen() {
             </div>
           </div>
 
-          {groups.map((group) => (
-            <div key={group.section}>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-                {group.section}
-              </p>
-              <div className="mt-2 grid grid-cols-3 gap-2">
-                {group.items.map((item) => {
-                  const Icon = iconForLabel(item.label);
-                  const screen = screenForLabel(item.label);
-                  const resolvedStatus: TodoItem["status"] =
-                    item.status === "testing" ? "testing" : screen ? "testing" : "coming";
-                  const isTesting = resolvedStatus === "testing";
-                  const isComing = resolvedStatus === "coming";
-                  const canNavigate = Boolean(screen) && isTesting;
-                  const badgeClass = isTesting
-                    ? "bg-[oklch(0.92_0.08_95)] text-[oklch(0.62_0.16_90)]"
-                    : "bg-[oklch(0.92_0.08_25)] text-[oklch(0.6_0.22_25)]";
-                  const statusLabel = isTesting ? "Testing" : "Coming";
-                  return (
-                    <button
-                      key={`${group.section}-${item.label}`}
-                      type="button"
-                      onClick={() => {
-                        if (canNavigate && screen) navigate(screen);
-                      }}
-                      aria-disabled={!canNavigate}
-                      className={`relative flex flex-col items-center gap-2 rounded-2xl bg-white px-2 py-3 text-center ${
-                        canNavigate ? "cursor-pointer" : "cursor-default"
-                      }`}
-                    >
-                      <span
-                        className={`absolute right-2 top-2 rounded-full px-1.5 py-0.5 text-[8px] font-bold ${badgeClass}`}
-                      >
-                        {statusLabel}
-                      </span>
-                      <div className="flex flex-col items-center gap-2 blur-[0.8px] opacity-70">
-                        <span className="grid h-9 w-9 place-items-center rounded-xl bg-[oklch(0.95_0.04_265)] text-[var(--primary)]">
-                          <Icon className="h-4 w-4" strokeWidth={2.2} />
-                        </span>
-                        <span className="text-[10px] font-bold text-foreground">{item.label}</span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+          {/* {groups.map((group) => ( */}
+          {/*   <div key={group.section}> */}
+          {/*     <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground"> */}
+          {/*       {group.section} */}
+          {/*     </p> */}
+          {/*     <div className="mt-2 grid grid-cols-3 gap-2"> */}
+          {/*       {group.items.map((item) => { */}
+          {/*         const Icon = iconForLabel(item.label); */}
+          {/*         const screen = screenForLabel(item.label); */}
+          {/*         const resolvedStatus: TodoItem["status"] = */}
+          {/*           item.status === "testing" ? "testing" : screen ? "testing" : "coming"; */}
+          {/*         const isTesting = resolvedStatus === "testing"; */}
+          {/*         const isComing = resolvedStatus === "coming"; */}
+          {/*         const canNavigate = Boolean(screen) && isTesting; */}
+          {/*         const badgeClass = isTesting */}
+          {/*           ? "bg-[oklch(0.92_0.08_95)] text-[oklch(0.62_0.16_90)]" */}
+          {/*           : "bg-[oklch(0.92_0.08_25)] text-[oklch(0.6_0.22_25)]"; */}
+          {/*         const statusLabel = isTesting ? "Testing" : "Coming"; */}
+          {/*         return ( */}
+          {/*           <button */}
+          {/*             key={`${group.section}-${item.label}`} */}
+          {/*             type="button" */}
+          {/*             onClick={() => { */}
+          {/*               if (canNavigate && screen) navigate(screen); */}
+          {/*             }} */}
+          {/*             aria-disabled={!canNavigate} */}
+          {/*             className={`relative flex flex-col items-center gap-2 rounded-2xl bg-white px-2 py-3 text-center ${ */}
+          {/*               canNavigate ? "cursor-pointer" : "cursor-default" */}
+          {/*             }`} */}
+          {/*           > */}
+          {/*             <span */}
+          {/*               className={`absolute right-2 top-2 rounded-full px-1.5 py-0.5 text-[8px] font-bold ${badgeClass}`} */}
+          {/*             > */}
+          {/*               {statusLabel} */}
+          {/*             </span> */}
+          {/*             <div className="flex flex-col items-center gap-2 blur-[0.8px] opacity-70"> */}
+          {/*               <span className="grid h-9 w-9 place-items-center rounded-xl bg-[oklch(0.95_0.04_265)] text-[var(--primary)]"> */}
+          {/*                 <Icon className="h-4 w-4" strokeWidth={2.2} /> */}
+          {/*               </span> */}
+          {/*               <span className="text-[10px] font-bold text-foreground">{item.label}</span> */}
+          {/*             </div> */}
+          {/*           </button> */}
+          {/*         ); */}
+          {/*       })} */}
+          {/*     </div> */}
+          {/*   </div> */}
+          {/* ))} */}
         </div>
       </div>
       <BottomNav active="more" />
