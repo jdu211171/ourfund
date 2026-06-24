@@ -230,7 +230,7 @@ export function ProductTrackerScreen() {
           ))}
         </div>
 
-        <div className="mt-4 flex-1 space-y-2 overflow-y-auto pr-1">
+        <div className="mt-4 space-y-2">
           {visibleProducts.map((product, index) => (
             <ProductRow
               key={product.id}
