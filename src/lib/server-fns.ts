@@ -94,7 +94,13 @@ function normalizeProductName(value: string) {
 const TEMPORARY_RECEIPT_SCAN_ERROR =
   "AI receipt scanning is busy right now. We tried another model, but the service is still overloaded. Please try again shortly.";
 
-const DEFAULT_GEMINI_RECEIPT_SCAN_FALLBACK_MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite"];
+const DEFAULT_GEMINI_RECEIPT_SCAN_FALLBACK_MODELS = [
+  "gemini-3.5-flash-lite",
+  "gemini-2.5-flash",
+  "gemini-2.5-flash-lite",
+  "gemini-2.0-flash",
+  "gemini-2.0-flash-lite",
+];
 
 function splitGeminiModelList(value?: string) {
   return String(value || "")
