@@ -167,33 +167,35 @@ export function ProductTrackerScreen() {
                 )}
               </div>
             </div>
-            <div className="mt-2 flex gap-1 overflow-x-auto">
-              {categories.map((item) => {
-                const Icon = categoryIconMap[item.icon] ?? ShoppingBag;
-                return (
+            <div className="mt-2 max-w-full overflow-hidden">
+              <div className="flex gap-1 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {categories.map((item) => {
+                  const Icon = categoryIconMap[item.icon] ?? ShoppingBag;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => setManualCategory(item.label)}
+                      className={`flex max-w-[9rem] shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-semibold ${
+                        item.label === manualCategory
+                          ? "bg-[var(--primary)] text-white"
+                          : "bg-[var(--muted)] text-foreground"
+                      }`}
+                    >
+                      <Icon className="h-3 w-3 shrink-0" strokeWidth={2.25} />
+                      <span className="min-w-0 truncate whitespace-nowrap">{item.label}</span>
+                    </button>
+                  );
+                })}
+                {categories.length === 0 && (
                   <button
-                    key={item.id}
-                    onClick={() => setManualCategory(item.label)}
-                    className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-semibold ${
-                      item.label === manualCategory
-                        ? "bg-[var(--primary)] text-white"
-                        : "bg-[var(--muted)] text-foreground"
-                    }`}
+                    type="button"
+                    onClick={() => navigate("new_category")}
+                    className="shrink-0 rounded-full bg-[var(--muted)] px-3 py-1.5 text-[10px] font-semibold text-foreground"
                   >
-                    <Icon className="h-3 w-3" strokeWidth={2.25} />
-                    {item.label}
+                    Add category
                   </button>
-                );
-              })}
-              {categories.length === 0 && (
-                <button
-                  type="button"
-                  onClick={() => navigate("new_category")}
-                  className="shrink-0 rounded-full bg-[var(--muted)] px-3 py-1.5 text-[10px] font-semibold text-foreground"
-                >
-                  Add category
-                </button>
-              )}
+                )}
+              </div>
             </div>
             <button
               type="button"
@@ -215,26 +217,28 @@ export function ProductTrackerScreen() {
           />
         </div>
 
-        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-          {categoryFilters.map((item) => (
-            <button
-              key={item}
-              onClick={() => setCategory(item)}
-              className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold ${
-                item === category
-                  ? "bg-[var(--primary)] text-white"
-                  : "bg-[var(--muted)] text-foreground"
-              }`}
-            >
-              {item !== "All" &&
-                (() => {
-                  const Icon =
-                    categoryIconMap[categoryByLabel.get(item)?.icon ?? ""] ?? ShoppingBag;
-                  return <Icon className="h-3.5 w-3.5" strokeWidth={2.25} />;
-                })()}
-              {item}
-            </button>
-          ))}
+        <div className="mt-3 max-w-full overflow-hidden">
+          <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {categoryFilters.map((item) => (
+              <button
+                key={item}
+                onClick={() => setCategory(item)}
+                className={`flex max-w-[8.5rem] shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold ${
+                  item === category
+                    ? "bg-[var(--primary)] text-white"
+                    : "bg-[var(--muted)] text-foreground"
+                }`}
+              >
+                {item !== "All" &&
+                  (() => {
+                    const Icon =
+                      categoryIconMap[categoryByLabel.get(item)?.icon ?? ""] ?? ShoppingBag;
+                    return <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={2.25} />;
+                  })()}
+                <span className="min-w-0 truncate whitespace-nowrap">{item}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="mt-4 space-y-2">
