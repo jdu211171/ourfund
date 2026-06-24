@@ -167,15 +167,15 @@ export function ProductTrackerScreen() {
                 )}
               </div>
             </div>
-            <div className="mt-2 max-w-full overflow-hidden">
-              <div className="flex gap-1 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="mt-2 min-w-0">
+              <div className="flex min-h-8 min-w-0 items-center gap-1 overflow-x-auto overflow-y-hidden pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {categories.map((item) => {
                   const Icon = categoryIconMap[item.icon] ?? ShoppingBag;
                   return (
                     <button
                       key={item.id}
                       onClick={() => setManualCategory(item.label)}
-                      className={`flex max-w-[9rem] shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-semibold ${
+                      className={`flex h-7 max-w-[9rem] shrink-0 items-center gap-1.5 rounded-full px-3 text-[10px] font-semibold ${
                         item.label === manualCategory
                           ? "bg-[var(--primary)] text-white"
                           : "bg-[var(--muted)] text-foreground"
@@ -217,13 +217,13 @@ export function ProductTrackerScreen() {
           />
         </div>
 
-        <div className="mt-3 max-w-full overflow-hidden">
-          <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="mt-3 min-w-0">
+          <div className="flex min-h-8 min-w-0 items-center gap-2 overflow-x-auto overflow-y-hidden pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {categoryFilters.map((item) => (
               <button
                 key={item}
                 onClick={() => setCategory(item)}
-                className={`flex max-w-[8.5rem] shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold ${
+                className={`flex h-7 max-w-[8.5rem] shrink-0 items-center gap-1.5 rounded-full px-3 text-[11px] font-semibold ${
                   item === category
                     ? "bg-[var(--primary)] text-white"
                     : "bg-[var(--muted)] text-foreground"
