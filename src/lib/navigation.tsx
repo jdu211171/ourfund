@@ -89,6 +89,7 @@ export type ScreenName =
   | "scan_receipt";
 
 export type BudgetMode = "personal" | "family";
+export type SalaryCalculationPeriod = "monthly" | "annual";
 export type ReportPeriod = "Week" | "Month" | "Year";
 export type CurrencyCode =
   | "UZS"
@@ -293,8 +294,16 @@ export interface CurrencySettings {
   family: CurrencyCode;
 }
 
+export interface SalaryCalculatorSettings {
+  country: string;
+  period: SalaryCalculationPeriod;
+  amount: number | null;
+  insurance: Record<string, boolean>;
+}
+
 export interface AppSeed {
   budgetMode: BudgetMode;
+  salaryCalculatorSettings: SalaryCalculatorSettings;
   reportPeriod: ReportPeriod;
   profile: Profile;
   household: Household | null;
@@ -333,6 +342,8 @@ interface NavigationContextType {
   logout: () => Promise<void>;
   budgetMode: BudgetMode;
   setBudgetMode: (mode: BudgetMode) => void;
+  salaryCalculatorSettings: SalaryCalculatorSettings;
+  setSalaryCalculatorSettings: (updates: Partial<SalaryCalculatorSettings>) => void;
   reportPeriod: ReportPeriod;
   setReportPeriod: (period: ReportPeriod) => void;
   profile: Profile;
@@ -647,6 +658,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
 
   const initialSeed = useMemo(() => getInitialSeed(), []);
   const [currentScreen, setCurrentScreen] = useState<ScreenName>("onboarding");
+  const [salaryCalculatorSettings, setSalaryCalculatorSettingsState] = useState<SalaryCalculatorSettings>(initialSeed.salaryCalculatorSettings);
   const [history, setHistory] = useState<ScreenName[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthReady, setIsAuthReady] = useState(false);
@@ -711,6 +723,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
 
   const applySeed = useCallback((seed: AppSeed) => {
     setBudgetModeState(seed.budgetMode);
+    setSalaryCalculatorSettingsState(seed.salaryCalculatorSettings);
     setReportPeriodState(seed.reportPeriod);
     setProfile(seed.profile);
     setHousehold(seed.household);
@@ -768,6 +781,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
 
     persistAppSeed({
       budgetMode,
+      salaryCalculatorSettings,
       reportPeriod,
       profile,
       household,
@@ -795,6 +809,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     });
   }, [
     budgetMode,
+    salaryCalculatorSettings,
     reportPeriod,
     profile,
     household,
@@ -820,6 +835,31 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     faceIdEnabled,
     compactMoneyMode,
   ]);
+
+  const setSalaryCalculatorSettings = useCallback((updates: Partial<SalaryCalculatorSettings>) => {
+    setSalaryCalculatorSettingsState((prev) => {
+      const nextAmount = 
+        updates.amount === undefined 
+          ? prev.amount
+            : updates.amount === null
+              ? null
+              : typeof updates.amount === "number" && Number.isFinite(updates.amount)
+                ? Math.max(0, updates.amount)
+                : prev.amount;
+              
+    return {
+      ...prev,
+      ...updates,
+      country:
+        typeof updates.country === "string" && updates.country.trim()
+          ? updates.country
+          : prev.country,
+      period: updates.period ?? prev.period,
+      amount: nextAmount,
+      insurance: updates.insurance ? { ...updates.insurance } : prev.insurance,
+    }
+  });
+}, []);
 
   const setBudgetMode = useCallback((mode: BudgetMode) => {
     setBudgetModeState(mode);
@@ -2243,6 +2283,8 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         setSignupHouseholdMode,
         logout,
         budgetMode,
+        salaryCalculatorSettings,
+        setSalaryCalculatorSettings,
         setBudgetMode,
         reportPeriod,
         setReportPeriod,

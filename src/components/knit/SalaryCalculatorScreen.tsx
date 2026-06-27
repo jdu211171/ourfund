@@ -12,19 +12,23 @@ import {
   type Period,
 } from "@/lib/salary/tax-engines";
 
+type InsuranceSelection = ReturnType<typeof defaultInsurance>;
+
 export function SalaryCalculatorScreen() {
-  const { goBack } = useAppNavigation();
-  const [country, setCountry] = useState("JP");
-  const [period, setPeriod] = useState<Period>("monthly");
-  const engine = getEngine(country);
-  const [amount, setAmount] = useState<number>(Math.round(engine.defaultGrossAnnual / 12));
-  // Raw text the user is typing, kept SEPARATE from the numeric `amount`.
-  // This is the actual fix: the <input> below is bound to this string, so it
-  // can be genuinely empty while editing instead of snapping back to "0".
-  const [amountInput, setAmountInput] = useState<string>(
-    String(Math.round(engine.defaultGrossAnnual / 12)),
+  const { goBack, salaryCalculatorSettings, setSalaryCalculatorSettings } = useAppNavigation();
+  const requestedCountry = salaryCalculatorSettings.country || "JP";
+  const engine = getEngine(requestedCountry);
+  const country = engine.code;
+  const period = salaryCalculatorSettings.period as Period;
+  const defaultAmount = Math.round(
+    period === "monthly" ? engine.defaultGrossAnnual / 12 : engine.defaultGrossAnnual,
   );
-  const [insurance, setInsurance] = useState(defaultInsurance(engine));
+  const amount = salaryCalculatorSettings.amount ?? defaultAmount;
+  const insurance = useMemo<InsuranceSelection>(() => ({
+    ...defaultInsurance(engine),
+    ...salaryCalculatorSettings.insurance,
+  }) as InsuranceSelection, [engine, salaryCalculatorSettings.insurance]);
+  const [amountInput, setAmountInput] = useState<string>(() => String(amount));
   const [pickerOpen, setPickerOpen] = useState(false);
 
   const result = useMemo(
@@ -41,20 +45,30 @@ export function SalaryCalculatorScreen() {
 
   const handleCountry = (code: string) => {
     const e = getEngine(code);
-    setCountry(code);
-    setInsurance(defaultInsurance(e));
     const next = period === "monthly" ? Math.round(e.defaultGrossAnnual / 12) : e.defaultGrossAnnual;
-    setAmount(next);
+    setSalaryCalculatorSettings({
+      country: e.code,
+      amount: next,
+      insurance: defaultInsurance(e),
+    });
     setAmountInput(String(next));
     setPickerOpen(false);
   };
 
-  const toggleIns = (k: InsuranceKey) => setInsurance((s) => ({ ...s, [k]: !s[k] }));
+  const toggleIns = (k: InsuranceKey) => {
+    setSalaryCalculatorSettings({
+      insurance: {...insurance, [k]: !insurance[k] },
+    });
+  };
+
+  const handlePeriod = (nextPeriod: Period) => {
+    setSalaryCalculatorSettings({period: nextPeriod});
+  }
 
   const handleAmountChange = (raw: string) => {
     const cleaned = raw.replace(/[^0-9]/g, "");
     setAmountInput(cleaned);
-    setAmount(cleaned === "" ? 0 : Math.max(0, Number(cleaned)));
+    setSalaryCalculatorSettings({ amount: cleaned === "" ? 0 : Math.max(0, Number(cleaned)) });
   };
 
   const handleAmountBlur = () => {
@@ -141,7 +155,7 @@ export function SalaryCalculatorScreen() {
               {(["monthly", "annual"] as Period[]).map((p) => (
                 <button
                   key={p}
-                  onClick={() => setPeriod(p)}
+                  onClick={() => handlePeriod(p)}
                   className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider transition ${
                     period === p ? "bg-[var(--primary)] text-white" : "text-muted-foreground"
                   }`}
