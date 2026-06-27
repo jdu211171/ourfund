@@ -286,7 +286,7 @@ export function WalletScreen() {
                         <GoalIcon name={normalizeGoalIconName(goal.icon)} className="h-4.5 w-4.5" />
                       </span>
                       <div className="flex-1 leading-tight min-w-0">
-                        <p className="text-[12px] font-bold text-foreground truncate">{goal.name}</p>
+                        <p className="text-[12px] font-bold text-foreground truncate">{goal.title}</p>
                         <div className="flex items-center gap-1.5 mt-0.5">
                           <div className="h-1 w-12 bg-slate-200 rounded-full overflow-hidden">
                             <div className="h-full bg-[var(--primary)]" style={{ width: `${pct}%` }} />

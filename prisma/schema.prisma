@@ -158,6 +158,7 @@ model ScheduleItem {
 model LoanEntry {
   id                   String   @id @default(uuid())
   householdId          String
+  ownerMemberId        String   @default("")
   counterpartyMemberId String?
   counterpartyName     String
   note                 String

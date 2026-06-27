@@ -109,6 +109,7 @@ export function LendBorrowScreen() {
     const cpName = selectedMember?.name ?? (counterpartyName.trim() || "Family member");
 
     addLoanEntry({
+      ownerMemberId: currentMemberId ?? members[0]?.id ?? "me",
       counterpartyMemberId: selectedMember?.id ?? null,
       counterpartyName: cpName,
       note: note.trim() || (direction === "lent" ? "Money lent" : "Money borrowed"),

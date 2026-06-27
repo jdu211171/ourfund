@@ -184,7 +184,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
         nodesToRestore.current.forEach((node) => {
           const original = originalValues.current.get(node);
           if (original !== undefined) {
-            if ("nodeValue" in node) {
+            if (node instanceof Text) {
               node.nodeValue = original;
             } else if (node instanceof HTMLElement && node.hasAttribute("placeholder")) {
               node.setAttribute("placeholder", original);
