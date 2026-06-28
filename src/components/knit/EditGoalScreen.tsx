@@ -31,7 +31,8 @@ export function EditGoalScreen() {
   const goal = goals.find((g) => g.id === selectedGoalId) ?? goals[0];
   const [amount, setAmount] = useState("0");
   const [title, setTitle] = useState("");
-  const [targetDate, setTargetDate] = useState(""); // "YYYY-MM" or "" for no deadline
+  const [targetYear, setTargetYear] = useState("");
+  const [targetMonth, setTargetMonth] = useState("");
   const [contributors, setContributors] = useState<string[]>([]);
   const [iconQuery, setIconQuery] = useState("");
   const [selectedIconName, setSelectedIconName] = useState(defaultGoalIconName);
@@ -53,9 +54,10 @@ export function EditGoalScreen() {
   useEffect(() => {
     if (!goal) return;
     setTitle(goal.title);
-    // Normalize legacy free-text dates to empty (no deadline) if not parseable
-    const isIso = /^\d{4}-\d{2}$/.test(goal.targetDate);
-    setTargetDate(isIso ? goal.targetDate : "");
+    // Normalize legacy free-text dates to empty (no deadline) if not parseable.
+    const targetDateMatch = goal.targetDate?.match(/^(\d{4})-(\d{2})$/);
+    setTargetYear(targetDateMatch?.[1] ?? "");
+    setTargetMonth(targetDateMatch ? String(Number(targetDateMatch[2])) : "");
     setContributors(goal.contributors ?? []);
     setAmount(String(Math.round(usdToCurrencyValue(goal.targetUsd, currency))));
     setSelectedIconName(normalizeGoalIconName(goal.icon));
@@ -175,22 +177,12 @@ export function EditGoalScreen() {
               "Dec",
             ];
             const years = Array.from({ length: 10 }, (_, i) => currentYear + i);
-            const selectedYear = targetDate ? parseInt(targetDate.split("-")[0], 10) : "";
-            const selectedMonth = targetDate ? parseInt(targetDate.split("-")[1], 10) : "";
-
-            const update = (year: string | number, month: string | number) => {
-              if (!year || !month) {
-                setTargetDate("");
-                return;
-              }
-              setTargetDate(`${year}-${String(month).padStart(2, "0")}`);
-            };
-
+            const selectedYear = targetYear ? Number(targetYear) : null;
             return (
               <div className="mt-2 flex items-center justify-center gap-2">
                 <select
-                  value={selectedMonth}
-                  onChange={(e) => update(selectedYear || "", e.target.value)}
+                  value={targetMonth}
+                  onChange={(e) => setTargetMonth(e.target.value)}
                   className="rounded-full border border-[var(--muted)] bg-white px-3 py-1.5 text-[11px] font-semibold text-foreground outline-none focus:ring-1 focus:ring-[var(--primary)] cursor-pointer"
                 >
                   <option value="">Month</option>
@@ -205,8 +197,18 @@ export function EditGoalScreen() {
                   })}
                 </select>
                 <select
-                  value={selectedYear}
-                  onChange={(e) => update(e.target.value, selectedMonth || "")}
+                  value={targetYear}
+                  onChange={(e) => {
+                    const nextYear = e.target.value;
+                    setTargetYear(nextYear);
+                    if (
+                      Number(nextYear) === currentYear &&
+                      targetMonth &&
+                      Number(targetMonth) < currentMonth + 1
+                    ) {
+                      setTargetMonth("");
+                    }
+                  }}
                   className="rounded-full border border-[var(--muted)] bg-white px-3 py-1.5 text-[11px] font-semibold text-foreground outline-none focus:ring-1 focus:ring-[var(--primary)] cursor-pointer"
                 >
                   <option value="">Year</option>
@@ -216,10 +218,13 @@ export function EditGoalScreen() {
                     </option>
                   ))}
                 </select>
-                {targetDate && (
+                {(targetMonth || targetYear) && (
                   <button
                     type="button"
-                    onClick={() => setTargetDate("")}
+                    onClick={() => {
+                      setTargetMonth("");
+                      setTargetYear("");
+                    }}
                     className="text-[10px] font-semibold text-muted-foreground underline"
                   >
                     Clear
@@ -317,10 +322,14 @@ export function EditGoalScreen() {
 
         <button
           onClick={() => {
+            const nextTargetDate =
+              targetYear && targetMonth
+                ? `${targetYear}-${String(targetMonth).padStart(2, "0")}`
+                : "No deadline";
             updateGoal(goal.id, {
               title: title.trim() || "New goal",
               targetUsd,
-              targetDate: targetDate || "No deadline",
+              targetDate: nextTargetDate,
               icon: normalizedIconName,
               contributors,
             });

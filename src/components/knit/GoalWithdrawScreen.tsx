@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useAppNavigation } from "@/lib/navigation";
 import { OptionSelect } from "./OptionSelect";
 import { currencyAdornment, currencyValueToUsd, formatUsdAsCurrency } from "@/lib/currency";
+import { GoalIcon, normalizeGoalIconName } from "./goalIconOptions";
 
 export function GoalWithdrawScreen() {
   const { navigate, goBack, currency, goals, selectedGoalId, activeWallets, withdrawFromGoal } =
@@ -14,6 +15,7 @@ export function GoalWithdrawScreen() {
   const wallet = activeWallets.find((item) => item.id === selectedWalletId) ?? activeWallets[0];
   const amountUsd = currencyValueToUsd(parseFloat(amount || "0"), currency);
   const { prefix, suffix } = currencyAdornment(currency);
+  const goalIconName = normalizeGoalIconName(goal?.icon ?? "plane");
 
   if (!goal) {
     return (
@@ -66,7 +68,7 @@ export function GoalWithdrawScreen() {
               background: "linear-gradient(135deg, oklch(0.65 0.22 200), oklch(0.45 0.24 200))",
             }}
           >
-            <Plane className="h-5 w-5" strokeWidth={2.25} />
+            <GoalIcon name={goalIconName} className="h-6 w-6" />
           </div>
           <div className="flex-1 leading-tight">
             <p className="text-[12px] font-bold text-foreground">{goal.title}</p>

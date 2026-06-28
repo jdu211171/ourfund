@@ -569,12 +569,28 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     return (wallet?.startingBalanceUsd ?? 0) + txTotal;
   };
 
+  const isGoalLedgerTransaction = (transaction: Pick<Transaction, "category" | "name">) => 
+    `${transaction.category} ${transaction.name}`.toLowerCase().includes("goal");
+
   const incomeUsd = currentMonthTransactions
-    .filter((t) => t.usd > 0)
+    .filter((t) => t.usd > 0 && !isGoalLedgerTransaction(t))
     .reduce((sum, t) => sum + t.usd, 0);
-  const spentUsd = Math.abs(
-    currentMonthTransactions.filter((t) => t.usd < 0).reduce((sum, t) => sum + t.usd, 0),
+
+  const nonGoalSpentUsd = Math.abs(
+    currentMonthTransactions
+      .filter((t) => t.usd < 0 && !isGoalLedgerTransaction(t))
+      .reduce((sum, t) => sum + t.usd, 0),
   );
+
+  const goalSpentUsd = Math.max(
+    0,
+    -currentMonthTransactions
+      .filter(isGoalLedgerTransaction)
+      .reduce((sum, t) => sum + t.usd, 0),
+  );
+
+  const spentUsd = nonGoalSpentUsd + goalSpentUsd;
+
   const balanceUsd = activeWallets.reduce((sum, wallet) => sum + walletBalanceUsd(wallet.label), 0);
 
   const createBaseWallets = (
@@ -1101,15 +1117,14 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
 
   const categorySpentUsd = (label: string) => {
     const aliases = categoryAliases(label);
-    return Math.abs(
-      currentMonthTransactions
-        .filter(
-          (t) =>
-            t.usd < 0 &&
-            aliases.some((alias) => `${t.category} ${t.name}`.toLowerCase().includes(alias)),
-        )
-        .reduce((sum, t) => sum + t.usd, 0),
-    );
+    const matchingTransactions = currentMonthTransactions.filter((transaction) =>
+      aliases.some((alias) => `${transaction.category} ${transaction.name}`.toLowerCase().includes(alias)),
+    );  
+    const netSpentUsd = matchingTransactions.reduce((sum, transaction) => {
+      if (transaction.usd < 0) return sum + transaction.usd;
+      return isGoalLedgerTransaction(transaction) ? sum + transaction.usd : sum;
+    }, 0);
+    return Math.max(0, -netSpentUsd);
   };
 
   const addGoal = (goal: Omit<Goal, "id" | "savedUsd" | "history"> & { savedUsd?: number }) => {
@@ -1209,20 +1224,35 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     if (!goal) return;
     const withdrawalUsd = Math.min(amountUsd, goal.savedUsd);
     if (withdrawalUsd <= 0) return;
+    const withdrawerName = firstName(profile.name);
+    const selectedWallet = activeWallets.find((w) => w.label === wallet);
+    const transaction = addTransaction({
+      name: `Goal Withdrawal: ${goal.title}`,
+      who: withdrawerName,
+      usd: withdrawalUsd,
+      category: "Goals",
+      wallet,
+      date: formatISODate(new Date()),
+    });
     const withdrawal = {
-      id: makeId("withdraw"),
-      who: firstName(profile.name),
-      initials: profile.initials,
-      date: "today",
+      id: transaction.id,
+      who: withdrawerName,
+      initials: profile.initials || initialsFor(withdrawerName),
+      date: "Just now",
       amountUsd: -withdrawalUsd,
+      transactionId: transaction.id,
+      memberId: currentMemberId ?? undefined,
+      walletId: selectedWallet?.id,
     };
+    const updatedSaved = Math.max(0, goal.savedUsd - withdrawalUsd);
+    const updatedHistory = [withdrawal, ...goal.history];
     setGoals((prev) =>
       prev.map((g) =>
         g.id === goalId
           ? {
               ...g,
-              savedUsd: Math.max(0, g.savedUsd - withdrawalUsd),
-              history: [withdrawal, ...g.history],
+              savedUsd: updatedSaved,
+              history: updatedHistory,
             }
           : g,
       ),
@@ -1232,19 +1262,11 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         type: "updateGoalSavings",
         data: {
           id: goalId,
-          savedUsd: Math.max(0, goal.savedUsd - withdrawalUsd),
-          history: [withdrawal, ...goal.history],
+          savedUsd: updatedSaved,
+          history: updatedHistory,
         },
       },
     }).catch(console.error);
-    addTransaction({
-      name: `Goal withdrawal · ${goal.title}`,
-      who: `${firstName(profile.name)} · today`,
-      usd: withdrawalUsd,
-      category: "Goals",
-      wallet,
-      date: "today",
-    });
   };
 
   const inviteMember = (role: MemberRole, email?: string) => {
