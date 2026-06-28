@@ -188,7 +188,7 @@ export function LendBorrowScreen() {
       status: updatedStatus,
     });
 
-    const isIncrease = payUsd > 0;
+    const isIncrease = payUsd < 0;
 
     if (paymentLoan.direction === "lent") {
       addTransaction({
