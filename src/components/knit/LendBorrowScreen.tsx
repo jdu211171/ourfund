@@ -23,6 +23,19 @@ import { OptionSelect } from "./OptionSelect";
 
 const tabs = ["All", "Lent", "Borrowed"] as const;
 
+function sanitizeSignedMoneyInput(value: string) {
+  const isNegative = value.trim().startsWith("-");
+  const unsigned = value.replace(/[^0-9.]/g, "");
+  const [whole, ...fractionParts] = unsigned.split(".");
+  const normalized = `${whole}${fractionParts.length > 0 ? `.${fractionParts.join("")}` : ""}`;
+  return `${isNegative ? "-" : ""}${normalized}`;
+}
+
+function parseSignedMoneyInput(value: string) {
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 export function LendBorrowScreen() {
   const {
     goBack,
@@ -62,6 +75,8 @@ export function LendBorrowScreen() {
   const selectedMember = otherMembers.find((member) => member.id === memberId);
   const amountUsd = currencyValueToUsd(parseFloat(amount || "0"), currency);
   const { prefix, suffix } = currencyAdornment(currency);
+  const paymentAmountValue = parseSignedMoneyInput(payAmount);
+  const canRecordPayment = paymentAmountValue !== 0;
 
   // Select mode
   const [selectMode, setSelectMode] = useState(false);
@@ -151,25 +166,35 @@ export function LendBorrowScreen() {
 
   const savePayment = () => {
     if (!paymentLoan) return;
-    const payUsd = currencyValueToUsd(parseFloat(payAmount || "0"), currency);
-    if (payUsd <= 0) return;
+    const paymentValue = parseSignedMoneyInput(payAmount);
+    if (paymentValue === 0) return;
+    const payUsd = currencyValueToUsd(Math.abs(paymentValue), currency) * Math.sign(paymentValue);
 
     const wallet = activeWallets.find((w) => w.id === payWalletId) ?? activeWallets[0];
     const walletLabel = wallet?.label ?? "Cash";
 
     const newPaidUsd = Math.min(paymentLoan.amountUsd, paymentLoan.paidAmountUsd + payUsd);
-    const remainingUsd = Math.max(0, paymentLoan.amountUsd - newPaidUsd);
-    const updatedStatus = remainingUsd <= 0.01 ? "paid" : paymentLoan.status;
+    const remainingUsd = paymentLoan.amountUsd - newPaidUsd;
+    const updatedStatus = 
+      remainingUsd <= 0.01 ? "paid" 
+        : paymentLoan.status === "paid" 
+          ? "pending" 
+            : paymentLoan.status;
 
-    // Keep original amountUsd unchanged — only update paidAmountUsd
+    // Keep original amountUsd unchanged. Negative payUsd will reduce paidAmountUsd,
+    // which increases remaining balance: 1000 - (-500) = 1500.
     updateLoanEntry(paymentLoan.id, {
       paidAmountUsd: newPaidUsd,
       status: updatedStatus,
     });
 
+    const isIncrease = payUsd > 0;
+
     if (paymentLoan.direction === "lent") {
       addTransaction({
-        name: `Repayment from ${paymentLoan.counterpartyName}`,
+        name: isIncrease 
+          ? `Additional lent to ${paymentLoan.counterpartyName}`
+          : `Repayment from ${paymentLoan.counterpartyName}`,
         who: `${profile?.name || "Me"} · today`,
         usd: payUsd,
         category: "Lend/Borrow",
@@ -182,7 +207,9 @@ export function LendBorrowScreen() {
           wallets.find((w) => w.members.includes(paymentLoan.counterpartyMemberId!)) || wallets[0];
         const counterpartyMember = members.find((m) => m.id === paymentLoan.counterpartyMemberId);
         addTransaction({
-          name: `Repay to ${profile?.name || "Me"}`,
+          name: isIncrease
+            ? `Additional borrowed from ${profile?.name || "Me"}`
+            : `Repayment to ${profile?.name || "Me"}`,
           who: `${counterpartyMember?.name || "Family member"} · today`,
           usd: -payUsd,
           category: "Lend/Borrow",
@@ -192,7 +219,9 @@ export function LendBorrowScreen() {
       }
     } else {
       addTransaction({
-        name: `Repay to ${paymentLoan.counterpartyName}`,
+        name: isIncrease
+          ? `Additional borrowed from ${paymentLoan.counterpartyName}`
+          : `Repayment to ${paymentLoan.counterpartyName}`,
         who: `${profile?.name || "Me"} · today`,
         usd: -payUsd,
         category: "Lend/Borrow",
@@ -205,7 +234,9 @@ export function LendBorrowScreen() {
           wallets.find((w) => w.members.includes(paymentLoan.counterpartyMemberId!)) || wallets[0];
         const counterpartyMember = members.find((m) => m.id === paymentLoan.counterpartyMemberId);
         addTransaction({
-          name: `Repayment from ${profile?.name || "Me"}`,
+          name: isIncrease
+            ? `Additional lent to ${profile?.name || "Me"}`
+            : `Repayment from ${profile?.name || "Me"}`,
           who: `${counterpartyMember?.name || "Family member"} · today`,
           usd: payUsd,
           category: "Lend/Borrow",
@@ -330,14 +361,17 @@ export function LendBorrowScreen() {
               )}
               <input
                 value={payAmount}
-                onChange={(event) => setPayAmount(event.target.value.replace(/[^0-9.]/g, ""))}
+                onChange={(event) => setPayAmount(sanitizeSignedMoneyInput(event.target.value))}
                 className="min-w-0 flex-1 bg-transparent text-[16px] font-extrabold outline-none"
-                placeholder="0"
+                placeholder="0 or -500"
               />
               {suffix && (
                 <span className="text-[11px] font-bold text-muted-foreground">{suffix}</span>
               )}
             </div>
+            <p className="mt-1 px-1 text-[9px] font-medium text-muted-foreground">
+              Use a negative value to reduce the paid amount (e.g., if you accidentally recorded too much, or if the counterparty returned some money).
+            </p>
 
             <div className="mt-3 flex gap-2">
               <button
@@ -350,7 +384,7 @@ export function LendBorrowScreen() {
               <button
                 type="button"
                 onClick={savePayment}
-                disabled={parseFloat(payAmount || "0") <= 0}
+                disabled={!canRecordPayment}
                 className="flex-1 rounded-full bg-[var(--primary)] py-2 text-[12px] font-semibold text-white disabled:opacity-50 cursor-pointer"
               >
                 Record
