@@ -56,7 +56,7 @@ export function formatCurrencyValue(
 ) {
   const meta = currencyMeta[currency];
   const signed = options.signed ?? false;
-  const amount = Number.isFinite(value) ? value : 0;
+  const amount = Number.isFinite(value) ? (Math.abs(value) < 0.000001 ? 0 : value) : 0;
   const abs = Math.abs(amount);
   const useCompact = compactMoneyMode && abs >= 1_000;
   const digits = options.maximumFractionDigits ?? currencyFractionDigits(currency);

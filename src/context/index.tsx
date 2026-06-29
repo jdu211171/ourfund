@@ -566,7 +566,8 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     const txTotal = transactions
       .filter((t) => t.wallet === walletLabel)
       .reduce((sum, t) => sum + t.usd, 0);
-    return (wallet?.startingBalanceUsd ?? 0) + txTotal;
+    const balance = (wallet?.startingBalanceUsd ?? 0) + txTotal;
+    return Math.abs(balance) < 0.000001 ? 0 : balance;
   };
 
   const isGoalLedgerTransaction = (transaction: Pick<Transaction, "category" | "name">) => 

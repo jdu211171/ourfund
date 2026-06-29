@@ -45,6 +45,7 @@ export function WalletDetailScreen() {
 
   // Delete confirmation state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   useEffect(() => {
     if (!wallet) return;
@@ -99,6 +100,7 @@ export function WalletDetailScreen() {
       wallet: wallet.label,
       date: "today",
     });
+    setShowResetConfirm(false);
   };
 
   const handleAdjustBalance = () => {
@@ -372,12 +374,35 @@ export function WalletDetailScreen() {
                 </div>
               )}
 
-              <button
-                onClick={handleResetBalance}
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-white py-3 text-[12px] font-bold text-foreground shadow-[var(--shadow-soft)] border border-slate-100/50 hover:bg-slate-50 transition-colors cursor-pointer"
-              >
-                Reset balance to 0
-              </button>
+              {showResetConfirm ? (
+                <div className="mt-3 rounded-2xl bg-[oklch(0.97_0.02_25)] p-4 border border-[var(--danger)]/20 animate-in zoom-in-95 duration-200">
+                  <h3 className="text-[13px] font-bold text-[var(--danger)] mb-1">Reset wallet balance?</h3>
+                  <p className="text-[11px] text-muted-foreground mb-4">
+                    This will add a balancing transaction so the wallet balance becomes 0. It cannot be undone.
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowResetConfirm(false)}
+                      className="flex-1 rounded-xl bg-white border border-slate-200 py-2 text-[12px] font-semibold text-foreground cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleResetBalance}
+                      className="flex-1 rounded-xl bg-[var(--danger)] py-2 text-[12px] font-semibold text-white cursor-pointer hover:opacity-90 transition-colors"
+                    >
+                      Reset to 0
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowResetConfirm(true)}
+                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-white py-3 text-[12px] font-bold text-foreground shadow-[var(--shadow-soft)] border border-slate-100/50 hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  Reset balance to 0
+                </button>
+              )}
 
               {/* Deletion block */}
               {showDeleteConfirm ? (
