@@ -88,6 +88,7 @@ export function GoalDetailScreen() {
     deleteContributionFromGoal,
     deleteContributionsFromGoal,
     activeWallets,
+    walletBalanceUsd,
   } = useAppNavigation();
   const goal = goals.find((g) => g.id === selectedGoalId) ?? goals[0];
   const [contribution, setContribution] = useState("0");
@@ -385,7 +386,7 @@ export function GoalDetailScreen() {
               options={activeWallets.map((wallet) => ({
                 value: wallet.id,
                 label: wallet.label,
-                description: wallet.sub,
+                description: `${wallet.sub} · ${formatUsdAsCurrency(walletBalanceUsd(wallet.label), currency)}`,
               }))}
               onChange={setSelectedWalletId}
               emptyLabel="No wallet available"
