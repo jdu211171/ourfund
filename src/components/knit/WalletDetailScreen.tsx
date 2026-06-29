@@ -1,8 +1,8 @@
 import { ArrowLeft, Users, Pencil, Plus, Minus, Trash2, DollarSign, Lock, PiggyBank, Check } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PhoneFrame } from "./PhoneFrame";
 import { Money } from "./Money";
-import { useAppNavigation } from "@/lib/navigation";
+import { useAppNavigation, type CurrencyCode } from "@/lib/navigation";
 import { currencyFractionDigits, currencyValueToUsd, formatUsdAsCurrency, usdToCurrencyValue } from "@/lib/currency";
 
 const COLOR_OPTIONS = [
@@ -28,13 +28,14 @@ export function WalletDetailScreen() {
 
   const wallet = activeWallets.find((w) => w.id === selectedDetailWalletId);
   const walletCurrency = wallet?.currency ?? currency;
-  const formatBalanceInput = (usd: number) =>
-    usdToCurrencyValue(usd, walletCurrency).toFixed(currencyFractionDigits(walletCurrency));
+  const formatBalanceInput = (usd: number, code: CurrencyCode = walletCurrency) =>
+    usdToCurrencyValue(usd, code).toFixed(currencyFractionDigits(code));
 
   // Editing state
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(wallet?.label ?? "");
   const [editColor, setEditColor] = useState(wallet?.color ?? COLOR_OPTIONS[0].value);
+  const [editCurrency, setEditCurrency] = useState(wallet?.currency ?? currency);
   const [editStartingBalance, setEditStartingBalance] = useState(formatBalanceInput(wallet?.startingBalanceUsd ?? 0));
 
   // Adjust balance state
@@ -44,6 +45,19 @@ export function WalletDetailScreen() {
 
   // Delete confirmation state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  useEffect(() => {
+    if (!wallet) return;
+    setEditName(wallet.label);
+    setEditColor(wallet.color);
+    setEditCurrency(wallet.currency);
+    setEditStartingBalance(formatBalanceInput(wallet.startingBalanceUsd ?? 0, wallet.currency));
+  }, [wallet?.id]);
+
+  useEffect(() => {
+    if (!wallet) return;
+    setEditStartingBalance(formatBalanceInput(wallet.startingBalanceUsd ?? 0, editCurrency));
+  }, [editCurrency]);
 
   if (!wallet) {
     return (
@@ -69,9 +83,22 @@ export function WalletDetailScreen() {
     updateWallet(wallet.id, {
       label: editName.trim(),
       color: editColor,
-      startingBalanceUsd: currencyValueToUsd(balanceNum, wallet.currency),
+      currency: editCurrency,
+      startingBalanceUsd: currencyValueToUsd(balanceNum, editCurrency),
     });
     setIsEditing(false);
+  };
+
+  const handleResetBalance = () => {
+    if (Math.abs(currentBalance) < 0.000001) return;
+    addTransaction({
+      name: "Balance reset",
+      who: "Wallet edit",
+      usd: -currentBalance,
+      category: "Transfer",
+      wallet: wallet.label,
+      date: "today",
+    });
   };
 
   const handleAdjustBalance = () => {
@@ -186,7 +213,7 @@ export function WalletDetailScreen() {
 
                 <div>
                   <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold block mb-1">
-                    Starting Balance ({wallet.currency})
+                    Starting Balance ({editCurrency})
                   </label>
                   <input
                     type="number"
@@ -196,6 +223,28 @@ export function WalletDetailScreen() {
                     placeholder="0.00"
                     step="any"
                   />
+                </div>
+
+                <div>
+                  <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold block mb-2">
+                    Currency
+                  </label>
+                  <div className="grid grid-cols-5 gap-2">
+                    {["UZS", "USD", "JPY", "EUR", "GBP"].map((code) => (
+                      <button
+                        key={code}
+                        type="button"
+                        onClick={() => setEditCurrency(code as typeof editCurrency)}
+                        className={`rounded-full py-2 text-[11px] font-semibold ${
+                          code === editCurrency
+                            ? "bg-[var(--primary)] text-white"
+                            : "bg-[var(--muted)] text-foreground"
+                        }`}
+                      >
+                        {code}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <div>
@@ -322,6 +371,13 @@ export function WalletDetailScreen() {
                   </button>
                 </div>
               )}
+
+              <button
+                onClick={handleResetBalance}
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-white py-3 text-[12px] font-bold text-foreground shadow-[var(--shadow-soft)] border border-slate-100/50 hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                Reset balance to 0
+              </button>
 
               {/* Deletion block */}
               {showDeleteConfirm ? (

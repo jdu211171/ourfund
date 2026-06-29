@@ -103,7 +103,7 @@ export function CreateWalletScreen() {
         <p className="mt-5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
           Access
         </p>
-        <div className="mt-2 flex-1 space-y-2 overflow-hidden">
+        <div className="mt-2 flex-1 space-y-2 overflow-y-auto pr-1 min-h-0">
           {members.map((m) => {
             const selected = memberIds.includes(m.id);
             return (
