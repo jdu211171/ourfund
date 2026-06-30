@@ -1,7 +1,7 @@
-import { BudgetMode, ReportPeriod, TxnKind } from '../../types/core';
-import { HistoryFilters } from '../../types/filters';
-import { Goal } from '../../types/goal';
-import { defaultHistoryFilters } from '../../lib/seed';
+import { BudgetMode, ReportPeriod, TxnKind } from "../../types/core";
+import { HistoryFilters } from "../../types/filters";
+import { Goal } from "../../types/goal";
+import { defaultHistoryFilters } from "../../lib/seed";
 
 export function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)

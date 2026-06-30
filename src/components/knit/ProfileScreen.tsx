@@ -137,7 +137,10 @@ export function ProfileScreen() {
                         <p className="text-[13px] font-bold text-foreground flex items-center gap-2">
                           {m.name}
                           {m.admin && (
-                            <Crown className="h-3.5 w-3.5 text-[oklch(0.75_0.15_85)]" strokeWidth={2.25} />
+                            <Crown
+                              className="h-3.5 w-3.5 text-[oklch(0.75_0.15_85)]"
+                              strokeWidth={2.25}
+                            />
                           )}
                         </p>
                         <p className="text-[11px] text-muted-foreground">
@@ -176,7 +179,10 @@ export function ProfileScreen() {
                 })}
                 {members.length === 0 && (
                   <div className="px-6 py-10 text-center">
-                    <Users className="h-8 w-8 text-muted-foreground mx-auto mb-3" strokeWidth={1.5} />
+                    <Users
+                      className="h-8 w-8 text-muted-foreground mx-auto mb-3"
+                      strokeWidth={1.5}
+                    />
                     <p className="text-[13px] font-bold text-foreground">No members yet</p>
                     <p className="mt-1 text-[12px] text-muted-foreground">
                       Create a household or join one with an invite code.

@@ -1,25 +1,25 @@
-import { AppSeed, SalaryCalculatorSettings } from '../../types';
-import { defaultSalaryCalculatorSettings, emptySeed, cloneSeed } from './defaults';
+import { AppSeed, SalaryCalculatorSettings } from "../../types";
+import { defaultSalaryCalculatorSettings, emptySeed, cloneSeed } from "./defaults";
 
 export function normalizeSalaryCalculatorSettings(value: unknown): SalaryCalculatorSettings {
-  const settings = 
+  const settings =
     value && typeof value === "object" && !Array.isArray(value)
-    ? (value as Partial<SalaryCalculatorSettings>)
-    : {};
-  
+      ? (value as Partial<SalaryCalculatorSettings>)
+      : {};
+
   const rawInsurance = settings.insurance;
-  const insurance = 
+  const insurance =
     rawInsurance && typeof rawInsurance === "object" && !Array.isArray(rawInsurance)
-    ? (Object.fromEntries(
-        Object.entries(rawInsurance).filter(([_, enabled]) => typeof enabled === "boolean"),
-      ) as Record<string, boolean>)
-    : {};
-  
+      ? (Object.fromEntries(
+          Object.entries(rawInsurance).filter(([_, enabled]) => typeof enabled === "boolean"),
+        ) as Record<string, boolean>)
+      : {};
+
   const amount =
     typeof settings.amount === "number" && Number.isFinite(settings.amount)
       ? Math.max(0, settings.amount)
       : null;
-      
+
   return {
     ...defaultSalaryCalculatorSettings,
     country:

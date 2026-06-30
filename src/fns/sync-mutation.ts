@@ -1,6 +1,6 @@
-import { createServerFn } from '@tanstack/react-start';
-import { getSessionUser } from '@/lib/auth-server';
-import * as mutations from '@/server/mutations';
+import { createServerFn } from "@tanstack/react-start";
+import { getSessionUser } from "@/lib/auth-server";
+import * as mutations from "@/server/mutations";
 
 export const syncMutationServerFn = createServerFn({ method: "POST" })
   .inputValidator((d: { type: string; data: any }) => d)

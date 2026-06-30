@@ -1,4 +1,4 @@
-import { CurrencyCode } from './core';
+import { CurrencyCode } from "./core";
 
 export interface Profile {
   name: string;

@@ -1,4 +1,4 @@
-import { SalaryCalculationPeriod } from './core';
+import { SalaryCalculationPeriod } from "./core";
 
 export interface SalaryCalculatorSettings {
   country: string;

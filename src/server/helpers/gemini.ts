@@ -1,4 +1,5 @@
-export const TEMPORARY_RECEIPT_SCAN_ERROR = "AI receipt scanning is busy right now. We tried another model, but the service is still overloaded. Please try again shortly.";
+export const TEMPORARY_RECEIPT_SCAN_ERROR =
+  "AI receipt scanning is busy right now. We tried another model, but the service is still overloaded. Please try again shortly.";
 
 export const DEFAULT_GEMINI_RECEIPT_SCAN_FALLBACK_MODELS = [
   "gemini-3.5-flash-lite",

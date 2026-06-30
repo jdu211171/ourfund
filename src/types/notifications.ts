@@ -1,4 +1,4 @@
-import { NotificationTone, ScreenName } from './core';
+import { NotificationTone, ScreenName } from "./core";
 
 export interface AppNotification {
   id: string;

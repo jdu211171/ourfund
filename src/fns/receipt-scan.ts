@@ -1,8 +1,18 @@
-import { createServerFn } from '@tanstack/react-start';
-import { prisma } from '@/lib/db';
-import { getSessionUser } from '@/lib/auth-server';
-import { currencyValueToUsd } from '@/lib/currency';
-import { getReceiptScanModels, isRetryableGeminiFailure, isGeminiModelUnavailable, parseGeminiJson, receiptScanFailureMessage, TEMPORARY_RECEIPT_SCAN_ERROR, normalizeCurrencyCode, normalizeProductName, makeServerId } from '@/server/helpers';
+import { createServerFn } from "@tanstack/react-start";
+import { prisma } from "@/lib/db";
+import { getSessionUser } from "@/lib/auth-server";
+import { currencyValueToUsd } from "@/lib/currency";
+import {
+  getReceiptScanModels,
+  isRetryableGeminiFailure,
+  isGeminiModelUnavailable,
+  parseGeminiJson,
+  receiptScanFailureMessage,
+  TEMPORARY_RECEIPT_SCAN_ERROR,
+  normalizeCurrencyCode,
+  normalizeProductName,
+  makeServerId,
+} from "@/server/helpers";
 
 export const scanReceiptServerFn = createServerFn({ method: "POST" })
   .inputValidator((d: { imageDataUrl: string; currency: string; categories?: string[] }) => d)

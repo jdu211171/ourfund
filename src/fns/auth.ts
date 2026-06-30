@@ -1,10 +1,16 @@
-import { createServerFn } from '@tanstack/react-start';
-import { setResponseHeaders } from '@tanstack/react-start/server';
-import crypto from 'node:crypto';
-import bcrypt from 'bcryptjs';
-import { prisma } from '@/lib/db';
-import { getSessionUser, createSessionCookie, createSessionCookie as createSessionCookieImport, clearSessionCookie, verifyGoogleToken } from '@/lib/auth-server';
-import { getAppBaseUrl, sendWelcomeEmail, sendPasswordResetEmail } from '@/lib/mailer';
+import { createServerFn } from "@tanstack/react-start";
+import { setResponseHeaders } from "@tanstack/react-start/server";
+import crypto from "node:crypto";
+import bcrypt from "bcryptjs";
+import { prisma } from "@/lib/db";
+import {
+  getSessionUser,
+  createSessionCookie,
+  createSessionCookie as createSessionCookieImport,
+  clearSessionCookie,
+  verifyGoogleToken,
+} from "@/lib/auth-server";
+import { getAppBaseUrl, sendWelcomeEmail, sendPasswordResetEmail } from "@/lib/mailer";
 
 export const loginWithEmailServerFn = createServerFn({ method: "POST" })
   .inputValidator((d: { email: string; passwordHash: string }) => d)
@@ -61,17 +67,18 @@ export const signUpWithEmailServerFn = createServerFn({ method: "POST" })
           },
         });
     createSessionCookie(user.id);
-    if (!existing) await prisma.appNotification.create({
-      data: {
-        userId: user.id,
-        title: "Welcome to Nest",
-        desc: "Your account is ready. Start your first household whenever you’re ready.",
-        time: "now",
-        group: "Today",
-        tone: "primary",
-        screen: "home",
-      },
-    });
+    if (!existing)
+      await prisma.appNotification.create({
+        data: {
+          userId: user.id,
+          title: "Welcome to Nest",
+          desc: "Your account is ready. Start your first household whenever you’re ready.",
+          time: "now",
+          group: "Today",
+          tone: "primary",
+          screen: "home",
+        },
+      });
     if (!existing) await sendWelcomeEmail({ to: user.email, name: user.name });
     return { success: true };
   });

@@ -1,4 +1,4 @@
-import { CurrencyCode, WalletType, LoanDirection, LoanStatus } from './core';
+import { CurrencyCode, WalletType, LoanDirection, LoanStatus } from "./core";
 
 export interface Transaction {
   id: string;

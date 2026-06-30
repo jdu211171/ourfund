@@ -55,7 +55,10 @@ export type ScreenName =
   | "lend_borrow"
   | "calc_salary"
   | "product_tracker"
-  | "scan_receipt";
+  | "scan_receipt"
+  | "buy_list"
+  | "saved_lists"
+  | "price_history";
 
 export type BudgetMode = "personal" | "family";
 export type SalaryCalculationPeriod = "monthly" | "annual";

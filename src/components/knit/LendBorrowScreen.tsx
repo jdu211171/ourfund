@@ -175,11 +175,12 @@ export function LendBorrowScreen() {
 
     const newPaidUsd = Math.min(paymentLoan.amountUsd, paymentLoan.paidAmountUsd + payUsd);
     const remainingUsd = paymentLoan.amountUsd - newPaidUsd;
-    const updatedStatus = 
-      remainingUsd <= 0.01 ? "paid" 
-        : paymentLoan.status === "paid" 
-          ? "pending" 
-            : paymentLoan.status;
+    const updatedStatus =
+      remainingUsd <= 0.01
+        ? "paid"
+        : paymentLoan.status === "paid"
+          ? "pending"
+          : paymentLoan.status;
 
     // Keep original amountUsd unchanged. Negative payUsd will reduce paidAmountUsd,
     // which increases remaining balance: 1000 - (-500) = 1500.
@@ -192,7 +193,7 @@ export function LendBorrowScreen() {
 
     if (paymentLoan.direction === "lent") {
       addTransaction({
-        name: isIncrease 
+        name: isIncrease
           ? `Additional lent to ${paymentLoan.counterpartyName}`
           : `Repayment from ${paymentLoan.counterpartyName}`,
         who: `${profile?.name || "Me"} · today`,
@@ -370,7 +371,8 @@ export function LendBorrowScreen() {
               )}
             </div>
             <p className="mt-1 px-1 text-[9px] font-medium text-muted-foreground">
-              Use a negative value to reduce the paid amount (e.g., if you accidentally recorded too much, or if the counterparty returned some money).
+              Use a negative value to reduce the paid amount (e.g., if you accidentally recorded too
+              much, or if the counterparty returned some money).
             </p>
 
             <div className="mt-3 flex gap-2">

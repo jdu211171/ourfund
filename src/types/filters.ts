@@ -1,4 +1,4 @@
-import { TxnKind } from './core';
+import { TxnKind } from "./core";
 
 export interface HistoryFilters {
   kind: TxnKind;

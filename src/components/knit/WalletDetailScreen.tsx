@@ -1,9 +1,25 @@
-import { ArrowLeft, Users, Pencil, Plus, Minus, Trash2, DollarSign, Lock, PiggyBank, Check } from "lucide-react";
+import {
+  ArrowLeft,
+  Users,
+  Pencil,
+  Plus,
+  Minus,
+  Trash2,
+  DollarSign,
+  Lock,
+  PiggyBank,
+  Check,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { PhoneFrame } from "./PhoneFrame";
 import { Money } from "./Money";
 import { useAppNavigation, type CurrencyCode } from "@/lib/navigation";
-import { currencyFractionDigits, currencyValueToUsd, formatUsdAsCurrency, usdToCurrencyValue } from "@/lib/currency";
+import {
+  currencyFractionDigits,
+  currencyValueToUsd,
+  formatUsdAsCurrency,
+  usdToCurrencyValue,
+} from "@/lib/currency";
 
 const COLOR_OPTIONS = [
   { name: "Purple", value: "oklch(0.55 0.24 265)" },
@@ -36,7 +52,9 @@ export function WalletDetailScreen() {
   const [editName, setEditName] = useState(wallet?.label ?? "");
   const [editColor, setEditColor] = useState(wallet?.color ?? COLOR_OPTIONS[0].value);
   const [editCurrency, setEditCurrency] = useState(wallet?.currency ?? currency);
-  const [editStartingBalance, setEditStartingBalance] = useState(formatBalanceInput(wallet?.startingBalanceUsd ?? 0));
+  const [editStartingBalance, setEditStartingBalance] = useState(
+    formatBalanceInput(wallet?.startingBalanceUsd ?? 0),
+  );
 
   // Adjust balance state
   const [adjustType, setAdjustType] = useState<"topup" | "withdraw" | null>(null);
@@ -166,277 +184,304 @@ export function WalletDetailScreen() {
           </button>
         </header>
 
-          {/* Wallet Summary Card */}
-          <div className="mt-5 rounded-3xl bg-white p-5 shadow-[var(--shadow-soft)] border border-slate-100/50">
-            <div className="flex items-center gap-3">
-              <div
-                className="grid h-12 w-12 place-items-center rounded-2xl transition-colors"
-                style={{ background: "oklch(0.96 0.05 265)", color: wallet.color }}
-              >
-                {wallet.type === "private" ? (
-                  <Lock className="h-5 w-5" strokeWidth={2.25} />
-                ) : wallet.type === "connected" ? (
-                  <PiggyBank className="h-5 w-5" strokeWidth={2.25} />
-                ) : (
-                  <Users className="h-5 w-5" strokeWidth={2.25} />
-                )}
-              </div>
-              <div className="leading-tight min-w-0 flex-1">
-                <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
-                  {wallet.sub}
-                </p>
-                <p className="text-[16px] font-bold text-foreground truncate">{wallet.label}</p>
-              </div>
+        {/* Wallet Summary Card */}
+        <div className="mt-5 rounded-3xl bg-white p-5 shadow-[var(--shadow-soft)] border border-slate-100/50">
+          <div className="flex items-center gap-3">
+            <div
+              className="grid h-12 w-12 place-items-center rounded-2xl transition-colors"
+              style={{ background: "oklch(0.96 0.05 265)", color: wallet.color }}
+            >
+              {wallet.type === "private" ? (
+                <Lock className="h-5 w-5" strokeWidth={2.25} />
+              ) : wallet.type === "connected" ? (
+                <PiggyBank className="h-5 w-5" strokeWidth={2.25} />
+              ) : (
+                <Users className="h-5 w-5" strokeWidth={2.25} />
+              )}
             </div>
-            <div className="mt-4">
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Current balance</p>
-              <Money usd={currentBalance} size="xl" />
+            <div className="leading-tight min-w-0 flex-1">
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
+                {wallet.sub}
+              </p>
+              <p className="text-[16px] font-bold text-foreground truncate">{wallet.label}</p>
             </div>
           </div>
+          <div className="mt-4">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
+              Current balance
+            </p>
+            <Money usd={currentBalance} size="xl" />
+          </div>
+        </div>
 
-          {isEditing ? (
-            /* Editing form block */
-            <div className="mt-5 space-y-4">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Edit details</p>
-              
-              <div className="space-y-3 rounded-2xl bg-white p-4 shadow-[var(--shadow-soft)] border border-slate-100/50">
-                <div>
-                  <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold block mb-1">
-                    Wallet Name
-                  </label>
-                  <input
-                    type="text"
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    className="w-full rounded-xl bg-slate-50 px-3 py-2 text-[13px] font-semibold outline-none focus:ring-2 focus:ring-[var(--primary)] border-transparent"
-                    placeholder="Wallet name"
-                  />
-                </div>
+        {isEditing ? (
+          /* Editing form block */
+          <div className="mt-5 space-y-4">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+              Edit details
+            </p>
 
-                <div>
-                  <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold block mb-1">
-                    Starting Balance ({editCurrency})
-                  </label>
-                  <input
-                    type="number"
-                    value={editStartingBalance}
-                    onChange={(e) => setEditStartingBalance(e.target.value)}
-                    className="w-full rounded-xl bg-slate-50 px-3 py-2 text-[13px] font-semibold outline-none focus:ring-2 focus:ring-[var(--primary)] border-transparent"
-                    placeholder="0.00"
-                    step="any"
-                  />
-                </div>
+            <div className="space-y-3 rounded-2xl bg-white p-4 shadow-[var(--shadow-soft)] border border-slate-100/50">
+              <div>
+                <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold block mb-1">
+                  Wallet Name
+                </label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full rounded-xl bg-slate-50 px-3 py-2 text-[13px] font-semibold outline-none focus:ring-2 focus:ring-[var(--primary)] border-transparent"
+                  placeholder="Wallet name"
+                />
+              </div>
 
-                <div>
-                  <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold block mb-2">
-                    Currency
-                  </label>
-                  <div className="grid grid-cols-5 gap-2">
-                    {["UZS", "USD", "JPY", "EUR", "GBP"].map((code) => (
-                      <button
-                        key={code}
-                        type="button"
-                        onClick={() => setEditCurrency(code as typeof editCurrency)}
-                        className={`rounded-full py-2 text-[11px] font-semibold ${
-                          code === editCurrency
-                            ? "bg-[var(--primary)] text-white"
-                            : "bg-[var(--muted)] text-foreground"
-                        }`}
-                      >
-                        {code}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+              <div>
+                <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold block mb-1">
+                  Starting Balance ({editCurrency})
+                </label>
+                <input
+                  type="number"
+                  value={editStartingBalance}
+                  onChange={(e) => setEditStartingBalance(e.target.value)}
+                  className="w-full rounded-xl bg-slate-50 px-3 py-2 text-[13px] font-semibold outline-none focus:ring-2 focus:ring-[var(--primary)] border-transparent"
+                  placeholder="0.00"
+                  step="any"
+                />
+              </div>
 
-                <div>
-                  <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold block mb-2">
-                    Theme Color
-                  </label>
-                  <div className="grid grid-cols-6 gap-2">
-                    {COLOR_OPTIONS.map((c) => (
-                      <button
-                        key={c.name}
-                        type="button"
-                        onClick={() => setEditColor(c.value)}
-                        className="h-8 w-8 rounded-full cursor-pointer relative flex items-center justify-center transition-transform hover:scale-110"
-                        style={{ backgroundColor: c.value }}
-                        title={c.name}
-                      >
-                        {editColor === c.value && (
-                          <Check className="h-4 w-4 text-white drop-shadow" strokeWidth={3} />
-                        )}
-                      </button>
-                    ))}
-                  </div>
+              <div>
+                <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold block mb-2">
+                  Currency
+                </label>
+                <div className="grid grid-cols-5 gap-2">
+                  {["UZS", "USD", "JPY", "EUR", "GBP"].map((code) => (
+                    <button
+                      key={code}
+                      type="button"
+                      onClick={() => setEditCurrency(code as typeof editCurrency)}
+                      className={`rounded-full py-2 text-[11px] font-semibold ${
+                        code === editCurrency
+                          ? "bg-[var(--primary)] text-white"
+                          : "bg-[var(--muted)] text-foreground"
+                      }`}
+                    >
+                      {code}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setIsEditing(false)}
-                  className="flex-1 rounded-2xl bg-slate-100 py-3 text-[13px] font-bold text-foreground cursor-pointer hover:bg-slate-200 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSaveEdit}
-                  className="flex-1 rounded-2xl bg-[var(--primary)] py-3 text-[13px] font-bold text-white cursor-pointer hover:opacity-90 transition-colors"
-                >
-                  Save Changes
-                </button>
+              <div>
+                <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold block mb-2">
+                  Theme Color
+                </label>
+                <div className="grid grid-cols-6 gap-2">
+                  {COLOR_OPTIONS.map((c) => (
+                    <button
+                      key={c.name}
+                      type="button"
+                      onClick={() => setEditColor(c.value)}
+                      className="h-8 w-8 rounded-full cursor-pointer relative flex items-center justify-center transition-transform hover:scale-110"
+                      style={{ backgroundColor: c.value }}
+                      title={c.name}
+                    >
+                      {editColor === c.value && (
+                        <Check className="h-4 w-4 text-white drop-shadow" strokeWidth={3} />
+                      )}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
-          ) : (
-            /* Regular details view */
-            <>
-              <p className="mt-5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Wallet details</p>
-              <div className="mt-2 space-y-2">
-                <Row label="Name" value={wallet.label} />
-                <Row label="Currency" value={wallet.currency} icon={<DollarSign className="h-4 w-4" strokeWidth={2.25} />} />
-                <Row label="Type" value={wallet.sub} />
-                <Row label="Starting balance" value={formatUsdAsCurrency(wallet.startingBalanceUsd ?? 0, wallet.currency)} />
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setIsEditing(false)}
+                className="flex-1 rounded-2xl bg-slate-100 py-3 text-[13px] font-bold text-foreground cursor-pointer hover:bg-slate-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                className="flex-1 rounded-2xl bg-[var(--primary)] py-3 text-[13px] font-bold text-white cursor-pointer hover:opacity-90 transition-colors"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* Regular details view */
+          <>
+            <p className="mt-5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+              Wallet details
+            </p>
+            <div className="mt-2 space-y-2">
+              <Row label="Name" value={wallet.label} />
+              <Row
+                label="Currency"
+                value={wallet.currency}
+                icon={<DollarSign className="h-4 w-4" strokeWidth={2.25} />}
+              />
+              <Row label="Type" value={wallet.sub} />
+              <Row
+                label="Starting balance"
+                value={formatUsdAsCurrency(wallet.startingBalanceUsd ?? 0, wallet.currency)}
+              />
+            </div>
+
+            {/* Adjust Balance Forms */}
+            <p className="mt-5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+              Adjust balance
+            </p>
+            {adjustType ? (
+              <div className="mt-2 rounded-2xl bg-white p-4 shadow-[var(--shadow-soft)] border border-slate-100/50 animate-in slide-in-from-top-4 duration-200">
+                <h3 className="text-[12px] font-bold text-foreground mb-3">
+                  {adjustType === "topup" ? "Top up wallet" : "Withdraw from wallet"}
+                </h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold block mb-1">
+                      Amount ({wallet.currency})
+                    </label>
+                    <input
+                      type="number"
+                      value={adjustAmount}
+                      onChange={(e) => setAdjustAmount(e.target.value)}
+                      className="w-full rounded-xl bg-slate-50 px-3 py-2 text-[13px] font-semibold outline-none focus:ring-2 focus:ring-[var(--primary)] border-transparent"
+                      placeholder="0.00"
+                      autoFocus
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold block mb-1">
+                      Note / Description
+                    </label>
+                    <input
+                      type="text"
+                      value={adjustNote}
+                      onChange={(e) => setAdjustNote(e.target.value)}
+                      className="w-full rounded-xl bg-slate-50 px-3 py-2 text-[13px] font-semibold outline-none focus:ring-2 focus:ring-[var(--primary)] border-transparent"
+                      placeholder={adjustType === "topup" ? "e.g. Deposit" : "e.g. Cash out"}
+                    />
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      onClick={() => setAdjustType(null)}
+                      className="flex-1 rounded-xl bg-slate-100 py-2 text-[12px] font-semibold text-foreground cursor-pointer hover:bg-slate-200 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleAdjustBalance}
+                      className={`flex-1 rounded-xl py-2 text-[12px] font-semibold text-white cursor-pointer transition-colors ${
+                        adjustType === "topup" ? "bg-[var(--success)]" : "bg-[var(--danger)]"
+                      }`}
+                    >
+                      Confirm
+                    </button>
+                  </div>
+                </div>
               </div>
-
-              {/* Adjust Balance Forms */}
-              <p className="mt-5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">Adjust balance</p>
-              {adjustType ? (
-                <div className="mt-2 rounded-2xl bg-white p-4 shadow-[var(--shadow-soft)] border border-slate-100/50 animate-in slide-in-from-top-4 duration-200">
-                  <h3 className="text-[12px] font-bold text-foreground mb-3">
-                    {adjustType === "topup" ? "Top up wallet" : "Withdraw from wallet"}
-                  </h3>
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold block mb-1">
-                        Amount ({wallet.currency})
-                      </label>
-                      <input
-                        type="number"
-                        value={adjustAmount}
-                        onChange={(e) => setAdjustAmount(e.target.value)}
-                        className="w-full rounded-xl bg-slate-50 px-3 py-2 text-[13px] font-semibold outline-none focus:ring-2 focus:ring-[var(--primary)] border-transparent"
-                        placeholder="0.00"
-                        autoFocus
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold block mb-1">
-                        Note / Description
-                      </label>
-                      <input
-                        type="text"
-                        value={adjustNote}
-                        onChange={(e) => setAdjustNote(e.target.value)}
-                        className="w-full rounded-xl bg-slate-50 px-3 py-2 text-[13px] font-semibold outline-none focus:ring-2 focus:ring-[var(--primary)] border-transparent"
-                        placeholder={adjustType === "topup" ? "e.g. Deposit" : "e.g. Cash out"}
-                      />
-                    </div>
-                    <div className="flex gap-2 pt-2">
-                      <button
-                        onClick={() => setAdjustType(null)}
-                        className="flex-1 rounded-xl bg-slate-100 py-2 text-[12px] font-semibold text-foreground cursor-pointer hover:bg-slate-200 transition-colors"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleAdjustBalance}
-                        className={`flex-1 rounded-xl py-2 text-[12px] font-semibold text-white cursor-pointer transition-colors ${
-                          adjustType === "topup" ? "bg-[var(--success)]" : "bg-[var(--danger)]"
-                        }`}
-                      >
-                        Confirm
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="mt-2 grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => setAdjustType("topup")}
-                    className="flex flex-col items-start gap-1 rounded-2xl bg-white p-3 shadow-[var(--shadow-soft)] hover:bg-slate-50 active:scale-[0.98] transition-all cursor-pointer border border-slate-100/50 text-left"
+            ) : (
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => setAdjustType("topup")}
+                  className="flex flex-col items-start gap-1 rounded-2xl bg-white p-3 shadow-[var(--shadow-soft)] hover:bg-slate-50 active:scale-[0.98] transition-all cursor-pointer border border-slate-100/50 text-left"
+                >
+                  <span
+                    className="grid h-8 w-8 place-items-center rounded-full"
+                    style={{ background: "oklch(0.96 0.04 145)", color: "var(--success)" }}
                   >
-                    <span className="grid h-8 w-8 place-items-center rounded-full" style={{ background: "oklch(0.96 0.04 145)", color: "var(--success)" }}>
-                      <Plus className="h-4 w-4" strokeWidth={2.5} />
-                    </span>
-                    <span className="text-[12px] font-bold text-foreground mt-1">Top up</span>
-                    <span className="text-[10px] text-muted-foreground">Add money to wallet</span>
+                    <Plus className="h-4 w-4" strokeWidth={2.5} />
+                  </span>
+                  <span className="text-[12px] font-bold text-foreground mt-1">Top up</span>
+                  <span className="text-[10px] text-muted-foreground">Add money to wallet</span>
+                </button>
+                <button
+                  onClick={() => setAdjustType("withdraw")}
+                  className="flex flex-col items-start gap-1 rounded-2xl bg-white p-3 shadow-[var(--shadow-soft)] hover:bg-slate-50 active:scale-[0.98] transition-all cursor-pointer border border-slate-100/50 text-left"
+                >
+                  <span
+                    className="grid h-8 w-8 place-items-center rounded-full"
+                    style={{ background: "oklch(0.96 0.05 25)", color: "var(--danger)" }}
+                  >
+                    <Minus className="h-4 w-4" strokeWidth={2.5} />
+                  </span>
+                  <span className="text-[12px] font-bold text-foreground mt-1">Withdraw</span>
+                  <span className="text-[10px] text-muted-foreground">Take money out</span>
+                </button>
+              </div>
+            )}
+
+            {showResetConfirm ? (
+              <div className="mt-3 rounded-2xl bg-[oklch(0.97_0.02_25)] p-4 border border-[var(--danger)]/20 animate-in zoom-in-95 duration-200">
+                <h3 className="text-[13px] font-bold text-[var(--danger)] mb-1">
+                  Reset wallet balance?
+                </h3>
+                <p className="text-[11px] text-muted-foreground mb-4">
+                  This will add a balancing transaction so the wallet balance becomes 0. It cannot
+                  be undone.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowResetConfirm(false)}
+                    className="flex-1 rounded-xl bg-white border border-slate-200 py-2 text-[12px] font-semibold text-foreground cursor-pointer"
+                  >
+                    Cancel
                   </button>
                   <button
-                    onClick={() => setAdjustType("withdraw")}
-                    className="flex flex-col items-start gap-1 rounded-2xl bg-white p-3 shadow-[var(--shadow-soft)] hover:bg-slate-50 active:scale-[0.98] transition-all cursor-pointer border border-slate-100/50 text-left"
+                    onClick={handleResetBalance}
+                    className="flex-1 rounded-xl bg-[var(--danger)] py-2 text-[12px] font-semibold text-white cursor-pointer hover:opacity-90 transition-colors"
                   >
-                    <span className="grid h-8 w-8 place-items-center rounded-full" style={{ background: "oklch(0.96 0.05 25)", color: "var(--danger)" }}>
-                      <Minus className="h-4 w-4" strokeWidth={2.5} />
-                    </span>
-                    <span className="text-[12px] font-bold text-foreground mt-1">Withdraw</span>
-                    <span className="text-[10px] text-muted-foreground">Take money out</span>
+                    Reset to 0
                   </button>
                 </div>
-              )}
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowResetConfirm(true)}
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-white py-3 text-[12px] font-bold text-foreground shadow-[var(--shadow-soft)] border border-slate-100/50 hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                Reset balance to 0
+              </button>
+            )}
 
-              {showResetConfirm ? (
-                <div className="mt-3 rounded-2xl bg-[oklch(0.97_0.02_25)] p-4 border border-[var(--danger)]/20 animate-in zoom-in-95 duration-200">
-                  <h3 className="text-[13px] font-bold text-[var(--danger)] mb-1">Reset wallet balance?</h3>
-                  <p className="text-[11px] text-muted-foreground mb-4">
-                    This will add a balancing transaction so the wallet balance becomes 0. It cannot be undone.
-                  </p>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setShowResetConfirm(false)}
-                      className="flex-1 rounded-xl bg-white border border-slate-200 py-2 text-[12px] font-semibold text-foreground cursor-pointer"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleResetBalance}
-                      className="flex-1 rounded-xl bg-[var(--danger)] py-2 text-[12px] font-semibold text-white cursor-pointer hover:opacity-90 transition-colors"
-                    >
-                      Reset to 0
-                    </button>
-                  </div>
+            {/* Deletion block */}
+            {showDeleteConfirm ? (
+              <div className="mt-6 rounded-2xl bg-[oklch(0.97_0.02_25)] p-4 border border-[var(--danger)]/20 animate-in zoom-in-95 duration-200">
+                <h3 className="text-[13px] font-bold text-[var(--danger)] mb-1">
+                  Delete this wallet?
+                </h3>
+                <p className="text-[11px] text-muted-foreground mb-4">
+                  This will permanently delete the wallet and all transactions recorded under it.
+                  This action cannot be undone.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="flex-1 rounded-xl bg-white border border-slate-200 py-2 text-[12px] font-semibold text-foreground cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    className="flex-1 rounded-xl bg-[var(--danger)] py-2 text-[12px] font-semibold text-white cursor-pointer hover:opacity-90 transition-colors"
+                  >
+                    Delete Permanently
+                  </button>
                 </div>
-              ) : (
-                <button
-                  onClick={() => setShowResetConfirm(true)}
-                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-white py-3 text-[12px] font-bold text-foreground shadow-[var(--shadow-soft)] border border-slate-100/50 hover:bg-slate-50 transition-colors cursor-pointer"
-                >
-                  Reset balance to 0
-                </button>
-              )}
-
-              {/* Deletion block */}
-              {showDeleteConfirm ? (
-                <div className="mt-6 rounded-2xl bg-[oklch(0.97_0.02_25)] p-4 border border-[var(--danger)]/20 animate-in zoom-in-95 duration-200">
-                  <h3 className="text-[13px] font-bold text-[var(--danger)] mb-1">Delete this wallet?</h3>
-                  <p className="text-[11px] text-muted-foreground mb-4">
-                    This will permanently delete the wallet and all transactions recorded under it. This action cannot be undone.
-                  </p>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setShowDeleteConfirm(false)}
-                      className="flex-1 rounded-xl bg-white border border-slate-200 py-2 text-[12px] font-semibold text-foreground cursor-pointer"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleDelete}
-                      className="flex-1 rounded-xl bg-[var(--danger)] py-2 text-[12px] font-semibold text-white cursor-pointer hover:opacity-90 transition-colors"
-                    >
-                      Delete Permanently
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setShowDeleteConfirm(true)}
-                  className="mt-6 flex items-center justify-center gap-2 rounded-2xl bg-[oklch(0.97_0.02_25)] py-3 text-[12px] font-bold text-[var(--danger)] hover:bg-[oklch(0.94_0.03_25)] transition-colors cursor-pointer w-full"
-                >
-                  <Trash2 className="h-4 w-4" strokeWidth={2.25} />
-                  Delete wallet
-                </button>
-              )}
-            </>
-          )}
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="mt-6 flex items-center justify-center gap-2 rounded-2xl bg-[oklch(0.97_0.02_25)] py-3 text-[12px] font-bold text-[var(--danger)] hover:bg-[oklch(0.94_0.03_25)] transition-colors cursor-pointer w-full"
+              >
+                <Trash2 className="h-4 w-4" strokeWidth={2.25} />
+                Delete wallet
+              </button>
+            )}
+          </>
+        )}
       </div>
     </PhoneFrame>
   );
@@ -451,7 +496,9 @@ function Row({ label, value, icon }: { label: string; value: string; icon?: Reac
         </div>
       )}
       <div className="flex-1 leading-tight min-w-0">
-        <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">{label}</p>
+        <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
+          {label}
+        </p>
         <p className="text-[13px] font-bold text-foreground truncate">{value}</p>
       </div>
     </div>

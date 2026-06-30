@@ -17,9 +17,10 @@ export function WalletSwitcherScreen() {
     walletBalanceUsd,
   } = useAppNavigation();
 
-  const currentActiveId = selectedWalletId && activeWallets.some((w) => w.id === selectedWalletId)
-    ? selectedWalletId
-    : (activeWallets[0]?.id ?? "");
+  const currentActiveId =
+    selectedWalletId && activeWallets.some((w) => w.id === selectedWalletId)
+      ? selectedWalletId
+      : (activeWallets[0]?.id ?? "");
 
   const handleSelect = (walletId: string) => {
     setSelectedWalletId(walletId);
@@ -96,7 +97,8 @@ export function WalletSwitcherScreen() {
         </button>
 
         <p className="mt-4 pt-4 text-[10px] leading-snug text-muted-foreground border-t border-slate-100">
-          The active wallet is where new income & expenses are recorded. You can change it any time — past transactions stay where they were.
+          The active wallet is where new income & expenses are recorded. You can change it any time
+          — past transactions stay where they were.
         </p>
 
         <button

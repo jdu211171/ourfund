@@ -4,8 +4,7 @@ import { useAppNavigation } from "@/lib/navigation";
 import { formatUsdAsCurrency } from "@/lib/currency";
 
 export function ConfirmDeleteGoalScreen() {
-  const { goBack, navigate, currency, selectedGoalId, goals, deleteGoal } =
-    useAppNavigation();
+  const { goBack, navigate, currency, selectedGoalId, goals, deleteGoal } = useAppNavigation();
 
   // Find goal
   const goal = goals.find((g) => g.id === selectedGoalId) || goals[0];

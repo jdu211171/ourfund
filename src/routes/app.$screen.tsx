@@ -6,7 +6,11 @@ export const Route = createFileRoute("/app/$screen")({
   notFoundComponent: () => (
     <div className="py-20 text-center">
       <p className="font-display text-[22px] text-foreground">Screen not found</p>
-      <Link to="/app/$screen" params={{ screen: "home" }} className="mt-3 inline-block text-[13px] text-[var(--primary)] font-semibold">
+      <Link
+        to="/app/$screen"
+        params={{ screen: "home" }}
+        className="mt-3 inline-block text-[13px] text-[var(--primary)] font-semibold"
+      >
         Go home
       </Link>
     </div>
@@ -15,7 +19,10 @@ export const Route = createFileRoute("/app/$screen")({
     <div className="py-20 text-center">
       <p className="font-display text-[20px] text-foreground">Couldn't render screen</p>
       <p className="mt-2 text-[12.5px] text-muted-foreground">{error.message}</p>
-      <button onClick={reset} className="mt-4 rounded-full bg-[var(--primary)] px-4 py-2 text-[12px] font-semibold text-white transition hover:opacity-90">
+      <button
+        onClick={reset}
+        className="mt-4 rounded-full bg-[var(--primary)] px-4 py-2 text-[12px] font-semibold text-white transition hover:opacity-90"
+      >
         Retry
       </button>
     </div>

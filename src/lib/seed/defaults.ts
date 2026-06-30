@@ -22,8 +22,8 @@ import {
   Transaction,
   WalletAccount,
   WalletType,
-} from '../../types';
-import { buildScheduleEvery, formatISODate } from '../schedules';
+} from "../../types";
+import { buildScheduleEvery, formatISODate } from "../schedules";
 
 const seedToday = new Date();
 const addSeedDays = (base: Date, days: number) =>

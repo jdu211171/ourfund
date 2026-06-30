@@ -1,5 +1,5 @@
-import { MemberRole } from '../../types/core';
-import { defaultPermissions } from '../../lib/seed';
+import { MemberRole } from "../../types/core";
+import { defaultPermissions } from "../../lib/seed";
 
 export function permissionsForRole(role: MemberRole) {
   return {

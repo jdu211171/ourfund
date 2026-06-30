@@ -24,10 +24,14 @@ export function SalaryCalculatorScreen() {
     period === "monthly" ? engine.defaultGrossAnnual / 12 : engine.defaultGrossAnnual,
   );
   const amount = salaryCalculatorSettings.amount ?? defaultAmount;
-  const insurance = useMemo<InsuranceSelection>(() => ({
-    ...defaultInsurance(engine),
-    ...salaryCalculatorSettings.insurance,
-  }) as InsuranceSelection, [engine, salaryCalculatorSettings.insurance]);
+  const insurance = useMemo<InsuranceSelection>(
+    () =>
+      ({
+        ...defaultInsurance(engine),
+        ...salaryCalculatorSettings.insurance,
+      }) as InsuranceSelection,
+    [engine, salaryCalculatorSettings.insurance],
+  );
   const [amountInput, setAmountInput] = useState<string>(() => String(amount));
   const [pickerOpen, setPickerOpen] = useState(false);
 
@@ -45,7 +49,8 @@ export function SalaryCalculatorScreen() {
 
   const handleCountry = (code: string) => {
     const e = getEngine(code);
-    const next = period === "monthly" ? Math.round(e.defaultGrossAnnual / 12) : e.defaultGrossAnnual;
+    const next =
+      period === "monthly" ? Math.round(e.defaultGrossAnnual / 12) : e.defaultGrossAnnual;
     setSalaryCalculatorSettings({
       country: e.code,
       amount: next,
@@ -57,13 +62,13 @@ export function SalaryCalculatorScreen() {
 
   const toggleIns = (k: InsuranceKey) => {
     setSalaryCalculatorSettings({
-      insurance: {...insurance, [k]: !insurance[k] },
+      insurance: { ...insurance, [k]: !insurance[k] },
     });
   };
 
   const handlePeriod = (nextPeriod: Period) => {
-    setSalaryCalculatorSettings({period: nextPeriod});
-  }
+    setSalaryCalculatorSettings({ period: nextPeriod });
+  };
 
   const handleAmountChange = (raw: string) => {
     const cleaned = raw.replace(/[^0-9]/g, "");

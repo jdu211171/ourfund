@@ -1,4 +1,4 @@
-import { Transaction } from '../../types/domain';
+import { Transaction } from "../../types/domain";
 
 export function plusDays(date: Date, days: number) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);

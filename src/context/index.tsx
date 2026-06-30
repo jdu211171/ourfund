@@ -220,7 +220,8 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
 
   const initialSeed = useMemo(() => getInitialSeed(), []);
   const [currentScreen, setCurrentScreen] = useState<ScreenName>("onboarding");
-  const [salaryCalculatorSettings, setSalaryCalculatorSettingsState] = useState<SalaryCalculatorSettings>(initialSeed.salaryCalculatorSettings);
+  const [salaryCalculatorSettings, setSalaryCalculatorSettingsState] =
+    useState<SalaryCalculatorSettings>(initialSeed.salaryCalculatorSettings);
   const [history, setHistory] = useState<ScreenName[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthReady, setIsAuthReady] = useState(false);
@@ -239,7 +240,10 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   const [goals, setGoals] = useState<Goal[]>(initialSeed.goals);
   const [members, setMembers] = useState<FamilyMember[]>(initialSeed.members);
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
-  const [selectedMonthHistory, setSelectedMonthHistory] = useState<{ year: number; month: number } | null>(null);
+  const [selectedMonthHistory, setSelectedMonthHistory] = useState<{
+    year: number;
+    month: number;
+  } | null>(null);
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(initialSeed.selectedGoalId);
   const [selectedWalletId, setSelectedWalletId] = useState<string | null>(null);
   const [selectedDetailWalletId, setSelectedDetailWalletId] = useState<string | null>(null);
@@ -400,28 +404,28 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
 
   const setSalaryCalculatorSettings = useCallback((updates: Partial<SalaryCalculatorSettings>) => {
     setSalaryCalculatorSettingsState((prev) => {
-      const nextAmount = 
-        updates.amount === undefined 
+      const nextAmount =
+        updates.amount === undefined
           ? prev.amount
-            : updates.amount === null
-              ? null
-              : typeof updates.amount === "number" && Number.isFinite(updates.amount)
-                ? Math.max(0, updates.amount)
-                : prev.amount;
-              
-    return {
-      ...prev,
-      ...updates,
-      country:
-        typeof updates.country === "string" && updates.country.trim()
-          ? updates.country
-          : prev.country,
-      period: updates.period ?? prev.period,
-      amount: nextAmount,
-      insurance: updates.insurance ? { ...updates.insurance } : prev.insurance,
-    }
-  });
-}, []);
+          : updates.amount === null
+            ? null
+            : typeof updates.amount === "number" && Number.isFinite(updates.amount)
+              ? Math.max(0, updates.amount)
+              : prev.amount;
+
+      return {
+        ...prev,
+        ...updates,
+        country:
+          typeof updates.country === "string" && updates.country.trim()
+            ? updates.country
+            : prev.country,
+        period: updates.period ?? prev.period,
+        amount: nextAmount,
+        insurance: updates.insurance ? { ...updates.insurance } : prev.insurance,
+      };
+    });
+  }, []);
 
   const setBudgetMode = useCallback((mode: BudgetMode) => {
     setBudgetModeState(mode);
@@ -570,7 +574,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     return Math.abs(balance) < 0.000001 ? 0 : balance;
   };
 
-  const isGoalLedgerTransaction = (transaction: Pick<Transaction, "category" | "name">) => 
+  const isGoalLedgerTransaction = (transaction: Pick<Transaction, "category" | "name">) =>
     `${transaction.category} ${transaction.name}`.toLowerCase().includes("goal");
 
   const incomeUsd = currentMonthTransactions
@@ -585,9 +589,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
 
   const goalSpentUsd = Math.max(
     0,
-    -currentMonthTransactions
-      .filter(isGoalLedgerTransaction)
-      .reduce((sum, t) => sum + t.usd, 0),
+    -currentMonthTransactions.filter(isGoalLedgerTransaction).reduce((sum, t) => sum + t.usd, 0),
   );
 
   const spentUsd = nonGoalSpentUsd + goalSpentUsd;
@@ -695,44 +697,48 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     return nextHousehold;
   };
 
-  const validateInviteCode = useCallback(async (code: string, invitedEmail?: string): Promise<HouseholdInvite | null> => {
-    const normalized = code.trim().toUpperCase();
-    const cleanInvitedEmail = invitedEmail?.trim().toLowerCase();
+  const validateInviteCode = useCallback(
+    async (code: string, invitedEmail?: string): Promise<HouseholdInvite | null> => {
+      const normalized = code.trim().toUpperCase();
+      const cleanInvitedEmail = invitedEmail?.trim().toLowerCase();
 
-    // 1. Check if it matches the current user's own household
-    const currentInvite: HouseholdInvite | null =
-      household?.inviteCode.toUpperCase() === normalized
-        ? {
-            code: household.inviteCode,
-            householdName: household.name,
-            memberCount: members.length,
-            role: "Adult",
-            inviter: profile.name || "Family admin",
-            familyCurrency: currencies.family,
-          }
-        : null;
+      // 1. Check if it matches the current user's own household
+      const currentInvite: HouseholdInvite | null =
+        household?.inviteCode.toUpperCase() === normalized
+          ? {
+              code: household.inviteCode,
+              householdName: household.name,
+              memberCount: members.length,
+              role: "Adult",
+              inviter: profile.name || "Family admin",
+              familyCurrency: currencies.family,
+            }
+          : null;
 
-    // 2. Check against seeded (demo) invite codes
-    const seededInvite = knownInvites.find((invite) => invite.code === normalized) ?? null;
+      // 2. Check against seeded (demo) invite codes
+      const seededInvite = knownInvites.find((invite) => invite.code === normalized) ?? null;
 
-    // 3. Fall back to a live DB lookup
-    let dbInvite: HouseholdInvite | null = null;
-    if (!currentInvite && !seededInvite) {
-      try {
-        const result = await validateInviteCodeServerFn({ data: { code: normalized } });
-        dbInvite = result as HouseholdInvite | null;
-      } catch {
-        // ignore lookup errors — treat as invalid code
+      // 3. Fall back to a live DB lookup
+      let dbInvite: HouseholdInvite | null = null;
+      if (!currentInvite && !seededInvite) {
+        try {
+          const result = await validateInviteCodeServerFn({ data: { code: normalized } });
+          dbInvite = result as HouseholdInvite | null;
+        } catch {
+          // ignore lookup errors — treat as invalid code
+        }
       }
-    }
 
-    const foundInvite = currentInvite ?? seededInvite ?? dbInvite;
-    const invite = foundInvite && cleanInvitedEmail
-      ? { ...foundInvite, invitedEmail: cleanInvitedEmail }
-      : foundInvite;
-    setPendingInvite(invite);
-    return invite;
-  }, [currencies.family, household, members.length, profile.name]);
+      const foundInvite = currentInvite ?? seededInvite ?? dbInvite;
+      const invite =
+        foundInvite && cleanInvitedEmail
+          ? { ...foundInvite, invitedEmail: cleanInvitedEmail }
+          : foundInvite;
+      setPendingInvite(invite);
+      return invite;
+    },
+    [currencies.family, household, members.length, profile.name],
+  );
 
   // Parse email deep links for password resets and household invites.
   useEffect(() => {
@@ -740,9 +746,8 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     const reset = params.get("reset");
     const invite = params.get("invite");
     const invitedEmail = params.get("email")?.trim().toLowerCase() || undefined;
-    const queryKey = reset || invite
-      ? `reset:${reset ?? ""}:invite:${invite ?? ""}:${invitedEmail ?? ""}`
-      : null;
+    const queryKey =
+      reset || invite ? `reset:${reset ?? ""}:invite:${invite ?? ""}:${invitedEmail ?? ""}` : null;
     if (!queryKey || handledQueryRef.current === queryKey) return;
     if (invite && !isAuthReady) return;
 
@@ -1018,19 +1023,12 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     return newWallet;
   };
 
-  const updateWallet = (
-    walletId: string,
-    updates: Partial<Omit<WalletAccount, "id">>
-  ) => {
+  const updateWallet = (walletId: string, updates: Partial<Omit<WalletAccount, "id">>) => {
     const existingWallet = wallets.find((w) => w.id === walletId);
-    setWallets((prev) =>
-      prev.map((w) => (w.id === walletId ? { ...w, ...updates } : w))
-    );
+    setWallets((prev) => prev.map((w) => (w.id === walletId ? { ...w, ...updates } : w)));
     if (existingWallet && updates.label && existingWallet.label !== updates.label) {
       setTransactions((prev) =>
-        prev.map((t) =>
-          t.wallet === existingWallet.label ? { ...t, wallet: updates.label! } : t
-        )
+        prev.map((t) => (t.wallet === existingWallet.label ? { ...t, wallet: updates.label! } : t)),
       );
     }
     syncMutationServerFn({
@@ -1042,9 +1040,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     const existingWallet = wallets.find((w) => w.id === walletId);
     setWallets((prev) => prev.filter((w) => w.id !== walletId));
     if (existingWallet) {
-      setTransactions((prev) =>
-        prev.filter((t) => t.wallet !== existingWallet.label)
-      );
+      setTransactions((prev) => prev.filter((t) => t.wallet !== existingWallet.label));
     }
     syncMutationServerFn({
       data: { type: "deleteWallet", data: { id: walletId } },
@@ -1069,9 +1065,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
     const applyTheme = () => {
-      const isDark =
-        theme === "dark" ||
-        (theme === "system" && mediaQuery.matches);
+      const isDark = theme === "dark" || (theme === "system" && mediaQuery.matches);
 
       if (isDark) {
         root.classList.add("dark");
@@ -1119,8 +1113,10 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   const categorySpentUsd = (label: string) => {
     const aliases = categoryAliases(label);
     const matchingTransactions = currentMonthTransactions.filter((transaction) =>
-      aliases.some((alias) => `${transaction.category} ${transaction.name}`.toLowerCase().includes(alias)),
-    );  
+      aliases.some((alias) =>
+        `${transaction.category} ${transaction.name}`.toLowerCase().includes(alias),
+      ),
+    );
     const netSpentUsd = matchingTransactions.reduce((sum, transaction) => {
       if (transaction.usd < 0) return sum + transaction.usd;
       return isGoalLedgerTransaction(transaction) ? sum + transaction.usd : sum;
@@ -1742,7 +1738,10 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         }
       } else {
         setCurrentScreen((screen) =>
-          screen === "onboarding" || screen === "login" || screen === "signup" || screen === "reset_password"
+          screen === "onboarding" ||
+          screen === "login" ||
+          screen === "signup" ||
+          screen === "reset_password"
             ? restoredPendingInvite
               ? "confirm_invite"
               : "home"
@@ -1763,10 +1762,13 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         family: (data.currencies?.family ?? "UZS") as CurrencyCode,
       });
       setReportPeriodState(normalizeReportPeriodInput(data.user.reportPeriod));
-      setNotificationPrefs((prev) => ({
-        ...prev,
-        ...asRecord(data.user.notificationPrefs),
-      } as Record<string, boolean>));
+      setNotificationPrefs(
+        (prev) =>
+          ({
+            ...prev,
+            ...asRecord(data.user.notificationPrefs),
+          }) as Record<string, boolean>,
+      );
       setHistoryFilterState(normalizeHistoryFiltersInput(data.user.historyFilters));
       setPasscodeState(data.user.passcode ?? "");
       setFaceIdEnabledState(data.user.faceIdEnabled);

@@ -17,7 +17,7 @@ import {
   ProductEntry,
   ReceiptScan,
   HistoryFilters,
-} from './index';
+} from "./index";
 
 export interface AppSeed {
   budgetMode: BudgetMode;

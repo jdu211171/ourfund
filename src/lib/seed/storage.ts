@@ -1,6 +1,6 @@
-import { AppSeed } from '../../types';
-import { demoSeed, emptySeed, cloneSeed } from './defaults';
-import { normalizeSeed } from './normalize';
+import { AppSeed } from "../../types";
+import { demoSeed, emptySeed, cloneSeed } from "./defaults";
+import { normalizeSeed } from "./normalize";
 
 const STORAGE_KEY = "ourfund.appSeed.v1";
 

@@ -1,4 +1,4 @@
-import { MemberRole, CurrencyCode } from './core';
+import { MemberRole, CurrencyCode } from "./core";
 
 export interface FamilyMember {
   id: string;

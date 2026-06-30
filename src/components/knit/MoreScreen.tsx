@@ -28,7 +28,11 @@ import {
   Users,
   Wallet,
   WifiOff,
+  ShoppingCart,
+  List,
+  History,
 } from "lucide-react";
+
 import { useMemo } from "react";
 import type { ScreenName } from "@/lib/navigation";
 import { useAppNavigation } from "@/lib/navigation";
@@ -59,6 +63,9 @@ const quickActions = [
   { label: "Products", Icon: ShoppingBag, screen: "product_tracker" as const },
   { label: "Lending", Icon: HandCoins, screen: "lend_borrow" as const },
   { label: "Salary Calculator", Icon: Landmark, screen: "calc_salary" as const },
+  { label: "Buy List", Icon: ShoppingCart, screen: "buy_list" as const },
+  { label: "Saved Lists", Icon: List, screen: "saved_lists" as const },
+  { label: "Price History", Icon: History, screen: "price_history" as const },
 ] as const;
 
 function parseTodo(text: string) {
@@ -137,6 +144,9 @@ function iconForLabel(label: string) {
     return Search;
   }
   if (text.includes("card") || text.includes("payment")) return CreditCard;
+  if (text.includes("buy list") || text.includes("shopping list")) return ShoppingCart;
+  if (text.includes("saved list")) return List;
+  if (text.includes("price history")) return History;
   return Grid2X2;
 }
 
@@ -172,6 +182,9 @@ function screenForLabel(label: string): ScreenName | null {
   if (text.includes("sign up")) return "signup";
   if (text.includes("reset password")) return "reset_password";
   if (text.includes("join")) return "join_family";
+  if (text.includes("buy list") || text.includes("shopping list")) return "buy_list";
+  if (text.includes("saved list")) return "saved_lists";
+  if (text.includes("price history")) return "price_history";
   return null;
 }
 

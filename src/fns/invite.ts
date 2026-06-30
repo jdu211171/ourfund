@@ -1,5 +1,5 @@
-import { createServerFn } from '@tanstack/react-start';
-import { prisma } from '@/lib/db';
+import { createServerFn } from "@tanstack/react-start";
+import { prisma } from "@/lib/db";
 
 export const validateInviteCodeServerFn = createServerFn({ method: "POST" })
   .inputValidator((d: { code: string }) => d)

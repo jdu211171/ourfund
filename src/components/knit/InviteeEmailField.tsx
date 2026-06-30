@@ -64,7 +64,9 @@ export function InviteeEmailField({
           >
             {label}
           </p>
-          {showError && <AlertCircle className="h-3.5 w-3.5 text-[var(--danger)]" strokeWidth={2.25} />}
+          {showError && (
+            <AlertCircle className="h-3.5 w-3.5 text-[var(--danger)]" strokeWidth={2.25} />
+          )}
         </div>
         <input
           value={value}

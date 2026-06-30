@@ -99,8 +99,8 @@ export function GoalDetailScreen() {
   const contributionAmount = Number.parseFloat(contribution || "0");
   const contributionUsd = currencyValueToUsd(
     Number.isFinite(contributionAmount) ? contributionAmount : 0,
-      currency,
-    );
+    currency,
+  );
   const { prefix, suffix } = currencyAdornment(currency);
   const currentMember = members.find((member) => member.id === currentMemberId);
   const currentMemberFirstName = currentMember?.name.split(" ")[0]?.trim().toLowerCase() ?? "";
@@ -409,7 +409,7 @@ export function GoalDetailScreen() {
             }
 
             window.requestAnimationFrame(() => {
-              contributionHistoryRef.current?.scrollTo({ top : 0, behavior: "smooth"});
+              contributionHistoryRef.current?.scrollTo({ top: 0, behavior: "smooth" });
               contributionInputRef.current?.focus();
               contributionInputRef.current?.select();
             });

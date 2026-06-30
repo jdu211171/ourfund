@@ -19,7 +19,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 
     const translateText = (text: string): string => {
       let result = text;
-      
+
       const trimmed = text.trim();
       if (!trimmed) return text;
 
@@ -42,13 +42,13 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       const sortedKeys = Array.from(lowercaseMap.keys()).sort((a, b) => b.length - a.length);
       for (const key of sortedKeys) {
         if (key.length <= 2) continue; // skip very short words to avoid matching parts of syllables
-        
+
         // Escape regex special chars
-        const escapedKey = key.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-        
+        const escapedKey = key.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
+
         // Match word boundaries for alphanumeric keys
         if (/^[a-zA-Z0-9\s]+$/.test(key)) {
-          const regex = new RegExp(`\\b${escapedKey}\\b`, 'gi');
+          const regex = new RegExp(`\\b${escapedKey}\\b`, "gi");
           if (regex.test(result)) {
             result = result.replace(regex, () => lowercaseMap.get(key)!);
           }
@@ -65,7 +65,12 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       }
 
       // 4. Dynamic possessive matches (e.g. "John's wallets", "Morgans' household")
-      if (result.includes("'s ") || result.includes("'s") || result.includes("' ") || result.includes("’s")) {
+      if (
+        result.includes("'s ") ||
+        result.includes("'s") ||
+        result.includes("' ") ||
+        result.includes("’s")
+      ) {
         const possessiveRegex = /([a-zA-Z0-9_-]+)(?:'s|'|’s|’)\s*([a-zA-Z0-9\s_&-]+)/gi;
         result = result.replace(possessiveRegex, (match, name, item) => {
           const lowerItem = item.trim().toLowerCase();
@@ -80,22 +85,18 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     const translateDOM = () => {
       if (typeof document === "undefined") return;
 
-      const walk = document.createTreeWalker(
-        document.body,
-        NodeFilter.SHOW_TEXT,
-        {
-          acceptNode: (node) => {
-            const parent = node.parentNode;
-            if (parent) {
-              const tag = (parent as HTMLElement).tagName?.toUpperCase();
-              if (tag === "SCRIPT" || tag === "STYLE" || tag === "INPUT" || tag === "TEXTAREA") {
-                return NodeFilter.FILTER_REJECT;
-              }
+      const walk = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+        acceptNode: (node) => {
+          const parent = node.parentNode;
+          if (parent) {
+            const tag = (parent as HTMLElement).tagName?.toUpperCase();
+            if (tag === "SCRIPT" || tag === "STYLE" || tag === "INPUT" || tag === "TEXTAREA") {
+              return NodeFilter.FILTER_REJECT;
             }
-            return NodeFilter.FILTER_ACCEPT;
-          },
-        }
-      );
+          }
+          return NodeFilter.FILTER_ACCEPT;
+        },
+      });
 
       let node: Node | null;
       while ((node = walk.nextNode())) {

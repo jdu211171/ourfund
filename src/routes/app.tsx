@@ -26,7 +26,10 @@ export const Route = createFileRoute("/app")({
   component: AppLayout,
 });
 
-const NAV_SECTIONS: { title: string; items: { slug: string; label: string; Icon: typeof Home }[] }[] = [
+const NAV_SECTIONS: {
+  title: string;
+  items: { slug: string; label: string; Icon: typeof Home }[];
+}[] = [
   {
     title: "Overview",
     items: [
@@ -68,15 +71,9 @@ function AppLayoutContent() {
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [allOpen, setAllOpen] = useState(false);
-  
-  const {
-    isAuthReady,
-    profile,
-    household,
-    members,
-    notifications,
-    markAllNotificationsRead,
-  } = useAppNavigation();
+
+  const { isAuthReady, profile, household, members, notifications, markAllNotificationsRead } =
+    useAppNavigation();
 
   const currentSlug = location.pathname.split("/").pop() ?? "home";
 
@@ -136,13 +133,17 @@ function AppLayoutContent() {
           <div className="flex items-center gap-2.5 px-6 py-6">
             <span
               className="grid h-9 w-9 place-items-center rounded-xl text-white font-display text-[15px]"
-              style={{ background: "linear-gradient(135deg, oklch(0.7 0.2 250), oklch(0.45 0.24 265))" }}
+              style={{
+                background: "linear-gradient(135deg, oklch(0.7 0.2 250), oklch(0.45 0.24 265))",
+              }}
             >
               N
             </span>
             <div className="leading-tight">
               <p className="font-display text-[17px] tracking-tight">Nest</p>
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Family budget</p>
+              <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                Family budget
+              </p>
             </div>
           </div>
 
@@ -152,7 +153,9 @@ function AppLayoutContent() {
             </span>
             <div className="min-w-0 flex-1 leading-tight">
               <p className="truncate text-[12px] font-bold">{householdName}</p>
-              <p className="truncate text-[10px] text-muted-foreground">Joint household · {memberCountText}</p>
+              <p className="truncate text-[10px] text-muted-foreground">
+                Joint household · {memberCountText}
+              </p>
             </div>
             <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
           </button>
@@ -197,7 +200,9 @@ function AppLayoutContent() {
               <div className="mt-1 max-h-[280px] overflow-y-auto px-1">
                 {groups.map((g) => (
                   <div key={g} className="py-1">
-                    <p className="px-2 pb-1 pt-1.5 text-[9px] font-bold uppercase tracking-widest text-muted-foreground/70">{g}</p>
+                    <p className="px-2 pb-1 pt-1.5 text-[9px] font-bold uppercase tracking-widest text-muted-foreground/70">
+                      {g}
+                    </p>
                     {SCREENS.filter((s) => s.group === g).map((s) => (
                       <Link
                         key={s.slug}
@@ -284,13 +289,18 @@ function AppLayoutContent() {
           >
             <div className="mb-3 flex items-center justify-between">
               <p className="font-display text-[18px]">Nest</p>
-              <button onClick={() => setDrawerOpen(false)} className="grid h-8 w-8 place-items-center rounded-lg bg-[var(--muted)]">
+              <button
+                onClick={() => setDrawerOpen(false)}
+                className="grid h-8 w-8 place-items-center rounded-lg bg-[var(--muted)]"
+              >
                 <X className="h-4 w-4" />
               </button>
             </div>
             {NAV_SECTIONS.map((sec) => (
               <div key={sec.title} className="mb-4">
-                <p className="px-2 pb-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{sec.title}</p>
+                <p className="px-2 pb-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                  {sec.title}
+                </p>
                 {sec.items.map(({ slug, label, Icon }) => (
                   <Link
                     key={slug}
@@ -298,7 +308,9 @@ function AppLayoutContent() {
                     params={{ screen: slug }}
                     onClick={() => setDrawerOpen(false)}
                     className={`flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] ${
-                      currentSlug === slug ? "bg-[var(--primary)] text-white" : "text-foreground hover:bg-[var(--muted)]"
+                      currentSlug === slug
+                        ? "bg-[var(--primary)] text-white"
+                        : "text-foreground hover:bg-[var(--muted)]"
                     }`}
                   >
                     <Icon className="h-4 w-4" />
@@ -308,10 +320,14 @@ function AppLayoutContent() {
               </div>
             ))}
             <div className="mt-2 border-t border-[var(--border)] pt-2">
-              <p className="px-2 pb-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">All screens</p>
+              <p className="px-2 pb-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                All screens
+              </p>
               {groups.map((g) => (
                 <div key={g} className="py-1">
-                  <p className="px-2 pb-0.5 text-[9px] font-bold uppercase tracking-widest text-muted-foreground/70">{g}</p>
+                  <p className="px-2 pb-0.5 text-[9px] font-bold uppercase tracking-widest text-muted-foreground/70">
+                    {g}
+                  </p>
                   {SCREENS.filter((s) => s.group === g).map((s) => (
                     <Link
                       key={s.slug}
@@ -319,7 +335,9 @@ function AppLayoutContent() {
                       params={{ screen: s.slug }}
                       onClick={() => setDrawerOpen(false)}
                       className={`block rounded-md px-2 py-1 text-[11.5px] ${
-                        currentSlug === s.slug ? "bg-[var(--primary)]/20 text-foreground" : "text-muted-foreground"
+                        currentSlug === s.slug
+                          ? "bg-[var(--primary)]/20 text-foreground"
+                          : "text-muted-foreground"
                       }`}
                     >
                       {s.label}

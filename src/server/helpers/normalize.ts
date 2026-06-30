@@ -1,4 +1,4 @@
-import { currencyMeta } from '../../lib/currency';
+import { currencyMeta } from "../../lib/currency";
 
 export const defaultNotificationPrefs = {
   "Category at 80%": true,

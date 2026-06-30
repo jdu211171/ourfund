@@ -20,7 +20,17 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { PhoneFrame, useFrameMode } from "./PhoneFrame";
-import { Area, AreaChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import {
+  Area,
+  AreaChart,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { BottomNav } from "./BottomNav";
 import { BalanceHeader } from "./BalanceHeader";
 import { Money } from "./Money";
@@ -65,7 +75,7 @@ export function HomeScreen() {
   const firstName = profile.name.trim().split(" ").filter(Boolean)[0] ?? "there";
   const unreadCount = notifications.filter((notification) => !notification.read).length;
   const scheduleToday = new Date();
-  
+
   const upcomingBills = useMemo(() => {
     return subscriptions
       .map((item) => ({ item, info: getScheduleInfo(item.every, scheduleToday) }))
@@ -81,9 +91,11 @@ export function HomeScreen() {
   }, [recurringIncome, scheduleToday]);
 
   const expectedIncomeUsd = forecastItems.reduce((sum, entry) => sum + entry.item.amountUsd, 0);
-  const showUpcoming = upcomingBills.filter(b => b.info.daysUntil !== null && b.info.daysUntil <= 5).length > 0;
-  const showForecast = forecastItems.filter(f => f.info.daysUntil !== null && f.info.daysUntil <= 5).length > 0;
-  
+  const showUpcoming =
+    upcomingBills.filter((b) => b.info.daysUntil !== null && b.info.daysUntil <= 5).length > 0;
+  const showForecast =
+    forecastItems.filter((f) => f.info.daysUntil !== null && f.info.daysUntil <= 5).length > 0;
+
   const primaryGoal = goals.find((goal) => goal.savedUsd < goal.targetUsd) ?? goals[0];
   const goalPct = primaryGoal
     ? Math.min(100, Math.round((primaryGoal.savedUsd / Math.max(primaryGoal.targetUsd, 1)) * 100))
@@ -111,7 +123,7 @@ export function HomeScreen() {
   const cashflow = useMemo(() => {
     const weeks = Array.from({ length: 8 }).map((_, i) => {
       const d = new Date();
-      d.setDate(d.getDate() - (7 * (7 - i)));
+      d.setDate(d.getDate() - 7 * (7 - i));
       return {
         label: `W${i + 1}`,
         start: new Date(d.getFullYear(), d.getMonth(), d.getDate() - d.getDay()),
@@ -165,14 +177,16 @@ export function HomeScreen() {
       "oklch(0.75 0.18 70)",
       "oklch(0.7 0.22 305)",
     ];
-    const data = categories.map((cat, i) => {
-      const val = Math.round(categorySpentUsd(cat.label));
-      return {
-        name: cat.label,
-        value: val,
-        color: cat.color || colors[i % colors.length],
-      };
-    }).filter((c) => c.value > 0);
+    const data = categories
+      .map((cat, i) => {
+        const val = Math.round(categorySpentUsd(cat.label));
+        return {
+          name: cat.label,
+          value: val,
+          color: cat.color || colors[i % colors.length],
+        };
+      })
+      .filter((c) => c.value > 0);
 
     if (data.length === 0) {
       return [
@@ -192,12 +206,14 @@ export function HomeScreen() {
 
   // Dynamic wallets list
   const desktopWallets = useMemo(() => {
-    return activeWallets.map((w) => ({
-      id: w.id,
-      name: w.label,
-      balance: walletBalanceUsd(w.label),
-      color: w.color || "oklch(0.66 0.22 265)",
-    })).slice(0, 3);
+    return activeWallets
+      .map((w) => ({
+        id: w.id,
+        name: w.label,
+        balance: walletBalanceUsd(w.label),
+        color: w.color || "oklch(0.66 0.22 265)",
+      }))
+      .slice(0, 3);
   }, [activeWallets, walletBalanceUsd]);
 
   const recentTransactionsDesktop = useMemo(() => {
@@ -210,10 +226,18 @@ export function HomeScreen() {
         {/* Title row */}
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-[12px] uppercase tracking-widest text-muted-foreground">Family Dashboard</p>
-            <h1 className="font-display text-[34px] leading-none tracking-tight text-foreground">Good evening, {firstName}</h1>
+            <p className="text-[12px] uppercase tracking-widest text-muted-foreground">
+              Family Dashboard
+            </p>
+            <h1 className="font-display text-[34px] leading-none tracking-tight text-foreground">
+              Good evening, {firstName}
+            </h1>
             <p className="mt-1.5 text-[13px] text-muted-foreground">
-              Your household is <span className="font-semibold text-[var(--primary)]">{household?.name ?? "Joint household"}</span>. Keep it up.
+              Your household is{" "}
+              <span className="font-semibold text-[var(--primary)]">
+                {household?.name ?? "Joint household"}
+              </span>
+              . Keep it up.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -221,7 +245,8 @@ export function HomeScreen() {
               onClick={() => navigate("wallet_switcher")}
               className="inline-flex items-center gap-2 rounded-xl bg-[var(--card)] px-3.5 py-2.5 text-[12px] font-semibold text-foreground border border-[var(--border)] transition hover:bg-[var(--muted)]/50"
             >
-              {activeWallet?.label ?? "Select wallet"} <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+              {activeWallet?.label ?? "Select wallet"}{" "}
+              <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
             </button>
             <button
               onClick={() => navigate("add_expense")}
@@ -235,22 +260,58 @@ export function HomeScreen() {
         {/* KPI row */}
         <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
           {[
-            { label: "Net balance", usd: balanceUsd, change: 4.2, up: true, Icon: WalletIcon, accent: "oklch(0.66 0.22 265)" },
-            { label: "Income", usd: incomeUsd, change: 2.1, up: true, Icon: ArrowDownLeft, accent: "oklch(0.72 0.18 145)" },
-            { label: "Expense", usd: spentUsd, change: -8.4, up: false, Icon: ArrowUpRight, accent: "oklch(0.7 0.22 25)" },
-            { label: "Savings Goal", usd: primaryGoal ? primaryGoal.savedUsd : 0, change: goalPct, up: true, Icon: PiggyBank, accent: "oklch(0.75 0.18 70)" },
+            {
+              label: "Net balance",
+              usd: balanceUsd,
+              change: 4.2,
+              up: true,
+              Icon: WalletIcon,
+              accent: "oklch(0.66 0.22 265)",
+            },
+            {
+              label: "Income",
+              usd: incomeUsd,
+              change: 2.1,
+              up: true,
+              Icon: ArrowDownLeft,
+              accent: "oklch(0.72 0.18 145)",
+            },
+            {
+              label: "Expense",
+              usd: spentUsd,
+              change: -8.4,
+              up: false,
+              Icon: ArrowUpRight,
+              accent: "oklch(0.7 0.22 25)",
+            },
+            {
+              label: "Savings Goal",
+              usd: primaryGoal ? primaryGoal.savedUsd : 0,
+              change: goalPct,
+              up: true,
+              Icon: PiggyBank,
+              accent: "oklch(0.75 0.18 70)",
+            },
           ].map((k) => (
-            <div key={k.label} className="rounded-2xl bg-[var(--card)] p-5 border border-[var(--border)]">
+            <div
+              key={k.label}
+              className="rounded-2xl bg-[var(--card)] p-5 border border-[var(--border)]"
+            >
               <div className="flex items-center justify-between">
                 <span
                   className="grid h-9 w-9 place-items-center rounded-xl"
-                  style={{ background: `color-mix(in oklab, ${k.accent} 22%, transparent)`, color: k.accent }}
+                  style={{
+                    background: `color-mix(in oklab, ${k.accent} 22%, transparent)`,
+                    color: k.accent,
+                  }}
                 >
                   <k.Icon className="h-4 w-4" strokeWidth={2.5} />
                 </span>
                 <span
                   className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                    k.up ? "bg-[var(--success)]/15 text-[var(--success)]" : "bg-[var(--danger)]/15 text-[var(--danger)]"
+                    k.up
+                      ? "bg-[var(--success)]/15 text-[var(--success)]"
+                      : "bg-[var(--danger)]/15 text-[var(--danger)]"
                   }`}
                 >
                   {k.up ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
@@ -258,7 +319,9 @@ export function HomeScreen() {
                   {k.change}%
                 </span>
               </div>
-              <p className="mt-4 text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">{k.label}</p>
+              <p className="mt-4 text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
+                {k.label}
+              </p>
               <div className="mt-1">
                 <Money usd={k.usd} size="lg" />
               </div>
@@ -271,8 +334,12 @@ export function HomeScreen() {
           <section className="rounded-2xl bg-[var(--card)] p-6 xl:col-span-2 border border-[var(--border)]">
             <div className="flex flex-wrap items-end justify-between gap-3">
               <div>
-                <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Cash flow</p>
-                <p className="font-display text-[22px] leading-none tracking-tight text-foreground">Last 8 weeks</p>
+                <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
+                  Cash flow
+                </p>
+                <p className="font-display text-[22px] leading-none tracking-tight text-foreground">
+                  Last 8 weeks
+                </p>
               </div>
               <div className="flex items-center gap-3 text-[11px]">
                 <span className="inline-flex items-center gap-1.5 text-muted-foreground font-semibold">
@@ -296,8 +363,17 @@ export function HomeScreen() {
                       <stop offset="100%" stopColor="oklch(0.66 0.22 265)" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="d" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "oklch(0.74 0.02 260)" }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "oklch(0.74 0.02 260)" }} />
+                  <XAxis
+                    dataKey="d"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 11, fill: "oklch(0.74 0.02 260)" }}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 11, fill: "oklch(0.74 0.02 260)" }}
+                  />
                   <Tooltip
                     contentStyle={{
                       background: "oklch(0.235 0.028 265)",
@@ -307,8 +383,20 @@ export function HomeScreen() {
                       fontSize: 12,
                     }}
                   />
-                  <Area type="monotone" dataKey="income" stroke="oklch(0.72 0.18 145)" strokeWidth={2.5} fill="url(#gIncome)" />
-                  <Area type="monotone" dataKey="expense" stroke="oklch(0.66 0.22 265)" strokeWidth={2.5} fill="url(#gExpense)" />
+                  <Area
+                    type="monotone"
+                    dataKey="income"
+                    stroke="oklch(0.72 0.18 145)"
+                    strokeWidth={2.5}
+                    fill="url(#gIncome)"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="expense"
+                    stroke="oklch(0.66 0.22 265)"
+                    strokeWidth={2.5}
+                    fill="url(#gExpense)"
+                  />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -317,7 +405,9 @@ export function HomeScreen() {
           <section className="rounded-2xl bg-[var(--card)] p-6 border border-[var(--border)]">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Spending by category</p>
+                <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
+                  Spending by category
+                </p>
                 <p className="font-display text-[22px] leading-none tracking-tight text-foreground">
                   <Money usd={totalCategorySpent} size="md" />
                 </p>
@@ -333,7 +423,14 @@ export function HomeScreen() {
               <div className="h-[150px] w-[150px] shrink-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={categoryChartData} dataKey="value" innerRadius={48} outerRadius={70} paddingAngle={3} stroke="none">
+                    <Pie
+                      data={categoryChartData}
+                      dataKey="value"
+                      innerRadius={48}
+                      outerRadius={70}
+                      paddingAngle={3}
+                      stroke="none"
+                    >
                       {categoryChartData.map((c) => (
                         <Cell key={c.name} fill={c.color} />
                       ))}
@@ -344,9 +441,16 @@ export function HomeScreen() {
               <div className="flex-1 space-y-2 max-h-[160px] overflow-y-auto pr-1">
                 {categoryChartData.map((c) => (
                   <div key={c.name} className="flex items-center gap-2 text-[12px] text-foreground">
-                    <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ background: c.color }} />
-                    <span className="text-muted-foreground truncate max-w-[80px] font-semibold">{c.name}</span>
-                    <span className="ml-auto font-bold"><Money usd={c.value} size="sm" /></span>
+                    <span
+                      className="h-2.5 w-2.5 rounded-full shrink-0"
+                      style={{ background: c.color }}
+                    />
+                    <span className="text-muted-foreground truncate max-w-[80px] font-semibold">
+                      {c.name}
+                    </span>
+                    <span className="ml-auto font-bold">
+                      <Money usd={c.value} size="sm" />
+                    </span>
                   </div>
                 ))}
               </div>
@@ -358,7 +462,12 @@ export function HomeScreen() {
         <section>
           <div className="mb-3 flex items-center justify-between">
             <p className="font-display text-[20px] tracking-tight text-foreground">Wallets</p>
-            <button onClick={() => navigate("wallet")} className="text-[12px] font-semibold text-[var(--primary)] transition hover:opacity-80">Manage</button>
+            <button
+              onClick={() => navigate("wallet")}
+              className="text-[12px] font-semibold text-[var(--primary)] transition hover:opacity-80"
+            >
+              Manage
+            </button>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             {desktopWallets.map((w) => (
@@ -394,8 +503,15 @@ export function HomeScreen() {
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
           <section className="rounded-2xl bg-[var(--card)] p-6 xl:col-span-2 border border-[var(--border)]">
             <div className="flex items-center justify-between">
-              <p className="font-display text-[20px] tracking-tight text-foreground">Recent transactions</p>
-              <button onClick={() => navigate("history_search")} className="text-[12px] font-semibold text-[var(--primary)] transition hover:opacity-80">View all</button>
+              <p className="font-display text-[20px] tracking-tight text-foreground">
+                Recent transactions
+              </p>
+              <button
+                onClick={() => navigate("history_search")}
+                className="text-[12px] font-semibold text-[var(--primary)] transition hover:opacity-80"
+              >
+                View all
+              </button>
             </div>
             <div className="mt-3 overflow-hidden rounded-xl border border-[var(--border)]">
               <table className="w-full text-left text-[13px] text-foreground">
@@ -428,13 +544,20 @@ export function HomeScreen() {
                       <td className="px-4 py-3 text-muted-foreground font-semibold">{t.who}</td>
                       <td className="px-4 py-3 text-muted-foreground">{t.date}</td>
                       <td className="px-4 py-3 text-right">
-                        <Money usd={t.usd} size="sm" tone={t.usd > 0 ? "success" : "danger"} signed />
+                        <Money
+                          usd={t.usd}
+                          size="sm"
+                          tone={t.usd > 0 ? "success" : "danger"}
+                          signed
+                        />
                       </td>
                     </tr>
                   ))}
                   {recentTransactionsDesktop.length === 0 && (
                     <tr>
-                      <td colSpan={4} className="text-center py-6 text-muted-foreground">No recent transactions.</td>
+                      <td colSpan={4} className="text-center py-6 text-muted-foreground">
+                        No recent transactions.
+                      </td>
                     </tr>
                   )}
                 </tbody>
@@ -444,13 +567,35 @@ export function HomeScreen() {
 
           <aside className="space-y-6">
             <section className="rounded-2xl bg-[var(--card)] p-6 border border-[var(--border)]">
-              <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Quick actions</p>
+              <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
+                Quick actions
+              </p>
               <div className="mt-3 grid grid-cols-2 gap-3">
                 {[
-                  { Icon: ArrowDownLeft, label: "Add income", tint: "var(--success)", action: () => navigate("add_income") },
-                  { Icon: ArrowUpRight, label: "Add expense", tint: "var(--danger)", action: () => navigate("add_expense") },
-                  { Icon: ArrowLeftRight, label: "Transfer", tint: "var(--primary)", action: () => navigate("transfer") },
-                  { Icon: Target, label: "New goal", tint: "oklch(0.75 0.18 70)", action: () => navigate("new_goal") },
+                  {
+                    Icon: ArrowDownLeft,
+                    label: "Add income",
+                    tint: "var(--success)",
+                    action: () => navigate("add_income"),
+                  },
+                  {
+                    Icon: ArrowUpRight,
+                    label: "Add expense",
+                    tint: "var(--danger)",
+                    action: () => navigate("add_expense"),
+                  },
+                  {
+                    Icon: ArrowLeftRight,
+                    label: "Transfer",
+                    tint: "var(--primary)",
+                    action: () => navigate("transfer"),
+                  },
+                  {
+                    Icon: Target,
+                    label: "New goal",
+                    tint: "oklch(0.75 0.18 70)",
+                    action: () => navigate("new_goal"),
+                  },
                 ].map(({ Icon, label, tint, action }) => (
                   <button
                     key={label}
@@ -459,7 +604,10 @@ export function HomeScreen() {
                   >
                     <span
                       className="grid h-9 w-9 place-items-center rounded-lg"
-                      style={{ color: tint, background: `color-mix(in oklab, ${tint} 18%, transparent)` }}
+                      style={{
+                        color: tint,
+                        background: `color-mix(in oklab, ${tint} 18%, transparent)`,
+                      }}
                     >
                       <Icon className="h-4 w-4" strokeWidth={2.5} />
                     </span>
@@ -471,7 +619,9 @@ export function HomeScreen() {
 
             <section className="rounded-2xl bg-[var(--card)] p-6 border border-[var(--border)]">
               <div className="flex items-center justify-between">
-                <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">Upcoming bills</p>
+                <p className="text-[11px] uppercase tracking-widest text-muted-foreground font-semibold">
+                  Upcoming bills
+                </p>
                 <span className="rounded-full bg-[var(--muted)] px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
                   Next 30 days
                 </span>
@@ -487,7 +637,9 @@ export function HomeScreen() {
                       <Receipt className="h-4 w-4" />
                     </div>
                     <div className="min-w-0 flex-1 leading-tight">
-                      <p className="truncate text-[12.5px] font-bold text-foreground">{entry.item.label}</p>
+                      <p className="truncate text-[12.5px] font-bold text-foreground">
+                        {entry.item.label}
+                      </p>
                       <p className="text-[10px] text-muted-foreground">
                         {formatScheduleSubtext(entry.info, { includeCategory: true })}
                       </p>
@@ -496,7 +648,9 @@ export function HomeScreen() {
                   </div>
                 ))}
                 {upcomingBills.length === 0 && (
-                  <p className="text-[12px] text-muted-foreground text-center py-2 font-semibold">No bills due soon.</p>
+                  <p className="text-[12px] text-muted-foreground text-center py-2 font-semibold">
+                    No bills due soon.
+                  </p>
                 )}
               </div>
             </section>

@@ -1,9 +1,16 @@
-import { createServerFn } from '@tanstack/react-start';
-import { setResponseHeaders } from '@tanstack/react-start/server';
-import { prisma } from '@/lib/db';
-import { getSessionUser } from '@/lib/auth-server';
-import { loanEntrySelect } from '@/server/helpers/notification';
-import { canMemberSeeGoal, normalizeBudgetMode, normalizeReportPeriod, defaultNotificationPrefs, asRecord, normalizeHistoryFilters } from '@/server/helpers';
+import { createServerFn } from "@tanstack/react-start";
+import { setResponseHeaders } from "@tanstack/react-start/server";
+import { prisma } from "@/lib/db";
+import { getSessionUser } from "@/lib/auth-server";
+import { loanEntrySelect } from "@/server/helpers/notification";
+import {
+  canMemberSeeGoal,
+  normalizeBudgetMode,
+  normalizeReportPeriod,
+  defaultNotificationPrefs,
+  asRecord,
+  normalizeHistoryFilters,
+} from "@/server/helpers";
 
 export const getAppDataServerFn = createServerFn({ method: "GET" }).handler(async () => {
   setResponseHeaders({

@@ -18,8 +18,18 @@ import { formatUsdAsCurrency } from "@/lib/currency";
 // ─── helpers ────────────────────────────────────────────────────────────────
 
 const MONTH_NAMES = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
 function monthKey(year: number, month: number) {
@@ -49,13 +59,8 @@ type MonthData = {
 // ─── component ───────────────────────────────────────────────────────────────
 
 export function MonthlyHistoryScreen() {
-  const {
-    goBack,
-    navigate,
-    activeTransactions,
-    setSelectedTransactionId,
-    currency,
-  } = useAppNavigation();
+  const { goBack, navigate, activeTransactions, setSelectedTransactionId, currency } =
+    useAppNavigation();
 
   const now = useMemo(() => new Date(), []);
 
@@ -101,19 +106,14 @@ export function MonthlyHistoryScreen() {
 
   // ── Detail view ────────────────────────────────────────────────────────────
   if (openMonth) {
-    const data = monthRows.find(
-      (r) => r.year === openMonth.year && r.month === openMonth.month,
-    );
+    const data = monthRows.find((r) => r.year === openMonth.year && r.month === openMonth.month);
     if (data) {
       const net = data.incomeUsd - data.expenseUsd;
-      const isCurrentMonth =
-        data.year === now.getFullYear() && data.month === now.getMonth();
+      const isCurrentMonth = data.year === now.getFullYear() && data.month === now.getMonth();
 
       // Group by day label
       const groups: Record<string, Transaction[]> = {};
-      for (const txn of [...data.transactions].sort((a, b) =>
-        b.id.localeCompare(a.id),
-      )) {
+      for (const txn of [...data.transactions].sort((a, b) => b.id.localeCompare(a.id))) {
         const d = transactionDate(txn.date, now);
         const dayLabel = d
           ? d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })
@@ -204,9 +204,7 @@ export function MonthlyHistoryScreen() {
                       style={{
                         width: `${Math.min(
                           100,
-                          data.incomeUsd > 0
-                            ? (data.expenseUsd / data.incomeUsd) * 100
-                            : 0,
+                          data.incomeUsd > 0 ? (data.expenseUsd / data.incomeUsd) * 100 : 0,
                         )}%`,
                       }}
                     />
@@ -300,9 +298,7 @@ export function MonthlyHistoryScreen() {
         {/* Net balance card */}
         <div className="mt-4 rounded-3xl bg-white p-5 shadow-[var(--shadow-soft)]">
           <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
-            {currentMonthData
-              ? `${currentMonthData.label} net`
-              : "Net balance this month"}
+            {currentMonthData ? `${currentMonthData.label} net` : "Net balance this month"}
           </p>
           <div className="mt-1">
             <Money
@@ -342,8 +338,7 @@ export function MonthlyHistoryScreen() {
             {monthRows.map((m, i) => {
               const net = m.incomeUsd - m.expenseUsd;
               const positive = net >= 0;
-              const isCurrentMonth =
-                m.year === now.getFullYear() && m.month === now.getMonth();
+              const isCurrentMonth = m.year === now.getFullYear() && m.month === now.getMonth();
               return (
                 <button
                   key={monthKey(m.year, m.month)}

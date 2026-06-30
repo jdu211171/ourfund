@@ -52,6 +52,10 @@ import { ProductTrackerScreen } from "@/components/knit/ProductTrackerScreen";
 import { ScanReceiptScreen } from "@/components/knit/ScanReceiptScreen";
 import { ResetPasswordScreen } from "@/components/knit/ResetPasswordScreen";
 import { MoreScreen } from "@/components/knit/MoreScreen";
+import { BuyListScreen } from "@/components/knit/BuyListScreen";
+import { SavedListsScreen } from "@/components/knit/SavedListsScreen";
+import { PriceHistoryScreen } from "@/components/knit/PriceHistoryScreen";
+
 import { PhoneFrame } from "@/components/knit/PhoneFrame";
 import { WalletSwitcherScreen } from "@/components/knit/WalletSwitcherScreen";
 import { WalletDetailScreen } from "@/components/knit/WalletDetailScreen";
@@ -200,8 +204,15 @@ function AppRouter() {
       return <ProductTrackerScreen />;
     case "scan_receipt":
       return <ScanReceiptScreen />;
+    case "buy_list":
+      return <BuyListScreen />;
+    case "saved_lists":
+      return <SavedListsScreen />;
+    case "price_history":
+      return <PriceHistoryScreen />;
     case "wallet_switcher":
       return <WalletSwitcherScreen />;
+
     case "wallet_detail":
       return <WalletDetailScreen />;
     default:
