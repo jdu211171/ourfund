@@ -13,6 +13,7 @@ import {
 import { PhoneFrame } from "./PhoneFrame";
 import { Money } from "./Money";
 import { useAppNavigation, transactionDate, type Transaction } from "@/lib/navigation";
+import { formatTransactionWho } from "@/context/helpers";
 import { formatUsdAsCurrency } from "@/lib/currency";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
@@ -255,7 +256,7 @@ export function MonthlyHistoryScreen() {
                                   {txn.name}
                                 </p>
                                 <p className="text-[10px] text-muted-foreground truncate">
-                                  {txn.who}
+                                  {formatTransactionWho(txn.who, txn.date)}
                                 </p>
                               </div>
                               <Money

@@ -14,6 +14,7 @@ import { useEffect, useState } from "react";
 import { PhoneFrame } from "./PhoneFrame";
 import { Money } from "./Money";
 import { useAppNavigation, type CurrencyCode } from "@/lib/navigation";
+import { formatISODate } from "@/context/helpers";
 import {
   currencyFractionDigits,
   currencyValueToUsd,
@@ -116,7 +117,7 @@ export function WalletDetailScreen() {
       usd: -currentBalance,
       category: "Transfer",
       wallet: wallet.label,
-      date: "today",
+      date: formatISODate(new Date()),
     });
     setShowResetConfirm(false);
   };
@@ -135,7 +136,7 @@ export function WalletDetailScreen() {
       usd: usdVal,
       category: "Transfer",
       wallet: wallet.label,
-      date: "today",
+      date: formatISODate(new Date()),
     });
 
     setAdjustType(null);

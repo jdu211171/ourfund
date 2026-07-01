@@ -35,6 +35,7 @@ import { BottomNav } from "./BottomNav";
 import { BalanceHeader } from "./BalanceHeader";
 import { Money } from "./Money";
 import { useAppNavigation } from "@/lib/navigation";
+import { formatTransactionWho, getRelativeDateString } from "@/context/helpers";
 import { GoalIcon, normalizeGoalIconName } from "./goalIconOptions";
 import { formatScheduleSubtext, getScheduleInfo } from "@/lib/schedules";
 
@@ -541,8 +542,8 @@ export function HomeScreen() {
                           <span className="font-semibold">{t.name}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground font-semibold">{t.who}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{t.date}</td>
+                      <td className="px-4 py-3 text-muted-foreground font-semibold">{t.who.split(" · ")[0]}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{getRelativeDateString(t.date, new Date())}</td>
                       <td className="px-4 py-3 text-right">
                         <Money
                           usd={t.usd}
@@ -870,7 +871,7 @@ export function HomeScreen() {
                 <span className="block truncate text-[12px] font-bold text-foreground">
                   {transaction.name}
                 </span>
-                <span className="block text-[10px] text-muted-foreground">{transaction.who}</span>
+                <span className="block text-[10px] text-muted-foreground">{formatTransactionWho(transaction.who, transaction.date)}</span>
               </span>
               <Money
                 usd={transaction.usd}

@@ -12,6 +12,7 @@ import {
 import { PhoneFrame } from "./PhoneFrame";
 import { Money } from "./Money";
 import { useAppNavigation, type Transaction, type TxnKind } from "@/lib/navigation";
+import { getRelativeDateString, formatTransactionWho } from "@/context/helpers";
 
 const filters: TxnKind[] = ["All", "Expense", "Income", "Goals", "Transfer"];
 
@@ -25,9 +26,8 @@ function iconFor(txn: Transaction) {
 }
 
 function groupDate(date: string) {
-  if (date.includes("today")) return "Today";
-  if (date.includes("yesterday")) return "Yesterday";
-  return date;
+  const rel = getRelativeDateString(date, new Date());
+  return rel.charAt(0).toUpperCase() + rel.slice(1);
 }
 
 export function TransactionHistoryScreen() {
@@ -159,7 +159,7 @@ export function TransactionHistoryScreen() {
                         </div>
                         <div className="flex-1 leading-tight">
                           <p className="text-[12px] font-bold text-foreground">{txn.name}</p>
-                          <p className="text-[10px] text-muted-foreground">{txn.who}</p>
+                          <p className="text-[10px] text-muted-foreground">{formatTransactionWho(txn.who, txn.date)}</p>
                         </div>
                         <Money
                           usd={txn.usd}

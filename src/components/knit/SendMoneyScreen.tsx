@@ -4,6 +4,7 @@ import { PhoneFrame } from "./PhoneFrame";
 import { Money } from "./Money";
 import { currencyValueToUsd, formatUsdAsCurrency } from "@/lib/currency";
 import { useAppNavigation } from "@/lib/navigation";
+import { formatISODate } from "@/context/helpers";
 import { OptionSelect } from "./OptionSelect";
 
 const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "del"] as const;
@@ -127,11 +128,11 @@ export function SendMoneyScreen() {
             if (amountUsd > 0) {
               addTransaction({
                 name: category?.label ? `${category.label} expense` : "Expense",
-                who: `${profile.name.split(" ").filter(Boolean)[0] ?? "You"} · today`,
+                who: profile.name.split(" ").filter(Boolean)[0] ?? "You",
                 usd: -amountUsd,
                 category: category?.label ?? "Uncategorized",
                 wallet: wallet.label,
-                date: "today",
+                date: formatISODate(new Date()),
               });
             }
             goBack();

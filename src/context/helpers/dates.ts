@@ -8,6 +8,36 @@ export function firstName(name: string) {
   return name.trim().split(" ").filter(Boolean)[0] ?? "You";
 }
 
+export function formatISODate(date: Date) {
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+export function getRelativeDateString(date: string, now: Date): string {
+  const parsed = transactionDate(date, now);
+  if (!parsed) return date;
+
+  const nowStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const parsedStart = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+  const diffTime = nowStart.getTime() - parsedStart.getTime();
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return "today";
+  if (diffDays === 1) return "yesterday";
+  if (diffDays > 1 && diffDays < 7) return `${diffDays} days ago`;
+
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  return `${monthNames[parsed.getMonth()]} ${parsed.getDate()}`;
+}
+
+export function formatTransactionWho(who: string, date: string, now: Date = new Date()): string {
+  const baseWho = who.split(" · ")[0] ?? "You";
+  const relativeDate = getRelativeDateString(date, now);
+  return `${baseWho} · ${relativeDate}`;
+}
+
 export function transactionDate(date: string, now: Date) {
   const text = date.trim().toLowerCase();
   if (text.includes("today") || text.includes("just now")) return now;
@@ -51,3 +81,4 @@ export function isCurrentMonthTransaction(transaction: Transaction, now: Date) {
     parsed.getMonth() === now.getMonth()
   );
 }
+

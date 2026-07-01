@@ -17,6 +17,7 @@ import {
   usdToCurrencyValue,
 } from "@/lib/currency";
 import { useAppNavigation, type LoanDirection, type LoanEntry } from "@/lib/navigation";
+import { formatISODate } from "@/context/helpers";
 import { PhoneFrame } from "./PhoneFrame";
 import { Money } from "./Money";
 import { OptionSelect } from "./OptionSelect";
@@ -136,11 +137,11 @@ export function LendBorrowScreen() {
 
     addTransaction({
       name: direction === "lent" ? `Lent to ${cpName}` : `Borrowed from ${cpName}`,
-      who: `${profile?.name || "Me"} · today`,
+      who: profile?.name || "Me",
       usd: direction === "lent" ? -amountUsd : amountUsd,
       category: "Lend/Borrow",
       wallet: walletLabel,
-      date: "today",
+      date: formatISODate(new Date()),
     });
 
     if (selectedMember) {
@@ -151,11 +152,11 @@ export function LendBorrowScreen() {
           direction === "lent"
             ? `Borrowed from ${profile?.name || "Me"}`
             : `Lent to ${profile?.name || "Me"}`,
-        who: `${selectedMember.name} · today`,
+        who: selectedMember.name,
         usd: direction === "lent" ? amountUsd : -amountUsd,
         category: "Lend/Borrow",
         wallet: counterpartyWallet.label,
-        date: "today",
+        date: formatISODate(new Date()),
       });
     }
 
@@ -196,11 +197,11 @@ export function LendBorrowScreen() {
         name: isIncrease
           ? `Additional lent to ${paymentLoan.counterpartyName}`
           : `Repayment from ${paymentLoan.counterpartyName}`,
-        who: `${profile?.name || "Me"} · today`,
+        who: profile?.name || "Me",
         usd: payUsd,
         category: "Lend/Borrow",
         wallet: walletLabel,
-        date: "today",
+        date: formatISODate(new Date()),
       });
 
       if (paymentLoan.counterpartyMemberId) {
@@ -211,11 +212,11 @@ export function LendBorrowScreen() {
           name: isIncrease
             ? `Additional borrowed from ${profile?.name || "Me"}`
             : `Repayment to ${profile?.name || "Me"}`,
-          who: `${counterpartyMember?.name || "Family member"} · today`,
+          who: counterpartyMember?.name || "Family member",
           usd: -payUsd,
           category: "Lend/Borrow",
           wallet: counterpartyWallet.label,
-          date: "today",
+          date: formatISODate(new Date()),
         });
       }
     } else {
@@ -223,11 +224,11 @@ export function LendBorrowScreen() {
         name: isIncrease
           ? `Additional borrowed from ${paymentLoan.counterpartyName}`
           : `Repayment to ${paymentLoan.counterpartyName}`,
-        who: `${profile?.name || "Me"} · today`,
+        who: profile?.name || "Me",
         usd: -payUsd,
         category: "Lend/Borrow",
         wallet: walletLabel,
-        date: "today",
+        date: formatISODate(new Date()),
       });
 
       if (paymentLoan.counterpartyMemberId) {
@@ -238,11 +239,11 @@ export function LendBorrowScreen() {
           name: isIncrease
             ? `Additional lent to ${profile?.name || "Me"}`
             : `Repayment from ${profile?.name || "Me"}`,
-          who: `${counterpartyMember?.name || "Family member"} · today`,
+          who: counterpartyMember?.name || "Family member",
           usd: payUsd,
           category: "Lend/Borrow",
           wallet: counterpartyWallet.label,
-          date: "today",
+          date: formatISODate(new Date()),
         });
       }
     }

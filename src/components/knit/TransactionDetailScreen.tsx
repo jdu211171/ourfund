@@ -2,6 +2,7 @@ import { ArrowLeft, Share2, Download, Edit3, ArrowDownLeft } from "lucide-react"
 import { PhoneFrame } from "./PhoneFrame";
 import { Money } from "./Money";
 import { useAppNavigation } from "@/lib/navigation";
+import { getRelativeDateString } from "@/context/helpers";
 import { useState } from "react";
 
 export function TransactionDetailScreen() {
@@ -49,9 +50,12 @@ export function TransactionDetailScreen() {
     ["Merchant", txn.name],
     [
       "Date",
-      txn.date.includes("today") || txn.date.includes("yesterday")
-        ? `${txn.date} 18:24`
-        : `${txn.date}, 18:24`,
+      (() => {
+        const rel = getRelativeDateString(txn.date, new Date());
+        return rel === "today" || rel === "yesterday"
+          ? `${rel} 18:24`
+          : `${rel}, 18:24`;
+      })(),
     ],
   ];
 

@@ -987,20 +987,20 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
       {
         id: `${id}-out`,
         name: note || `Transfer to ${toWallet}`,
-        who: `${firstName(profile.name)} · today`,
+        who: firstName(profile.name),
         usd: -amountUsd,
         category: "Transfer",
         wallet: fromWallet,
-        date: "today",
+        date: formatISODate(new Date()),
       },
       {
         id: `${id}-in`,
         name: note || `Transfer from ${fromWallet}`,
-        who: `${firstName(profile.name)} · today`,
+        who: firstName(profile.name),
         usd: amountUsd,
         category: "Transfer",
         wallet: toWallet,
-        date: "today",
+        date: formatISODate(new Date()),
       },
     ];
     setTransactions((prev) => [...transferTransactions, ...prev]);
@@ -1653,11 +1653,11 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         ? {
             id: makeId("txn"),
             name: normalizedScan.storeName || "Receipt purchase",
-            who: `${firstName(profile.name)} · today`,
+            who: firstName(profile.name),
             usd: -normalizedScan.totalUsd,
             category: products[0]?.category ?? "Groceries",
             wallet: walletLabel,
-            date: normalizedScan.purchasedAt || "today",
+            date: normalizedScan.purchasedAt || formatISODate(new Date()),
           }
         : null;
 

@@ -4,6 +4,7 @@ import { PhoneFrame } from "./PhoneFrame";
 import { Money } from "./Money";
 import { currencyValueToUsd } from "@/lib/currency";
 import { useAppNavigation } from "@/lib/navigation";
+import { formatISODate } from "@/context/helpers";
 import { OptionSelect } from "./OptionSelect";
 
 const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "del"] as const;
@@ -114,11 +115,11 @@ export function AddIncomeScreen() {
             if (amountUsd > 0) {
               addTransaction({
                 name: source,
-                who: "Income · today",
+                who: "Income",
                 usd: amountUsd,
                 category: "Salary",
                 wallet: wallet.label,
-                date: "today",
+                date: formatISODate(new Date()),
               });
             }
             goBack();

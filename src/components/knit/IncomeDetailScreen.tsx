@@ -2,6 +2,7 @@ import { ArrowLeft, ArrowDownLeft, Repeat, Edit3 } from "lucide-react";
 import { PhoneFrame } from "./PhoneFrame";
 import { Money } from "./Money";
 import { useAppNavigation } from "@/lib/navigation";
+import { getRelativeDateString } from "@/context/helpers";
 
 export function IncomeDetailScreen() {
   const { goBack, navigate, selectedTransactionId, transactions } = useAppNavigation();
@@ -45,9 +46,12 @@ export function IncomeDetailScreen() {
     ["Recurrence", txn.who.toLowerCase().includes("recurring") ? "Recurring" : "One-time"],
     [
       "Date",
-      txn.date.includes("today") || txn.date.includes("yesterday")
-        ? `${txn.date} 09:00`
-        : `${txn.date}, 09:00`,
+      (() => {
+        const rel = getRelativeDateString(txn.date, new Date());
+        return rel === "today" || rel === "yesterday"
+          ? `${rel} 09:00`
+          : `${rel}, 09:00`;
+      })(),
     ],
   ];
 
