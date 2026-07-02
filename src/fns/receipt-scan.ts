@@ -15,7 +15,9 @@ import {
 } from "@/server/helpers";
 
 export const scanReceiptServerFn = createServerFn({ method: "POST" })
-  .inputValidator((d: { imageDataUrl: string; currency: string; categories?: string[] }) => d)
+  .inputValidator(
+    (d: { imageDataUrl: string; currency: string; categories?: string[]; localDate?: string }) => d,
+  )
   .handler(async ({ data }) => {
     const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY;
     if (!apiKey) {
@@ -185,7 +187,7 @@ export const scanReceiptServerFn = createServerFn({ method: "POST" })
     return {
       id: makeServerId("receipt"),
       storeName: String(parsed.storeName || parsed.store || "Unknown store"),
-      purchasedAt: normalizeReceiptDate(parsed.purchasedAt || parsed.date),
+      purchasedAt: normalizeReceiptDate(parsed.purchasedAt || parsed.date, data.localDate),
       currency: receiptCurrency,
       totalUsd,
       items: normalizedItems,
@@ -194,18 +196,27 @@ export const scanReceiptServerFn = createServerFn({ method: "POST" })
     };
   });
 
-function getJSTISODate(date = new Date()) {
-  const formatter = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Tokyo",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-  return formatter.format(date);
+/** Returns today's date as YYYY-MM-DD using the provided UTC offset string (e.g. from the client). */
+function serverFallbackDate(): string {
+  // The server falls back to UTC; real local date comes from the client via localDate.
+  const now = new Date();
+  const yyyy = now.getUTCFullYear();
+  const mm = String(now.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(now.getUTCDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
 }
 
-function normalizeReceiptDate(dateStr: string | undefined | null): string {
-  const defaultDate = getJSTISODate();
+/**
+ * Normalizes a receipt date string to YYYY-MM-DD.
+ * @param dateStr - Raw date from the Gemini response (should be YYYY-MM-DD per prompt, but may not be).
+ * @param localDate - The client's local date today as YYYY-MM-DD (user-timezone-aware). Used as fallback.
+ */
+function normalizeReceiptDate(dateStr: string | undefined | null, localDate?: string): string {
+  // Build fallback: prefer the client-supplied local date, otherwise fall back to server UTC.
+  const defaultDate = localDate && /^\d{4}-\d{2}-\d{2}$/.test(localDate)
+    ? localDate
+    : serverFallbackDate();
+
   if (!dateStr) return defaultDate;
 
   const clean = dateStr.trim().toLowerCase();
@@ -213,11 +224,17 @@ function normalizeReceiptDate(dateStr: string | undefined | null): string {
     return defaultDate;
   }
   if (clean === "yesterday") {
+    if (localDate && /^\d{4}-\d{2}-\d{2}$/.test(localDate)) {
+      const d = new Date(localDate + "T00:00:00");
+      d.setDate(d.getDate() - 1);
+      return d.toISOString().slice(0, 10);
+    }
     const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    return getJSTISODate(yesterday);
+    yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+    return yesterday.toISOString().slice(0, 10);
   }
 
+  // Strip Japanese characters and non-standard separators
   const parseable = clean
     .replace(/\([月火水木金土日]\)/g, "")
     .replace(/年|月/g, "-")
@@ -225,14 +242,16 @@ function normalizeReceiptDate(dateStr: string | undefined | null): string {
     .replace(/\//g, "-")
     .trim();
 
-  const match = parseable.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (match) {
-    return `${match[1]}-${match[2]}-${match[3]}`;
+  // Already a clean YYYY-MM-DD
+  const isoMatch = parseable.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) {
+    return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
   }
 
+  // Try standard JS Date parsing as last resort
   const parsed = new Date(parseable);
   if (!isNaN(parsed.getTime())) {
-    return getJSTISODate(parsed);
+    return parsed.toISOString().slice(0, 10);
   }
 
   return defaultDate;

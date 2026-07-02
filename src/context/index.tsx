@@ -1586,8 +1586,9 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
 
   const scanReceiptImage = async (imageDataUrl: string) => {
     const existingCategories = categories.map((c) => c.label);
+    const localDate = formatISODate(new Date());
     const result = (await scanReceiptServerFn({
-      data: { imageDataUrl, currency, categories: existingCategories },
+      data: { imageDataUrl, currency, categories: existingCategories, localDate },
     })) as ReceiptScan;
     return {
       ...result,
