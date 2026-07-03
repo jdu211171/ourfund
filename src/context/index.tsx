@@ -1555,9 +1555,9 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
 
   const deleteLoanEntries = (ids: string[]) => {
     setLoanEntries(prev => prev.filter(entry => !ids.includes(entry.id)))
-    ids.forEach(id =>
+    ids.forEach(id => {
       syncMutationServerFn({ data: { type: 'deleteLoanEntry', data: { id } } }).catch(console.error)
-    )
+    })
   }
 
   const addTrackedProduct = (product: Omit<ProductEntry, 'id' | 'createdAt'>) => {
