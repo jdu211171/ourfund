@@ -1,36 +1,36 @@
-import { ArrowLeft, Users, Check } from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { useAppNavigation } from "@/lib/navigation";
-import { useState } from "react";
+import { ArrowLeft, Check, Users } from 'lucide-react'
+import { useState } from 'react'
+import { useAppNavigation } from '@/lib/navigation'
+import { PhoneFrame } from './PhoneFrame'
 
 export function ConfirmInviteScreen() {
   const { navigate, goBack, pendingInvite, acceptInvite, isAuthenticated, setSignupHouseholdMode } =
-    useAppNavigation();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const role = pendingInvite?.role ?? "Adult";
-  const householdName = pendingInvite?.householdName ?? "No invite selected";
-  const memberCount = pendingInvite?.memberCount ?? 0;
+    useAppNavigation()
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const role = pendingInvite?.role ?? 'Adult'
+  const householdName = pendingInvite?.householdName ?? 'No invite selected'
+  const memberCount = pendingInvite?.memberCount ?? 0
 
   const join = async () => {
-    if (!pendingInvite) return;
+    if (!pendingInvite) return
     if (!isAuthenticated) {
-      setSignupHouseholdMode("join");
-      navigate("signup");
-      return;
+      setSignupHouseholdMode('join')
+      navigate('signup')
+      return
     }
 
-    setLoading(true);
-    setError("");
+    setLoading(true)
+    setError('')
     try {
-      await acceptInvite();
-      navigate("home");
+      await acceptInvite()
+      navigate('home')
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not accept this invite.");
+      setError(err instanceof Error ? err.message : 'Could not accept this invite.')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <PhoneFrame>
@@ -47,24 +47,24 @@ export function ConfirmInviteScreen() {
           <div
             className="grid h-14 w-14 place-items-center rounded-2xl text-white shadow-[var(--shadow-tile)]"
             style={{
-              background: "linear-gradient(135deg, oklch(0.65 0.22 265), oklch(0.45 0.24 265))",
+              background: 'linear-gradient(135deg, oklch(0.65 0.22 265), oklch(0.45 0.24 265))'
             }}
           >
             <Users className="h-6 w-6" strokeWidth={2.25} />
           </div>
           <h2 className="mt-4 font-display text-[22px] leading-tight tracking-tight text-foreground text-center">
-            {pendingInvite ? "You're joining" : "Invite needed"}
+            {pendingInvite ? "You're joining" : 'Invite needed'}
             <br />
             {householdName}
           </h2>
           <p className="mt-2 text-center text-[12px] text-muted-foreground">
             {pendingInvite ? (
               <>
-                Code <span className="font-semibold text-foreground">{pendingInvite.code}</span>{" "}
+                Code <span className="font-semibold text-foreground">{pendingInvite.code}</span>{' '}
                 verified
               </>
             ) : (
-              "Enter a valid invite code to continue"
+              'Enter a valid invite code to continue'
             )}
           </p>
         </div>
@@ -78,7 +78,7 @@ export function ConfirmInviteScreen() {
           <div className="flex items-center justify-between">
             <span className="text-[11px] text-muted-foreground">Members</span>
             <span className="text-[12px] font-bold text-foreground">
-              {memberCount} {memberCount === 1 ? "person" : "people"}
+              {memberCount} {memberCount === 1 ? 'person' : 'people'}
             </span>
           </div>
           <div className="my-3 h-px bg-[oklch(0.94_0.01_265)]" />
@@ -105,8 +105,8 @@ export function ConfirmInviteScreen() {
             disabled={!pendingInvite || loading}
             className="flex w-full items-center justify-center gap-2 rounded-full bg-[oklch(0.18_0.04_265)] py-4 text-[15px] font-semibold text-white active:scale-95 transition-transform cursor-pointer disabled:opacity-50"
           >
-            <Check className="h-4 w-4" strokeWidth={3} />{" "}
-            {loading ? "Joining..." : isAuthenticated ? "Accept & join" : "Create account to join"}
+            <Check className="h-4 w-4" strokeWidth={3} />{' '}
+            {loading ? 'Joining...' : isAuthenticated ? 'Accept & join' : 'Create account to join'}
           </button>
           <button
             onClick={goBack}
@@ -117,5 +117,5 @@ export function ConfirmInviteScreen() {
         </div>
       </div>
     </PhoneFrame>
-  );
+  )
 }

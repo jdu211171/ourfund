@@ -1,11 +1,11 @@
-import { prisma } from "../../lib/db";
+import { prisma } from '../../lib/db'
 export async function handleAddWallet(
   payload: any,
   user: any,
   member: any,
-  householdId: string | undefined,
+  householdId: string | undefined
 ) {
-  if (!householdId) throw new Error("No household linked");
+  if (!householdId) throw new Error('No household linked')
   await prisma.walletAccount.create({
     data: {
       id: payload.id,
@@ -16,21 +16,21 @@ export async function handleAddWallet(
       currency: payload.currency,
       members: payload.members,
       color: payload.color,
-      startingBalanceUsd: payload.startingBalanceUsd || 0,
-    },
-  });
+      startingBalanceUsd: payload.startingBalanceUsd || 0
+    }
+  })
 }
 
 export async function handleUpdateWallet(
   payload: any,
   user: any,
   member: any,
-  householdId: string | undefined,
+  householdId: string | undefined
 ) {
-  if (!householdId) throw new Error("No household linked");
+  if (!householdId) throw new Error('No household linked')
   const existingWallet = await prisma.walletAccount.findFirst({
-    where: { id: payload.id, householdId },
-  });
+    where: { id: payload.id, householdId }
+  })
   await prisma.walletAccount.update({
     where: { id: payload.id },
     data: {
@@ -40,14 +40,14 @@ export async function handleUpdateWallet(
       currency: payload.currency,
       members: payload.members,
       color: payload.color,
-      startingBalanceUsd: payload.startingBalanceUsd ?? undefined,
-    },
-  });
+      startingBalanceUsd: payload.startingBalanceUsd ?? undefined
+    }
+  })
   if (existingWallet && payload.label && existingWallet.label !== payload.label) {
     await prisma.transaction.updateMany({
       where: { householdId, wallet: existingWallet.label },
-      data: { wallet: payload.label },
-    });
+      data: { wallet: payload.label }
+    })
   }
 }
 
@@ -55,18 +55,18 @@ export async function handleDeleteWallet(
   payload: any,
   user: any,
   member: any,
-  householdId: string | undefined,
+  householdId: string | undefined
 ) {
-  if (!householdId) throw new Error("No household linked");
+  if (!householdId) throw new Error('No household linked')
   const existingWallet = await prisma.walletAccount.findFirst({
-    where: { id: payload.id, householdId },
-  });
+    where: { id: payload.id, householdId }
+  })
   await prisma.walletAccount.delete({
-    where: { id: payload.id },
-  });
+    where: { id: payload.id }
+  })
   if (existingWallet) {
     await prisma.transaction.deleteMany({
-      where: { householdId, wallet: existingWallet.label },
-    });
+      where: { householdId, wallet: existingWallet.label }
+    })
   }
 }

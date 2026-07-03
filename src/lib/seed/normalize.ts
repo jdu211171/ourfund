@@ -1,35 +1,35 @@
-import { AppSeed, SalaryCalculatorSettings } from "../../types";
-import { defaultSalaryCalculatorSettings, emptySeed, cloneSeed } from "./defaults";
+import type { AppSeed, SalaryCalculatorSettings } from '../../types'
+import { cloneSeed, defaultSalaryCalculatorSettings, emptySeed } from './defaults'
 
 export function normalizeSalaryCalculatorSettings(value: unknown): SalaryCalculatorSettings {
   const settings =
-    value && typeof value === "object" && !Array.isArray(value)
+    value && typeof value === 'object' && !Array.isArray(value)
       ? (value as Partial<SalaryCalculatorSettings>)
-      : {};
+      : {}
 
-  const rawInsurance = settings.insurance;
+  const rawInsurance = settings.insurance
   const insurance =
-    rawInsurance && typeof rawInsurance === "object" && !Array.isArray(rawInsurance)
+    rawInsurance && typeof rawInsurance === 'object' && !Array.isArray(rawInsurance)
       ? (Object.fromEntries(
-          Object.entries(rawInsurance).filter(([_, enabled]) => typeof enabled === "boolean"),
+          Object.entries(rawInsurance).filter(([_, enabled]) => typeof enabled === 'boolean')
         ) as Record<string, boolean>)
-      : {};
+      : {}
 
   const amount =
-    typeof settings.amount === "number" && Number.isFinite(settings.amount)
+    typeof settings.amount === 'number' && Number.isFinite(settings.amount)
       ? Math.max(0, settings.amount)
-      : null;
+      : null
 
   return {
     ...defaultSalaryCalculatorSettings,
     country:
-      typeof settings.country === "string" && settings.country.trim()
+      typeof settings.country === 'string' && settings.country.trim()
         ? settings.country
         : defaultSalaryCalculatorSettings.country,
-    period: settings.period === "annual" ? "annual" : "monthly",
+    period: settings.period === 'annual' ? 'annual' : 'monthly',
     amount,
-    insurance,
-  };
+    insurance
+  }
 }
 
 export function normalizeSeed(seed: Partial<AppSeed>): AppSeed {
@@ -41,6 +41,6 @@ export function normalizeSeed(seed: Partial<AppSeed>): AppSeed {
     profile: { ...emptySeed.profile, ...seed.profile },
     currencies: { ...emptySeed.currencies, ...seed.currencies },
     notificationPrefs: { ...emptySeed.notificationPrefs, ...seed.notificationPrefs },
-    historyFilters: { ...emptySeed.historyFilters, ...seed.historyFilters },
-  };
+    historyFilters: { ...emptySeed.historyFilters, ...seed.historyFilters }
+  }
 }

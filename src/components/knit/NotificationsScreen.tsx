@@ -1,28 +1,28 @@
-import { ArrowLeft, AlertTriangle, Target, Calendar, Users } from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { useAppNavigation, type NotificationTone } from "@/lib/navigation";
+import { AlertTriangle, ArrowLeft, Calendar, Target, Users } from 'lucide-react'
+import { type NotificationTone, useAppNavigation } from '@/lib/navigation'
+import { PhoneFrame } from './PhoneFrame'
 
 const toneClass: Record<NotificationTone, string> = {
-  success: "bg-[oklch(0.95_0.08_150)] text-[var(--success)]",
-  danger: "bg-[oklch(0.96_0.05_20)] text-[var(--danger)]",
-  warn: "bg-[oklch(0.96_0.08_85)] text-[oklch(0.55_0.15_75)]",
-  primary: "bg-[oklch(0.95_0.04_265)] text-[var(--primary)]",
-};
+  success: 'bg-[oklch(0.95_0.08_150)] text-[var(--success)]',
+  danger: 'bg-[oklch(0.96_0.05_20)] text-[var(--danger)]',
+  warn: 'bg-[oklch(0.96_0.08_85)] text-[oklch(0.55_0.15_75)]',
+  primary: 'bg-[oklch(0.95_0.04_265)] text-[var(--primary)]'
+}
 
 const iconFor: Record<NotificationTone, typeof AlertTriangle> = {
   success: Target,
   danger: AlertTriangle,
   warn: Calendar,
-  primary: Users,
-};
+  primary: Users
+}
 
 export function NotificationsScreen() {
   const { goBack, navigate, notifications, markAllNotificationsRead, markNotificationRead } =
-    useAppNavigation();
+    useAppNavigation()
   const groups = notifications.reduce<Record<string, typeof notifications>>((acc, notification) => {
-    acc[notification.group] = [...(acc[notification.group] ?? []), notification];
-    return acc;
-  }, {});
+    acc[notification.group] = [...(acc[notification.group] ?? []), notification]
+    return acc
+  }, {})
 
   return (
     <PhoneFrame>
@@ -51,16 +51,16 @@ export function NotificationsScreen() {
                 {label}
               </p>
               <div className="mt-2 space-y-2">
-                {items.map((n) => {
-                  const Icon = iconFor[n.tone];
+                {items.map(n => {
+                  const Icon = iconFor[n.tone]
                   return (
                     <button
                       key={n.id}
                       onClick={() => {
-                        markNotificationRead(n.id);
-                        navigate(n.screen);
+                        markNotificationRead(n.id)
+                        navigate(n.screen)
                       }}
-                      className={`flex w-full items-start gap-3 rounded-2xl bg-white px-3 py-3 text-left shadow-[var(--shadow-soft)] ${n.read ? "opacity-70" : ""}`}
+                      className={`flex w-full items-start gap-3 rounded-2xl bg-white px-3 py-3 text-left shadow-[var(--shadow-soft)] ${n.read ? 'opacity-70' : ''}`}
                     >
                       <div
                         className={`grid h-10 w-10 place-items-center rounded-xl ${toneClass[n.tone]}`}
@@ -73,7 +73,7 @@ export function NotificationsScreen() {
                       </div>
                       <span className="text-[10px] text-muted-foreground">{n.time}</span>
                     </button>
-                  );
+                  )
                 })}
               </div>
             </div>
@@ -81,5 +81,5 @@ export function NotificationsScreen() {
         </div>
       </div>
     </PhoneFrame>
-  );
+  )
 }

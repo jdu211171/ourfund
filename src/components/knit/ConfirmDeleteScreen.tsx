@@ -1,22 +1,22 @@
-import { AlertTriangle } from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { useAppNavigation } from "@/lib/navigation";
-import { formatUsdAsCurrency } from "@/lib/currency";
+import { AlertTriangle } from 'lucide-react'
+import { formatUsdAsCurrency } from '@/lib/currency'
+import { useAppNavigation } from '@/lib/navigation'
+import { PhoneFrame } from './PhoneFrame'
 
 export function ConfirmDeleteScreen() {
   const { goBack, navigate, currency, selectedTransactionId, transactions, deleteTransaction } =
-    useAppNavigation();
+    useAppNavigation()
 
   // Find transaction
   const txn =
-    transactions.find((t) => t.id === selectedTransactionId) || transactions.find((t) => t.usd < 0);
+    transactions.find(t => t.id === selectedTransactionId) || transactions.find(t => t.usd < 0)
 
   const handleDelete = () => {
     if (txn) {
-      deleteTransaction(txn.id);
+      deleteTransaction(txn.id)
     }
-    navigate("home");
-  };
+    navigate('home')
+  }
 
   return (
     <PhoneFrame>
@@ -40,12 +40,12 @@ export function ConfirmDeleteScreen() {
               Delete transaction?
             </h3>
             <p className="mt-1 text-[12px] text-muted-foreground">
-              This removes{" "}
+              This removes{' '}
               <span className="font-semibold text-foreground">
                 {txn
                   ? `${txn.name} · ${formatUsdAsCurrency(Math.abs(txn.usd), currency)}`
-                  : "this transaction"}
-              </span>{" "}
+                  : 'this transaction'}
+              </span>{' '}
               from the budget ledger. This cannot be undone.
             </p>
           </div>
@@ -66,5 +66,5 @@ export function ConfirmDeleteScreen() {
         </div>
       </div>
     </PhoneFrame>
-  );
+  )
 }

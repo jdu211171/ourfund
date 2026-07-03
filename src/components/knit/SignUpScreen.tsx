@@ -1,11 +1,11 @@
-import { ArrowLeft, User, Mail, Lock, Check, Users } from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { useAppNavigation } from "@/lib/navigation";
-import { useEffect, useState } from "react";
-import { signUpWithEmailServerFn } from "@/lib/server-fns";
+import { ArrowLeft, Check, Lock, Mail, User, Users } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { useAppNavigation } from '@/lib/navigation'
+import { signUpWithEmailServerFn } from '@/lib/server-fns'
+import { PhoneFrame } from './PhoneFrame'
 
 function errorMessage(err: unknown, fallback: string) {
-  return err instanceof Error ? err.message : fallback;
+  return err instanceof Error ? err.message : fallback
 }
 
 export function SignUpScreen() {
@@ -17,57 +17,57 @@ export function SignUpScreen() {
     syncDataAfterLogin,
     signupHouseholdMode,
     setSignupHouseholdMode,
-    pendingInvite,
-  } = useAppNavigation();
-  const [name, setName] = useState("");
-  const invitedEmail = pendingInvite?.invitedEmail ?? "";
-  const [email, setEmail] = useState(invitedEmail);
-  const [password, setPassword] = useState("");
-  const [householdName, setHouseholdName] = useState("");
-  const [householdMode, setHouseholdMode] = useState<"new" | "join">(signupHouseholdMode);
-  const [accepted, setAccepted] = useState(false);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+    pendingInvite
+  } = useAppNavigation()
+  const [name, setName] = useState('')
+  const invitedEmail = pendingInvite?.invitedEmail ?? ''
+  const [email, setEmail] = useState(invitedEmail)
+  const [password, setPassword] = useState('')
+  const [householdName, setHouseholdName] = useState('')
+  const [householdMode, setHouseholdMode] = useState<'new' | 'join'>(signupHouseholdMode)
+  const [accepted, setAccepted] = useState(false)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    setHouseholdMode(signupHouseholdMode);
-  }, [signupHouseholdMode]);
+    setHouseholdMode(signupHouseholdMode)
+  }, [signupHouseholdMode])
 
   useEffect(() => {
     if (invitedEmail) {
-      setEmail(invitedEmail);
-      setHouseholdMode("join");
-      setSignupHouseholdMode("join");
+      setEmail(invitedEmail)
+      setHouseholdMode('join')
+      setSignupHouseholdMode('join')
     }
-  }, [invitedEmail, setSignupHouseholdMode]);
+  }, [invitedEmail, setSignupHouseholdMode])
 
   const createAccount = async () => {
-    setError("");
-    setLoading(true);
+    setError('')
+    setLoading(true)
     try {
-      await signUpWithEmailServerFn({ data: { email, name, passwordHash: password } });
-      const restored = await syncDataAfterLogin();
+      await signUpWithEmailServerFn({ data: { email, name, passwordHash: password } })
+      const restored = await syncDataAfterLogin()
       if (!restored) {
-        throw new Error("Account created, but the session could not be restored.");
+        throw new Error('Account created, but the session could not be restored.')
       }
-      if (householdMode === "new") {
-        await createHousehold({ name, email, householdName });
-        navigate("home");
+      if (householdMode === 'new') {
+        await createHousehold({ name, email, householdName })
+        navigate('home')
       } else {
-        updateProfile({ name, email });
-        navigate(pendingInvite ? "confirm_invite" : "join_family");
+        updateProfile({ name, email })
+        navigate(pendingInvite ? 'confirm_invite' : 'join_family')
       }
     } catch (err: unknown) {
-      const message = errorMessage(err, "Registration failed. Please try again.");
-      if (householdMode === "join" && message.toLowerCase().includes("email already registered")) {
-        navigate("login");
-        return;
+      const message = errorMessage(err, 'Registration failed. Please try again.')
+      if (householdMode === 'join' && message.toLowerCase().includes('email already registered')) {
+        navigate('login')
+        return
       }
-      setError(message);
+      setError(message)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <PhoneFrame>
@@ -91,18 +91,18 @@ export function SignUpScreen() {
 
         <div className="mt-7 space-y-3">
           {[
-            { Icon: User, label: "Full name", value: name, setValue: setName, type: "text" },
+            { Icon: User, label: 'Full name', value: name, setValue: setName, type: 'text' },
             ...(invitedEmail
               ? []
-              : [{ Icon: Mail, label: "Email", value: email, setValue: setEmail, type: "email" }]),
+              : [{ Icon: Mail, label: 'Email', value: email, setValue: setEmail, type: 'email' }]),
             {
               Icon: Lock,
-              label: "Password",
+              label: 'Password',
               value: password,
               setValue: setPassword,
-              type: "password",
-            },
-          ].map((f) => (
+              type: 'password'
+            }
+          ].map(f => (
             <div
               key={f.label}
               className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-[var(--shadow-soft)]"
@@ -113,7 +113,7 @@ export function SignUpScreen() {
                 <input
                   type={f.type}
                   value={f.value}
-                  onChange={(e) => f.setValue(e.target.value)}
+                  onChange={e => f.setValue(e.target.value)}
                   className="w-full bg-transparent text-[13px] font-semibold text-foreground outline-none"
                 />
               </div>
@@ -137,27 +137,27 @@ export function SignUpScreen() {
         <div className="mt-2 grid grid-cols-2 gap-2">
           <button
             onClick={() => {
-              setHouseholdMode("new");
-              setSignupHouseholdMode("new");
+              setHouseholdMode('new')
+              setSignupHouseholdMode('new')
             }}
-            className={`rounded-2xl p-3 text-left shadow-[var(--shadow-soft)] ${householdMode === "new" ? "bg-[var(--accent)]" : "bg-white"}`}
+            className={`rounded-2xl p-3 text-left shadow-[var(--shadow-soft)] ${householdMode === 'new' ? 'bg-[var(--accent)]' : 'bg-white'}`}
           >
             <span className="text-[12px] font-bold text-foreground">Start new</span>
             <p className="text-[10px] text-muted-foreground">Create a household</p>
           </button>
           <button
             onClick={() => {
-              setHouseholdMode("join");
-              setSignupHouseholdMode("join");
+              setHouseholdMode('join')
+              setSignupHouseholdMode('join')
             }}
-            className={`rounded-2xl p-3 text-left shadow-[var(--shadow-soft)] active:scale-95 transition-transform cursor-pointer ${householdMode === "join" ? "bg-[var(--accent)]" : "bg-white"}`}
+            className={`rounded-2xl p-3 text-left shadow-[var(--shadow-soft)] active:scale-95 transition-transform cursor-pointer ${householdMode === 'join' ? 'bg-[var(--accent)]' : 'bg-white'}`}
           >
             <span className="text-[12px] font-bold text-foreground">Join existing</span>
             <p className="text-[10px] text-muted-foreground">Use invite code</p>
           </button>
         </div>
 
-        {householdMode === "new" && (
+        {householdMode === 'new' && (
           <div className="mt-3 flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-[var(--shadow-soft)]">
             <Users className="h-4 w-4 text-muted-foreground" strokeWidth={2.25} />
             <div className="flex-1">
@@ -165,7 +165,7 @@ export function SignUpScreen() {
               <input
                 type="text"
                 value={householdName}
-                onChange={(e) => setHouseholdName(e.target.value)}
+                onChange={e => setHouseholdName(e.target.value)}
                 placeholder="Our household"
                 className="w-full bg-transparent text-[13px] font-semibold text-foreground outline-none placeholder:text-muted-foreground"
               />
@@ -174,19 +174,19 @@ export function SignUpScreen() {
         )}
 
         <button
-          onClick={() => setAccepted((prev) => !prev)}
+          onClick={() => setAccepted(prev => !prev)}
           className="mt-5 flex items-center gap-2 text-left text-[11px] text-muted-foreground"
         >
           <span
             className={`grid h-5 w-5 shrink-0 place-items-center rounded-md border transition-colors ${
               accepted
-                ? "border-[var(--primary)] bg-[var(--primary)] text-white"
-                : "border-slate-300 bg-white"
+                ? 'border-[var(--primary)] bg-[var(--primary)] text-white'
+                : 'border-slate-300 bg-white'
             }`}
           >
             {accepted && <Check className="h-3 w-3" strokeWidth={3} />}
           </span>
-          I agree to the <span className="font-bold text-foreground">Terms</span> &{" "}
+          I agree to the <span className="font-bold text-foreground">Terms</span> &{' '}
           <span className="font-bold text-foreground">Privacy</span>
         </button>
 
@@ -199,9 +199,9 @@ export function SignUpScreen() {
           disabled={!name || !email || !password || !accepted || loading}
           className="mt-auto w-full rounded-full bg-[var(--primary)] py-4 text-[15px] font-semibold text-white active:scale-95 transition-transform cursor-pointer disabled:opacity-50"
         >
-          {loading ? "Creating account..." : "Create account"}
+          {loading ? 'Creating account...' : 'Create account'}
         </button>
       </div>
     </PhoneFrame>
-  );
+  )
 }

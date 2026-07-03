@@ -1,23 +1,23 @@
-import { Loader2, Lock, Shield } from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { useEffect, useState } from "react";
-import { useAppNavigation } from "@/lib/navigation";
+import { Loader2, Lock, Shield } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { useAppNavigation } from '@/lib/navigation'
+import { PhoneFrame } from './PhoneFrame'
 
 export function PlaidConnectingScreen() {
-  const { currentScreen, navigate, selectedBankName, connectSelectedBank } = useAppNavigation();
-  const [step, setStep] = useState(2);
+  const { currentScreen, navigate, selectedBankName, connectSelectedBank } = useAppNavigation()
+  const [step, setStep] = useState(2)
 
   useEffect(() => {
-    if (currentScreen !== "plaid_connecting") return;
+    if (currentScreen !== 'plaid_connecting') return
     const timers = [
       window.setTimeout(() => setStep(3), 700),
       window.setTimeout(() => {
-        connectSelectedBank();
-        navigate("plaid_success");
-      }, 1400),
-    ];
-    return () => timers.forEach(window.clearTimeout);
-  }, [connectSelectedBank, currentScreen, navigate]);
+        connectSelectedBank()
+        navigate('plaid_success')
+      }, 1400)
+    ]
+    return () => timers.forEach(window.clearTimeout)
+  }, [connectSelectedBank, currentScreen, navigate])
 
   return (
     <PhoneFrame>
@@ -25,12 +25,12 @@ export function PlaidConnectingScreen() {
         <div className="relative grid h-24 w-24 place-items-center">
           <span
             className="absolute inset-0 rounded-full"
-            style={{ background: "oklch(0.95 0.04 265)" }}
+            style={{ background: 'oklch(0.95 0.04 265)' }}
           />
           <span className="absolute inset-2 rounded-full border-[3px] border-[var(--primary)]/20 border-t-[var(--primary)] animate-spin" />
           <div
             className="relative grid h-12 w-12 place-items-center rounded-2xl text-white text-[14px] font-extrabold shadow-[var(--shadow-tile)]"
-            style={{ background: "oklch(0.45 0.18 250)" }}
+            style={{ background: 'oklch(0.45 0.18 250)' }}
           >
             {selectedBankName[0]}
           </div>
@@ -48,13 +48,13 @@ export function PlaidConnectingScreen() {
 
         <div className="mt-8 w-full space-y-2">
           {[
-            { label: "Authenticate" },
-            { label: "Verify identity" },
-            { label: "Sync accounts" },
-            { label: "Import transactions" },
+            { label: 'Authenticate' },
+            { label: 'Verify identity' },
+            { label: 'Sync accounts' },
+            { label: 'Import transactions' }
           ].map((s, index) => {
-            const done = index < step;
-            const loading = index === step;
+            const done = index < step
+            const loading = index === step
             return (
               <div
                 key={s.label}
@@ -63,21 +63,21 @@ export function PlaidConnectingScreen() {
                 <div
                   className={`grid h-7 w-7 place-items-center rounded-full text-[10px] font-bold ${
                     done
-                      ? "bg-[oklch(0.92_0.1_150)] text-[oklch(0.4_0.18_150)]"
+                      ? 'bg-[oklch(0.92_0.1_150)] text-[oklch(0.4_0.18_150)]'
                       : loading
-                        ? "bg-[oklch(0.95_0.04_265)] text-[var(--primary)]"
-                        : "bg-[var(--muted)] text-muted-foreground"
+                        ? 'bg-[oklch(0.95_0.04_265)] text-[var(--primary)]'
+                        : 'bg-[var(--muted)] text-muted-foreground'
                   }`}
                 >
-                  {done ? "✓" : loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : ""}
+                  {done ? '✓' : loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : ''}
                 </div>
                 <p
-                  className={`text-[12px] font-semibold ${done || loading ? "text-foreground" : "text-muted-foreground"}`}
+                  className={`text-[12px] font-semibold ${done || loading ? 'text-foreground' : 'text-muted-foreground'}`}
                 >
                   {s.label}
                 </p>
               </div>
-            );
+            )
           })}
         </div>
 
@@ -90,5 +90,5 @@ export function PlaidConnectingScreen() {
         </div>
       </div>
     </PhoneFrame>
-  );
+  )
 }

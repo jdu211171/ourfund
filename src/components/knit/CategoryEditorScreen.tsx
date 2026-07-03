@@ -1,14 +1,14 @@
-import { ArrowLeft, Check, Plus, Save, ShoppingBag, Trash2 } from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { useEffect, useState } from "react";
-import { useAppNavigation } from "@/lib/navigation";
-import { categoryColorOptions, categoryIconMap, categoryIconOptions } from "./categoryOptions";
+import { ArrowLeft, Check, Plus, Save, ShoppingBag, Trash2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import {
   currencyAdornment,
   currencyValueToUsd,
   formatUsdAsCurrency,
-  usdToCurrencyValue,
-} from "@/lib/currency";
+  usdToCurrencyValue
+} from '@/lib/currency'
+import { useAppNavigation } from '@/lib/navigation'
+import { categoryColorOptions, categoryIconMap, categoryIconOptions } from './categoryOptions'
+import { PhoneFrame } from './PhoneFrame'
 
 export function CategoryEditorScreen() {
   const {
@@ -18,46 +18,46 @@ export function CategoryEditorScreen() {
     categories,
     updateCategory,
     deleteCategory,
-    categorySpentUsd,
-  } = useAppNavigation();
-  const [selectedId, setSelectedId] = useState(categories[1]?.id ?? categories[0]?.id ?? "");
-  const selected = categories.find((c) => c.id === selectedId) ?? categories[0];
-  const [draftLabel, setDraftLabel] = useState(selected?.label ?? "");
+    categorySpentUsd
+  } = useAppNavigation()
+  const [selectedId, setSelectedId] = useState(categories[1]?.id ?? categories[0]?.id ?? '')
+  const selected = categories.find(c => c.id === selectedId) ?? categories[0]
+  const [draftLabel, setDraftLabel] = useState(selected?.label ?? '')
   const [draftLimit, setDraftLimit] = useState(
-    String(Math.round(usdToCurrencyValue(selected?.limitUsd ?? 0, currency))),
-  );
-  const [draftIcon, setDraftIcon] = useState(selected?.icon ?? categoryIconOptions[0].key);
-  const [draftColor, setDraftColor] = useState(selected?.color ?? categoryColorOptions[0]);
-  const SelectedIcon = categoryIconMap[draftIcon] ?? ShoppingBag;
-  const { prefix, suffix } = currencyAdornment(currency);
+    String(Math.round(usdToCurrencyValue(selected?.limitUsd ?? 0, currency)))
+  )
+  const [draftIcon, setDraftIcon] = useState(selected?.icon ?? categoryIconOptions[0].key)
+  const [draftColor, setDraftColor] = useState(selected?.color ?? categoryColorOptions[0])
+  const SelectedIcon = categoryIconMap[draftIcon] ?? ShoppingBag
+  const { prefix, suffix } = currencyAdornment(currency)
 
   useEffect(() => {
-    setDraftLabel(selected?.label ?? "");
-    setDraftLimit(String(Math.round(usdToCurrencyValue(selected?.limitUsd ?? 0, currency))));
-    setDraftIcon(selected?.icon ?? categoryIconOptions[0].key);
-    setDraftColor(selected?.color ?? categoryColorOptions[0]);
-  }, [currency, selected]);
+    setDraftLabel(selected?.label ?? '')
+    setDraftLimit(String(Math.round(usdToCurrencyValue(selected?.limitUsd ?? 0, currency))))
+    setDraftIcon(selected?.icon ?? categoryIconOptions[0].key)
+    setDraftColor(selected?.color ?? categoryColorOptions[0])
+  }, [currency, selected])
 
   const saveSelected = () => {
-    if (!selected) return;
+    if (!selected) return
     updateCategory(selected.id, {
-      label: draftLabel.trim() || "Category",
-      limitUsd: currencyValueToUsd(parseFloat(draftLimit || "0"), currency),
+      label: draftLabel.trim() || 'Category',
+      limitUsd: currencyValueToUsd(parseFloat(draftLimit || '0'), currency),
       icon: draftIcon,
-      color: draftColor,
-    });
-  };
+      color: draftColor
+    })
+  }
 
   const deleteSelected = () => {
-    if (!selected) return;
-    const nextCategory = categories.find((category) => category.id !== selected.id);
-    deleteCategory(selected.id);
-    setSelectedId(nextCategory?.id ?? "");
-  };
+    if (!selected) return
+    const nextCategory = categories.find(category => category.id !== selected.id)
+    deleteCategory(selected.id)
+    setSelectedId(nextCategory?.id ?? '')
+  }
 
   useEffect(() => {
-    if (!selectedId && categories[0]) setSelectedId(categories[0].id);
-  }, [categories, selectedId]);
+    if (!selectedId && categories[0]) setSelectedId(categories[0].id)
+  }, [categories, selectedId])
 
   return (
     <PhoneFrame>
@@ -72,7 +72,7 @@ export function CategoryEditorScreen() {
           </button>
           <h2 className="text-[17px] font-bold tracking-tight">Categories</h2>
           <button
-            onClick={() => navigate("new_category")}
+            onClick={() => navigate('new_category')}
             className="grid h-9 w-9 place-items-center rounded-full bg-[var(--muted)] hover:bg-slate-200 transition-colors active:scale-95 cursor-pointer"
             aria-label="Add category"
           >
@@ -95,7 +95,7 @@ export function CategoryEditorScreen() {
               <input
                 type="text"
                 value={draftLabel}
-                onChange={(event) => setDraftLabel(event.target.value)}
+                onChange={event => setDraftLabel(event.target.value)}
                 className="w-full bg-transparent text-[13px] font-bold text-foreground outline-none"
                 placeholder="Category"
               />
@@ -110,7 +110,7 @@ export function CategoryEditorScreen() {
             <input
               type="text"
               value={draftLimit}
-              onChange={(event) => setDraftLimit(event.target.value.replace(/[^0-9.]/g, ""))}
+              onChange={event => setDraftLimit(event.target.value.replace(/[^0-9.]/g, ''))}
               className="w-24 bg-transparent text-[20px] font-extrabold tracking-tight text-foreground outline-none"
             />
             {suffix && (
@@ -128,7 +128,7 @@ export function CategoryEditorScreen() {
                 type="button"
                 onClick={() => setDraftIcon(key)}
                 className={`grid h-8 place-items-center rounded-xl ${
-                  draftIcon === key ? "bg-[var(--primary)] text-white" : "bg-[var(--muted)]"
+                  draftIcon === key ? 'bg-[var(--primary)] text-white' : 'bg-[var(--muted)]'
                 }`}
               >
                 <Icon className="h-3.5 w-3.5" strokeWidth={2.25} />
@@ -137,13 +137,13 @@ export function CategoryEditorScreen() {
           </div>
 
           <div className="mt-3 grid grid-cols-6 gap-1.5">
-            {categoryColorOptions.map((color) => (
+            {categoryColorOptions.map(color => (
               <button
                 key={color}
                 type="button"
                 onClick={() => setDraftColor(color)}
                 className={`grid h-7 place-items-center rounded-full ${
-                  draftColor === color ? "ring-2 ring-foreground ring-offset-2" : ""
+                  draftColor === color ? 'ring-2 ring-foreground ring-offset-2' : ''
                 }`}
                 style={{ background: color }}
               >
@@ -183,19 +183,18 @@ export function CategoryEditorScreen() {
         <p className="mt-1 text-[10px] text-muted-foreground">Tap a category to select it.</p>
 
         <div className="mt-2 flex-1 space-y-2 overflow-y-auto pr-1">
-          {categories.map((c) => {
-            const Icon = categoryIconMap[c.icon] ?? ShoppingBag;
-            const spent = categorySpentUsd(c.label);
-            const pct =
-              c.limitUsd > 0 ? Math.min(100, Math.round((spent / c.limitUsd) * 100)) : 100;
+          {categories.map(c => {
+            const Icon = categoryIconMap[c.icon] ?? ShoppingBag
+            const spent = categorySpentUsd(c.label)
+            const pct = c.limitUsd > 0 ? Math.min(100, Math.round((spent / c.limitUsd) * 100)) : 100
             return (
               <button
                 key={c.id}
                 onClick={() => setSelectedId(c.id)}
                 className={`w-full rounded-2xl px-3 py-2.5 text-left shadow-[var(--shadow-soft)] ${
                   selectedId === c.id
-                    ? "bg-[var(--accent)] ring-2 ring-[var(--primary)]"
-                    : "bg-white"
+                    ? 'bg-[var(--accent)] ring-2 ring-[var(--primary)]'
+                    : 'bg-white'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -208,18 +207,18 @@ export function CategoryEditorScreen() {
                   <div className="flex-1 leading-tight">
                     <p className="text-[12px] font-bold text-foreground">{c.label}</p>
                     <p className="text-[10px] text-muted-foreground">
-                      {formatUsdAsCurrency(spent, currency)} of{" "}
+                      {formatUsdAsCurrency(spent, currency)} of{' '}
                       {formatUsdAsCurrency(c.limitUsd, currency)}
                     </p>
                   </div>
                   <p className="text-[11px] font-bold text-muted-foreground">{pct}%</p>
                 </div>
               </button>
-            );
+            )
           })}
           {categories.length === 0 && (
             <button
-              onClick={() => navigate("new_category")}
+              onClick={() => navigate('new_category')}
               className="w-full rounded-2xl bg-white px-4 py-5 text-center shadow-[var(--shadow-soft)]"
             >
               <p className="text-[13px] font-bold text-foreground">No categories yet</p>
@@ -231,5 +230,5 @@ export function CategoryEditorScreen() {
         </div>
       </div>
     </PhoneFrame>
-  );
+  )
 }

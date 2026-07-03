@@ -1,83 +1,83 @@
-import { useState, useMemo } from "react";
 import {
   ArrowLeft,
-  ChevronRight,
-  TrendingUp,
-  TrendingDown,
-  ShoppingBag,
-  Coffee,
-  Car,
-  Home,
   Briefcase,
-} from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { Money } from "./Money";
-import { useAppNavigation, transactionDate, type Transaction } from "@/lib/navigation";
-import { formatTransactionWho } from "@/context/helpers";
-import { formatUsdAsCurrency } from "@/lib/currency";
+  Car,
+  ChevronRight,
+  Coffee,
+  Home,
+  ShoppingBag,
+  TrendingDown,
+  TrendingUp
+} from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { formatTransactionWho } from '@/context/helpers'
+import { formatUsdAsCurrency } from '@/lib/currency'
+import { type Transaction, transactionDate, useAppNavigation } from '@/lib/navigation'
+import { Money } from './Money'
+import { PhoneFrame } from './PhoneFrame'
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
 const MONTH_NAMES = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December'
+]
 
 function monthKey(year: number, month: number) {
-  return `${year}-${String(month).padStart(2, "0")}`;
+  return `${year}-${String(month).padStart(2, '0')}`
 }
 
 function iconFor(txn: Transaction) {
-  const text = `${txn.category} ${txn.name}`.toLowerCase();
-  if (txn.usd > 0) return Briefcase;
-  if (text.includes("rent") || text.includes("housing") || text.includes("electric")) return Home;
-  if (text.includes("dining") || text.includes("coffee")) return Coffee;
-  if (text.includes("transport") || text.includes("gas")) return Car;
-  return ShoppingBag;
+  const text = `${txn.category} ${txn.name}`.toLowerCase()
+  if (txn.usd > 0) return Briefcase
+  if (text.includes('rent') || text.includes('housing') || text.includes('electric')) return Home
+  if (text.includes('dining') || text.includes('coffee')) return Coffee
+  if (text.includes('transport') || text.includes('gas')) return Car
+  return ShoppingBag
 }
 
 // ─── types ───────────────────────────────────────────────────────────────────
 
 type MonthData = {
-  year: number;
-  month: number; // 0-indexed
-  label: string;
-  incomeUsd: number;
-  expenseUsd: number;
-  transactions: Transaction[];
-};
+  year: number
+  month: number // 0-indexed
+  label: string
+  incomeUsd: number
+  expenseUsd: number
+  transactions: Transaction[]
+}
 
 // ─── component ───────────────────────────────────────────────────────────────
 
 export function MonthlyHistoryScreen() {
   const { goBack, navigate, activeTransactions, setSelectedTransactionId, currency } =
-    useAppNavigation();
+    useAppNavigation()
 
-  const now = useMemo(() => new Date(), []);
+  const now = useMemo(() => new Date(), [])
 
   // Opened month: null = list view, defined = detail view
-  const [openMonth, setOpenMonth] = useState<{ year: number; month: number } | null>(null);
+  const [openMonth, setOpenMonth] = useState<{ year: number; month: number } | null>(null)
 
   // Build per-month summaries from real transactions (newest first)
   const monthRows = useMemo<MonthData[]>(() => {
-    const map = new Map<string, MonthData>();
+    const map = new Map<string, MonthData>()
 
     for (const txn of activeTransactions) {
-      const d = transactionDate(txn.date, now);
-      if (!d) continue;
-      const year = d.getFullYear();
-      const month = d.getMonth();
-      const key = monthKey(year, month);
+      const d = transactionDate(txn.date, now)
+      if (!d) continue
+      const year = d.getFullYear()
+      const month = d.getMonth()
+      const key = monthKey(year, month)
       if (!map.has(key)) {
         map.set(key, {
           year,
@@ -85,41 +85,39 @@ export function MonthlyHistoryScreen() {
           label: `${MONTH_NAMES[month]} ${year}`,
           incomeUsd: 0,
           expenseUsd: 0,
-          transactions: [],
-        });
+          transactions: []
+        })
       }
-      const row = map.get(key)!;
-      row.transactions.push(txn);
-      if (txn.usd > 0) row.incomeUsd += txn.usd;
-      else row.expenseUsd += Math.abs(txn.usd);
+      const row = map.get(key)!
+      row.transactions.push(txn)
+      if (txn.usd > 0) row.incomeUsd += txn.usd
+      else row.expenseUsd += Math.abs(txn.usd)
     }
 
     return Array.from(map.values()).sort((a, b) => {
-      if (b.year !== a.year) return b.year - a.year;
-      return b.month - a.month;
-    });
-  }, [activeTransactions, now]);
+      if (b.year !== a.year) return b.year - a.year
+      return b.month - a.month
+    })
+  }, [activeTransactions, now])
 
-  const currentMonthData = monthRows[0] ?? null;
-  const netBalance = currentMonthData
-    ? currentMonthData.incomeUsd - currentMonthData.expenseUsd
-    : 0;
+  const currentMonthData = monthRows[0] ?? null
+  const netBalance = currentMonthData ? currentMonthData.incomeUsd - currentMonthData.expenseUsd : 0
 
   // ── Detail view ────────────────────────────────────────────────────────────
   if (openMonth) {
-    const data = monthRows.find((r) => r.year === openMonth.year && r.month === openMonth.month);
+    const data = monthRows.find(r => r.year === openMonth.year && r.month === openMonth.month)
     if (data) {
-      const net = data.incomeUsd - data.expenseUsd;
-      const isCurrentMonth = data.year === now.getFullYear() && data.month === now.getMonth();
+      const net = data.incomeUsd - data.expenseUsd
+      const isCurrentMonth = data.year === now.getFullYear() && data.month === now.getMonth()
 
       // Group by day label
-      const groups: Record<string, Transaction[]> = {};
+      const groups: Record<string, Transaction[]> = {}
       for (const txn of [...data.transactions].sort((a, b) => b.id.localeCompare(a.id))) {
-        const d = transactionDate(txn.date, now);
+        const d = transactionDate(txn.date, now)
         const dayLabel = d
-          ? d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })
-          : txn.date;
-        groups[dayLabel] = [...(groups[dayLabel] ?? []), txn];
+          ? d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+          : txn.date
+        groups[dayLabel] = [...(groups[dayLabel] ?? []), txn]
       }
 
       return (
@@ -173,10 +171,10 @@ export function MonthlyHistoryScreen() {
                     </p>
                     <p
                       className={`mt-1 text-[15px] font-extrabold ${
-                        net >= 0 ? "text-[var(--success)]" : "text-[var(--danger)]"
+                        net >= 0 ? 'text-[var(--success)]' : 'text-[var(--danger)]'
                       }`}
                     >
-                      {net >= 0 ? "+" : ""}
+                      {net >= 0 ? '+' : ''}
                       {formatUsdAsCurrency(net, currency)}
                     </p>
                   </div>
@@ -199,14 +197,14 @@ export function MonthlyHistoryScreen() {
                     <div
                       className={`h-full rounded-full transition-all ${
                         data.expenseUsd > data.incomeUsd
-                          ? "bg-[var(--danger)]"
-                          : "bg-[var(--success)]"
+                          ? 'bg-[var(--danger)]'
+                          : 'bg-[var(--success)]'
                       }`}
                       style={{
                         width: `${Math.min(
                           100,
-                          data.incomeUsd > 0 ? (data.expenseUsd / data.incomeUsd) * 100 : 0,
-                        )}%`,
+                          data.incomeUsd > 0 ? (data.expenseUsd / data.incomeUsd) * 100 : 0
+                        )}%`
                       }}
                     />
                   </div>
@@ -231,22 +229,22 @@ export function MonthlyHistoryScreen() {
                         {day}
                       </p>
                       <div className="mt-2 space-y-2">
-                        {items.map((txn) => {
-                          const Icon = iconFor(txn);
+                        {items.map(txn => {
+                          const Icon = iconFor(txn)
                           return (
                             <button
                               key={txn.id}
                               onClick={() => {
-                                setSelectedTransactionId(txn.id);
-                                navigate(txn.usd < 0 ? "expense_detail" : "income_detail");
+                                setSelectedTransactionId(txn.id)
+                                navigate(txn.usd < 0 ? 'expense_detail' : 'income_detail')
                               }}
                               className="flex w-full items-center gap-3 rounded-2xl bg-white px-3 py-2.5 text-left shadow-[var(--shadow-soft)] hover:shadow-md transition-shadow cursor-pointer"
                             >
                               <div
                                 className={`grid h-9 w-9 place-items-center rounded-xl ${
                                   txn.usd >= 0
-                                    ? "bg-[oklch(0.95_0.06_145)] text-[var(--success)]"
-                                    : "bg-[oklch(0.95_0.04_265)] text-[var(--primary)]"
+                                    ? 'bg-[oklch(0.95_0.06_145)] text-[var(--success)]'
+                                    : 'bg-[oklch(0.95_0.04_265)] text-[var(--primary)]'
                                 }`}
                               >
                                 <Icon className="h-4 w-4" strokeWidth={2.25} />
@@ -262,11 +260,11 @@ export function MonthlyHistoryScreen() {
                               <Money
                                 usd={txn.usd}
                                 size="sm"
-                                tone={txn.usd < 0 ? "danger" : "success"}
+                                tone={txn.usd < 0 ? 'danger' : 'success'}
                                 signed
                               />
                             </button>
-                          );
+                          )
                         })}
                       </div>
                     </div>
@@ -276,7 +274,7 @@ export function MonthlyHistoryScreen() {
             </div>
           </div>
         </PhoneFrame>
-      );
+      )
     }
   }
 
@@ -299,13 +297,13 @@ export function MonthlyHistoryScreen() {
         {/* Net balance card */}
         <div className="mt-4 rounded-3xl bg-white p-5 shadow-[var(--shadow-soft)]">
           <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
-            {currentMonthData ? `${currentMonthData.label} net` : "Net balance this month"}
+            {currentMonthData ? `${currentMonthData.label} net` : 'Net balance this month'}
           </p>
           <div className="mt-1">
             <Money
               usd={netBalance}
               size="lg"
-              tone={netBalance >= 0 ? "success" : "danger"}
+              tone={netBalance >= 0 ? 'success' : 'danger'}
               signed
             />
           </div>
@@ -313,18 +311,18 @@ export function MonthlyHistoryScreen() {
             <p className="mt-2 text-[11px] text-muted-foreground">
               <span className="font-semibold text-[var(--success)]">
                 {formatUsdAsCurrency(currentMonthData.incomeUsd, currency)}
-              </span>{" "}
-              in ·{" "}
+              </span>{' '}
+              in ·{' '}
               <span className="font-semibold text-[var(--danger)]">
                 {formatUsdAsCurrency(currentMonthData.expenseUsd, currency)}
-              </span>{" "}
+              </span>{' '}
               out this month
             </p>
           )}
         </div>
 
         <p className="mt-5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-          {monthRows.length === 0 ? "No data yet" : "All months"}
+          {monthRows.length === 0 ? 'No data yet' : 'All months'}
         </p>
 
         {monthRows.length === 0 ? (
@@ -337,9 +335,9 @@ export function MonthlyHistoryScreen() {
         ) : (
           <div className="mt-2 flex-1 space-y-2 overflow-y-auto">
             {monthRows.map((m, i) => {
-              const net = m.incomeUsd - m.expenseUsd;
-              const positive = net >= 0;
-              const isCurrentMonth = m.year === now.getFullYear() && m.month === now.getMonth();
+              const net = m.incomeUsd - m.expenseUsd
+              const positive = net >= 0
+              const isCurrentMonth = m.year === now.getFullYear() && m.month === now.getMonth()
               return (
                 <button
                   key={monthKey(m.year, m.month)}
@@ -349,8 +347,8 @@ export function MonthlyHistoryScreen() {
                   <div
                     className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl"
                     style={{
-                      background: positive ? "oklch(0.96 0.06 145)" : "oklch(0.96 0.06 25)",
-                      color: positive ? "var(--success)" : "var(--danger)",
+                      background: positive ? 'oklch(0.96 0.06 145)' : 'oklch(0.96 0.06 25)',
+                      color: positive ? 'var(--success)' : 'var(--danger)'
                     }}
                   >
                     {positive ? (
@@ -369,31 +367,31 @@ export function MonthlyHistoryScreen() {
                       )}
                     </p>
                     <p className="mt-0.5 text-[10px] text-muted-foreground">
-                      In{" "}
+                      In{' '}
                       <span className="font-semibold text-[var(--success)]">
                         {formatUsdAsCurrency(m.incomeUsd, currency)}
                       </span>
-                      {"  ·  "}
-                      Out{" "}
+                      {'  ·  '}
+                      Out{' '}
                       <span className="font-semibold text-[var(--danger)]">
                         {formatUsdAsCurrency(m.expenseUsd, currency)}
                       </span>
-                      {"  ·  "}
+                      {'  ·  '}
                       <span className="text-muted-foreground">
-                        {m.transactions.length} txn{m.transactions.length !== 1 ? "s" : ""}
+                        {m.transactions.length} txn{m.transactions.length !== 1 ? 's' : ''}
                       </span>
                     </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
-                    <Money usd={net} size="sm" tone={positive ? "success" : "danger"} signed />
+                    <Money usd={net} size="sm" tone={positive ? 'success' : 'danger'} signed />
                     <ChevronRight className="h-4 w-4 text-muted-foreground" strokeWidth={2.25} />
                   </div>
                 </button>
-              );
+              )
             })}
           </div>
         )}
       </div>
     </PhoneFrame>
-  );
+  )
 }

@@ -1,9 +1,9 @@
-import { Users } from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { useAppNavigation } from "@/lib/navigation";
+import { Users } from 'lucide-react'
+import { useAppNavigation } from '@/lib/navigation'
+import { PhoneFrame } from './PhoneFrame'
 
 export function OnboardingScreen() {
-  const { navigate, setSignupHouseholdMode } = useAppNavigation();
+  const { navigate, setSignupHouseholdMode } = useAppNavigation()
 
   return (
     <PhoneFrame>
@@ -13,7 +13,7 @@ export function OnboardingScreen() {
             Nest<span className="text-[var(--primary)]">.</span>
           </h2>
           <button
-            onClick={() => navigate("login")}
+            onClick={() => navigate('login')}
             className="text-[12px] font-semibold text-muted-foreground hover:text-foreground active:scale-95 transition-all"
           >
             Sign in
@@ -24,13 +24,13 @@ export function OnboardingScreen() {
           <div
             className="absolute h-56 w-56 rounded-full opacity-60 blur-2xl"
             style={{
-              background: "linear-gradient(135deg, oklch(0.75 0.2 265), oklch(0.92 0.18 95))",
+              background: 'linear-gradient(135deg, oklch(0.75 0.2 265), oklch(0.92 0.18 95))'
             }}
           />
           <div
             className="relative h-44 w-72 rotate-[-8deg] rounded-3xl p-5 text-white shadow-[var(--shadow-tile)]"
             style={{
-              background: "linear-gradient(135deg, oklch(0.45 0.24 265), oklch(0.2 0.05 265))",
+              background: 'linear-gradient(135deg, oklch(0.45 0.24 265), oklch(0.2 0.05 265))'
             }}
           >
             <div className="flex items-start justify-between">
@@ -40,7 +40,7 @@ export function OnboardingScreen() {
             <p className="mt-5 text-[11px] text-white/60">Ready to budget</p>
             <p className="mt-1 text-[22px] font-extrabold tracking-tight">$0.00</p>
             <div className="mt-3 flex -space-x-2">
-              {["YOU", "+1", "+2"].map((i) => (
+              {['YOU', '+1', '+2'].map(i => (
                 <span
                   key={i}
                   className="grid h-6 w-6 place-items-center rounded-full border-2 border-[oklch(0.2_0.05_265)] bg-[oklch(0.65_0.22_265)] text-[9px] font-bold"
@@ -73,8 +73,8 @@ export function OnboardingScreen() {
         <div className="mt-auto space-y-2">
           <button
             onClick={() => {
-              setSignupHouseholdMode("new");
-              navigate("signup");
+              setSignupHouseholdMode('new')
+              navigate('signup')
             }}
             className="w-full rounded-full bg-[oklch(0.18_0.04_265)] py-4 text-[14px] font-semibold text-white active:scale-95 transition-transform cursor-pointer"
           >
@@ -82,8 +82,8 @@ export function OnboardingScreen() {
           </button>
           <button
             onClick={() => {
-              setSignupHouseholdMode("join");
-              navigate("join_family");
+              setSignupHouseholdMode('join')
+              navigate('join_family')
             }}
             className="w-full rounded-full bg-[var(--muted)] py-4 text-[14px] font-semibold text-foreground active:scale-95 transition-transform cursor-pointer"
           >
@@ -92,5 +92,5 @@ export function OnboardingScreen() {
         </div>
       </div>
     </PhoneFrame>
-  );
+  )
 }

@@ -1,19 +1,19 @@
-import { Check, CheckCircle2 } from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { useAppNavigation } from "@/lib/navigation";
-import { Money } from "./Money";
+import { Check, CheckCircle2 } from 'lucide-react'
+import { useAppNavigation } from '@/lib/navigation'
+import { Money } from './Money'
+import { PhoneFrame } from './PhoneFrame'
 
 export function PlaidSuccessScreen() {
-  const { navigate, selectedBankName, linkedBanks } = useAppNavigation();
-  const bank = linkedBanks.find((b) => b.name === selectedBankName);
-  const accounts = bank?.accounts ?? [];
+  const { navigate, selectedBankName, linkedBanks } = useAppNavigation()
+  const bank = linkedBanks.find(b => b.name === selectedBankName)
+  const accounts = bank?.accounts ?? []
 
   return (
     <PhoneFrame>
       <div className="flex h-full flex-col items-center px-7 pt-16 pb-7">
         <div
           className="grid h-20 w-20 place-items-center rounded-3xl text-white shadow-[var(--shadow-tile)]"
-          style={{ background: "linear-gradient(135deg, oklch(0.7 0.2 150), oklch(0.5 0.2 150))" }}
+          style={{ background: 'linear-gradient(135deg, oklch(0.7 0.2 150), oklch(0.5 0.2 150))' }}
         >
           <CheckCircle2 className="h-10 w-10" strokeWidth={2} />
         </div>
@@ -30,7 +30,7 @@ export function PlaidSuccessScreen() {
           <div className="flex items-center gap-3 border-b border-[var(--muted)] pb-3">
             <div
               className="grid h-10 w-10 place-items-center rounded-xl text-white text-[12px] font-extrabold"
-              style={{ background: "oklch(0.45 0.18 250)" }}
+              style={{ background: 'oklch(0.45 0.18 250)' }}
             >
               C
             </div>
@@ -44,7 +44,7 @@ export function PlaidSuccessScreen() {
           </div>
 
           <div className="mt-3 space-y-2">
-            {accounts.map((a) => (
+            {accounts.map(a => (
               <div key={a.name} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Check className="h-3.5 w-3.5 text-[oklch(0.5_0.2_150)]" strokeWidth={2.5} />
@@ -55,7 +55,7 @@ export function PlaidSuccessScreen() {
             ))}
             {accounts.length === 0 && (
               <button
-                onClick={() => navigate("connect_bank")}
+                onClick={() => navigate('connect_bank')}
                 className="w-full rounded-2xl bg-[var(--muted)] py-3 text-[12px] font-semibold text-foreground"
               >
                 Connect a bank to import accounts
@@ -66,13 +66,13 @@ export function PlaidSuccessScreen() {
 
         <div className="mt-auto w-full space-y-2">
           <button
-            onClick={() => navigate("wallet")}
+            onClick={() => navigate('wallet')}
             className="w-full rounded-full bg-[oklch(0.18_0.04_265)] py-4 text-[15px] font-semibold text-white"
           >
             Done
           </button>
           <button
-            onClick={() => navigate("connect_bank")}
+            onClick={() => navigate('connect_bank')}
             className="w-full rounded-full bg-white py-3 text-[13px] font-semibold text-foreground shadow-[var(--shadow-soft)]"
           >
             Connect another bank
@@ -80,5 +80,5 @@ export function PlaidSuccessScreen() {
         </div>
       </div>
     </PhoneFrame>
-  );
+  )
 }

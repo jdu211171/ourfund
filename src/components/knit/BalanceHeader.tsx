@@ -1,31 +1,31 @@
-import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
-import { Money } from "./Money";
-import { formatUsdAsCurrency } from "@/lib/currency";
-import { useAppNavigation } from "@/lib/navigation";
-import { BudgetModeToggle } from "./BudgetModeToggle";
+import { ArrowDownLeft, ArrowUpRight } from 'lucide-react'
+import { formatUsdAsCurrency } from '@/lib/currency'
+import { useAppNavigation } from '@/lib/navigation'
+import { BudgetModeToggle } from './BudgetModeToggle'
+import { Money } from './Money'
 
 type Props = {
-  label?: string;
-  balanceUsd: number;
-  incomeUsd: number;
-  spentUsd: number;
-  interactive?: boolean;
-};
+  label?: string
+  balanceUsd: number
+  incomeUsd: number
+  spentUsd: number
+  interactive?: boolean
+}
 
 /**
  * Shared budget-showing header used on every primary screen so users see
  * the same balance surface everywhere. Borderless: white card, soft shadow.
  */
 export function BalanceHeader({
-  label = "Current balance",
+  label = 'Current balance',
   balanceUsd,
   incomeUsd,
   spentUsd,
-  interactive = true,
+  interactive = true
 }: Props) {
-  const { currency } = useAppNavigation();
-  const balanceText = formatUsdAsCurrency(balanceUsd, currency);
-  const balanceToggleVariant = balanceText.length >= 13 ? "vertical" : undefined;
+  const { currency } = useAppNavigation()
+  const balanceText = formatUsdAsCurrency(balanceUsd, currency)
+  const balanceToggleVariant = balanceText.length >= 13 ? 'vertical' : undefined
 
   return (
     <div className="rounded-3xl bg-white shadow-[var(--shadow-soft)]">
@@ -43,7 +43,7 @@ export function BalanceHeader({
           primaryClassName="!text-[clamp(28px,9cqw,34px)]"
         />
         <BudgetModeToggle
-          className={`shrink-0 scale-90 ${balanceToggleVariant === "vertical" ? "origin-left" : "origin-right"}`}
+          className={`shrink-0 scale-90 ${balanceToggleVariant === 'vertical' ? 'origin-left' : 'origin-right'}`}
           variant={balanceToggleVariant}
         />
       </div>
@@ -66,7 +66,7 @@ export function BalanceHeader({
         />
       </div>
     </div>
-  );
+  )
 }
 
 function Cell({
@@ -75,16 +75,16 @@ function Cell({
   icon,
   label,
   usd,
-  interactive,
+  interactive
 }: {
-  tint: string;
-  fg: string;
-  icon: React.ReactNode;
-  label: string;
-  usd: number;
-  interactive: boolean;
+  tint: string
+  fg: string
+  icon: React.ReactNode
+  label: string
+  usd: number
+  interactive: boolean
 }) {
-  const { navigate } = useAppNavigation();
+  const { navigate } = useAppNavigation()
   const content = (
     <>
       <div className="flex items-center gap-1.5">
@@ -96,21 +96,21 @@ function Cell({
         </span>
         <span className="text-[11px] font-semibold text-muted-foreground">{label}</span>
       </div>
-      <Money usd={usd} size="md" tone={label === "Expense" ? "danger" : "default"} />
+      <Money usd={usd} size="md" tone={label === 'Expense' ? 'danger' : 'default'} />
     </>
-  );
+  )
 
   if (interactive) {
     return (
       <button
-        onClick={() => navigate(label === "Expense" ? "scan_receipt" : "add_income")}
+        onClick={() => navigate(label === 'Expense' ? 'scan_receipt' : 'add_income')}
         className="flex flex-col gap-1.5 rounded-2xl bg-[var(--muted)]/55 p-3 text-left transition-colors hover:bg-[var(--muted)]"
         type="button"
       >
         {content}
       </button>
-    );
+    )
   }
 
-  return <div className="flex flex-col gap-1.5">{content}</div>;
+  return <div className="flex flex-col gap-1.5">{content}</div>
 }

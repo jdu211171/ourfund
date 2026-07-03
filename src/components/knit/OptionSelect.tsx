@@ -1,23 +1,23 @@
-import type { ReactNode } from "react";
-import { useState } from "react";
-import { Check, ChevronDown, X } from "lucide-react";
+import { Check, ChevronDown, X } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { useState } from 'react'
 
 export type SelectOption<T extends string> = {
-  value: T;
-  label: string;
-  description?: string;
-  disabled?: boolean;
-};
+  value: T
+  label: string
+  description?: string
+  disabled?: boolean
+}
 
 type Props<T extends string> = {
-  label: string;
-  value: T | "";
-  options: SelectOption<T>[];
-  onChange: (value: T) => void;
-  icon: ReactNode;
-  emptyLabel?: string;
-  title?: string;
-};
+  label: string
+  value: T | ''
+  options: SelectOption<T>[]
+  onChange: (value: T) => void
+  icon: ReactNode
+  emptyLabel?: string
+  title?: string
+}
 
 export function OptionSelect<T extends string>({
   label,
@@ -25,11 +25,11 @@ export function OptionSelect<T extends string>({
   options,
   onChange,
   icon,
-  emptyLabel = "Select an option",
-  title = label,
+  emptyLabel = 'Select an option',
+  title = label
 }: Props<T>) {
-  const [open, setOpen] = useState(false);
-  const selected = options.find((option) => option.value === value);
+  const [open, setOpen] = useState(false)
+  const selected = options.find(option => option.value === value)
 
   return (
     <>
@@ -72,21 +72,21 @@ export function OptionSelect<T extends string>({
               </button>
             </div>
             <div className="max-h-[300px] space-y-1 overflow-y-auto pr-1">
-              {options.map((option) => {
-                const selectedOption = option.value === value;
+              {options.map(option => {
+                const selectedOption = option.value === value
                 return (
                   <button
                     key={option.value}
                     type="button"
                     disabled={option.disabled}
                     onClick={() => {
-                      onChange(option.value);
-                      setOpen(false);
+                      onChange(option.value)
+                      setOpen(false)
                     }}
                     className={`flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-colors ${
                       selectedOption
-                        ? "bg-[var(--accent)] text-foreground"
-                        : "bg-white text-foreground hover:bg-slate-50"
+                        ? 'bg-[var(--accent)] text-foreground'
+                        : 'bg-white text-foreground hover:bg-slate-50'
                     } disabled:opacity-45`}
                   >
                     <div className="min-w-0 flex-1">
@@ -99,13 +99,13 @@ export function OptionSelect<T extends string>({
                     </div>
                     <span
                       className={`grid h-6 w-6 place-items-center rounded-full ${
-                        selectedOption ? "bg-[var(--primary)] text-white" : "bg-[var(--muted)]"
+                        selectedOption ? 'bg-[var(--primary)] text-white' : 'bg-[var(--muted)]'
                       }`}
                     >
                       {selectedOption && <Check className="h-3 w-3" strokeWidth={3} />}
                     </span>
                   </button>
-                );
+                )
               })}
               {options.length === 0 && (
                 <div className="rounded-2xl bg-[var(--muted)] px-3 py-4 text-center">
@@ -117,5 +117,5 @@ export function OptionSelect<T extends string>({
         </div>
       )}
     </>
-  );
+  )
 }

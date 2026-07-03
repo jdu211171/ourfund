@@ -4,24 +4,24 @@ import {
   ChevronRight,
   Lock,
   PiggyBank,
+  Plus,
   ShoppingBag,
   TrendingDown,
   TrendingUp,
   Users,
-  WalletCards,
-  Plus,
-} from "lucide-react";
-import { PhoneFrame, useFrameMode } from "./PhoneFrame";
-import { BottomNav } from "./BottomNav";
-import { BudgetModeToggle } from "./BudgetModeToggle";
-import { Money } from "./Money";
-import { useAppNavigation } from "@/lib/navigation";
-import { categoryIconMap } from "./categoryOptions";
-import { GoalIcon, normalizeGoalIconName } from "./goalIconOptions";
-import { formatScheduleSubtext, getScheduleInfo } from "@/lib/schedules";
+  WalletCards
+} from 'lucide-react'
+import { useAppNavigation } from '@/lib/navigation'
+import { formatScheduleSubtext, getScheduleInfo } from '@/lib/schedules'
+import { BottomNav } from './BottomNav'
+import { BudgetModeToggle } from './BudgetModeToggle'
+import { categoryIconMap } from './categoryOptions'
+import { GoalIcon, normalizeGoalIconName } from './goalIconOptions'
+import { Money } from './Money'
+import { PhoneFrame, useFrameMode } from './PhoneFrame'
 
 export function WalletScreen() {
-  const mode = useFrameMode();
+  const mode = useFrameMode()
   const {
     navigate,
     budgetMode,
@@ -36,40 +36,40 @@ export function WalletScreen() {
     setSelectedGoalId,
     subscriptions,
     recurringIncome,
-    setSelectedDetailWalletId,
-  } = useAppNavigation();
-  const viewedMember = members.find((member) => member.id === selectedMemberId);
+    setSelectedDetailWalletId
+  } = useAppNavigation()
+  const viewedMember = members.find(member => member.id === selectedMemberId)
 
   const sortedWallets = [...activeWallets].sort((a, b) => {
-    if (budgetMode === "personal") {
-      return a.type === "private" ? -1 : 1;
+    if (budgetMode === 'personal') {
+      return a.type === 'private' ? -1 : 1
     }
-    return a.type !== "private" ? -1 : 1;
-  });
+    return a.type !== 'private' ? -1 : 1
+  })
   const visibleOwner =
-    budgetMode === "personal" && viewedMember ? viewedMember.name.split(" ")[0] : "Household";
+    budgetMode === 'personal' && viewedMember ? viewedMember.name.split(' ')[0] : 'Household'
   const categoryRows = categories
-    .map((category) => {
-      const usedUsd = categorySpentUsd(category.label);
+    .map(category => {
+      const usedUsd = categorySpentUsd(category.label)
       const pct =
-        category.limitUsd > 0 ? Math.min(100, Math.round((usedUsd / category.limitUsd) * 100)) : 0;
-      return { ...category, usedUsd, pct };
+        category.limitUsd > 0 ? Math.min(100, Math.round((usedUsd / category.limitUsd) * 100)) : 0
+      return { ...category, usedUsd, pct }
     })
     .sort((a, b) => b.pct - a.pct)
-    .slice(0, 4);
+    .slice(0, 4)
   const scheduledIncomeRows = recurringIncome
-    .map((item) => ({ item, info: getScheduleInfo(item.every) }))
-    .sort((a, b) => (a.info.daysUntil ?? 9999) - (b.info.daysUntil ?? 9999));
+    .map(item => ({ item, info: getScheduleInfo(item.every) }))
+    .sort((a, b) => (a.info.daysUntil ?? 9999) - (b.info.daysUntil ?? 9999))
   const scheduledExpenseRows = subscriptions
-    .map((item) => ({ item, info: getScheduleInfo(item.every) }))
-    .sort((a, b) => (a.info.daysUntil ?? 9999) - (b.info.daysUntil ?? 9999));
-  const scheduledIncomeUsd = recurringIncome.reduce((sum, item) => sum + item.amountUsd, 0);
-  const scheduledExpenseUsd = subscriptions.reduce((sum, item) => sum + item.amountUsd, 0);
-  const scheduledNetUsd = scheduledIncomeUsd - scheduledExpenseUsd;
-  const nextIncome = scheduledIncomeRows[0];
-  const nextExpense = scheduledExpenseRows[0];
+    .map(item => ({ item, info: getScheduleInfo(item.every) }))
+    .sort((a, b) => (a.info.daysUntil ?? 9999) - (b.info.daysUntil ?? 9999))
+  const scheduledIncomeUsd = recurringIncome.reduce((sum, item) => sum + item.amountUsd, 0)
+  const scheduledExpenseUsd = subscriptions.reduce((sum, item) => sum + item.amountUsd, 0)
+  const scheduledNetUsd = scheduledIncomeUsd - scheduledExpenseUsd
+  const nextIncome = scheduledIncomeRows[0]
+  const nextExpense = scheduledExpenseRows[0]
 
-  if (mode === "web") {
+  if (mode === 'web') {
     return (
       <div className="space-y-6">
         <header className="flex items-center justify-between">
@@ -84,7 +84,7 @@ export function WalletScreen() {
           <div className="flex items-center gap-3">
             <BudgetModeToggle className="scale-95 origin-right" />
             <button
-              onClick={() => navigate("new_wallet")}
+              onClick={() => navigate('new_wallet')}
               className="inline-flex items-center gap-2 rounded-xl bg-[var(--primary)] px-4 py-2.5 text-[12px] font-bold text-white shadow-[0_12px_30px_-12px_oklch(0.55_0.24_265/0.7)] transition hover:opacity-90 cursor-pointer"
             >
               <Plus className="h-4 w-4" strokeWidth={2.5} />
@@ -111,7 +111,7 @@ export function WalletScreen() {
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => navigate("transfer")}
+                    onClick={() => navigate('transfer')}
                     className="inline-flex items-center gap-2 rounded-xl bg-[var(--muted)] px-3.5 py-2 text-[12px] font-bold text-foreground transition hover:bg-[var(--accent)] cursor-pointer"
                   >
                     <ArrowRightLeft className="h-3.5 w-3.5 text-[var(--primary)]" /> Move money
@@ -123,17 +123,17 @@ export function WalletScreen() {
             {/* Wallets List */}
             <section>
               <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-3">
-                {budgetMode === "personal" && viewedMember
-                  ? `${viewedMember.name.split(" ")[0]}'s wallets`
-                  : "Household wallets"}
+                {budgetMode === 'personal' && viewedMember
+                  ? `${viewedMember.name.split(' ')[0]}'s wallets`
+                  : 'Household wallets'}
               </p>
               <div className="grid gap-3 sm:grid-cols-2">
-                {sortedWallets.map((wallet) => (
+                {sortedWallets.map(wallet => (
                   <button
                     key={wallet.id}
                     onClick={() => {
-                      setSelectedDetailWalletId(wallet.id);
-                      navigate("wallet_detail");
+                      setSelectedDetailWalletId(wallet.id)
+                      navigate('wallet_detail')
                     }}
                     className="flex items-center gap-3 rounded-2xl bg-[var(--card)] p-4 text-left border border-[var(--border)] transition hover:-translate-y-0.5 cursor-pointer"
                   >
@@ -142,11 +142,11 @@ export function WalletScreen() {
                       style={{
                         background: wallet.color
                           ? `color-mix(in oklab, ${wallet.color} 18%, transparent)`
-                          : "oklch(0.96 0.05 265)",
-                        color: wallet.color || "var(--primary)",
+                          : 'oklch(0.96 0.05 265)',
+                        color: wallet.color || 'var(--primary)'
                       }}
                     >
-                      {wallet.type === "private" ? (
+                      {wallet.type === 'private' ? (
                         <Lock className="h-5 w-5" strokeWidth={2.25} />
                       ) : (
                         <Users className="h-5 w-5" strokeWidth={2.25} />
@@ -157,8 +157,8 @@ export function WalletScreen() {
                         {wallet.label}
                       </p>
                       <p className="text-[11px] text-muted-foreground truncate">
-                        {wallet.type === "private"
-                          ? "Private wallet"
+                        {wallet.type === 'private'
+                          ? 'Private wallet'
                           : `${wallet.members.length} members`}
                       </p>
                     </div>
@@ -166,7 +166,7 @@ export function WalletScreen() {
                   </button>
                 ))}
                 <button
-                  onClick={() => navigate("new_wallet")}
+                  onClick={() => navigate('new_wallet')}
                   className="flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[var(--border)] p-4 text-[12px] font-semibold text-[var(--primary)] transition hover:bg-[var(--muted)]/30 cursor-pointer sm:col-span-2"
                 >
                   <Plus className="h-4 w-4" /> Add a wallet
@@ -182,13 +182,13 @@ export function WalletScreen() {
                 </p>
                 <div className="flex gap-2">
                   <span className="inline-flex items-center gap-1 text-[11.5px] text-muted-foreground font-semibold">
-                    Income:{" "}
+                    Income:{' '}
                     <span className="font-bold text-[var(--success)]">
                       <Money usd={scheduledIncomeUsd} size="sm" />
                     </span>
                   </span>
                   <span className="inline-flex items-center gap-1 text-[11.5px] text-muted-foreground font-semibold">
-                    Bills:{" "}
+                    Bills:{' '}
                     <span className="font-bold text-[var(--danger)]">
                       <Money usd={scheduledExpenseUsd} size="sm" />
                     </span>
@@ -203,7 +203,7 @@ export function WalletScreen() {
                   </p>
                   {nextIncome ? (
                     <div
-                      onClick={() => navigate("recurring_income")}
+                      onClick={() => navigate('recurring_income')}
                       className="flex items-center justify-between cursor-pointer"
                     >
                       <div>
@@ -227,7 +227,7 @@ export function WalletScreen() {
                   </p>
                   {nextExpense ? (
                     <div
-                      onClick={() => navigate("subscriptions")}
+                      onClick={() => navigate('subscriptions')}
                       className="flex items-center justify-between cursor-pointer"
                     >
                       <div>
@@ -256,15 +256,15 @@ export function WalletScreen() {
                   Category limits
                 </p>
                 <button
-                  onClick={() => navigate("categories")}
+                  onClick={() => navigate('categories')}
                   className="text-[11px] font-semibold text-[var(--primary)] hover:opacity-80 cursor-pointer"
                 >
                   Edit limits
                 </button>
               </div>
               <div className="space-y-4">
-                {categoryRows.map((cat) => {
-                  const IconComponent = categoryIconMap[cat.icon] || ShoppingBag;
+                {categoryRows.map(cat => {
+                  const IconComponent = categoryIconMap[cat.icon] || ShoppingBag
                   return (
                     <div
                       key={cat.id}
@@ -276,8 +276,8 @@ export function WalletScreen() {
                           style={{
                             background: cat.color
                               ? `color-mix(in oklab, ${cat.color} 18%, transparent)`
-                              : "oklch(0.96 0.04 265)",
-                            color: cat.color || "var(--primary)",
+                              : 'oklch(0.96 0.04 265)',
+                            color: cat.color || 'var(--primary)'
                           }}
                         >
                           <IconComponent className="h-4.5 w-4.5" strokeWidth={2.25} />
@@ -302,12 +302,12 @@ export function WalletScreen() {
                           className="h-full rounded-full"
                           style={{
                             width: `${cat.pct}%`,
-                            background: cat.pct > 90 ? "var(--danger)" : "var(--primary)",
+                            background: cat.pct > 90 ? 'var(--danger)' : 'var(--primary)'
                           }}
                         />
                       </div>
                     </div>
-                  );
+                  )
                 })}
                 {categoryRows.length === 0 && (
                   <p className="text-[12px] text-muted-foreground text-center py-4">
@@ -324,24 +324,24 @@ export function WalletScreen() {
                   Goals
                 </p>
                 <button
-                  onClick={() => navigate("new_goal")}
+                  onClick={() => navigate('new_goal')}
                   className="text-[11px] font-semibold text-[var(--primary)] hover:opacity-80 cursor-pointer"
                 >
                   All goals
                 </button>
               </div>
               <div className="space-y-3">
-                {goals.slice(0, 3).map((goal) => {
+                {goals.slice(0, 3).map(goal => {
                   const pct = Math.min(
                     100,
-                    Math.round((goal.savedUsd / Math.max(goal.targetUsd, 1)) * 100),
-                  );
+                    Math.round((goal.savedUsd / Math.max(goal.targetUsd, 1)) * 100)
+                  )
                   return (
                     <div
                       key={goal.id}
                       onClick={() => {
-                        setSelectedGoalId(goal.id);
-                        navigate("goal_detail");
+                        setSelectedGoalId(goal.id)
+                        navigate('goal_detail')
                       }}
                       className="flex items-center gap-3 rounded-xl bg-[var(--muted)]/40 p-3 cursor-pointer hover:bg-[var(--muted)]/60 transition border border-[var(--border)]/10"
                     >
@@ -366,7 +366,7 @@ export function WalletScreen() {
                       </div>
                       <Money usd={goal.savedUsd} size="sm" />
                     </div>
-                  );
+                  )
                 })}
                 {goals.length === 0 && (
                   <p className="text-[12px] text-muted-foreground text-center py-4">
@@ -378,7 +378,7 @@ export function WalletScreen() {
           </aside>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -415,7 +415,7 @@ export function WalletScreen() {
           <div className="mt-4 grid grid-cols-2 gap-2">
             <button
               type="button"
-              onClick={() => navigate("transfer")}
+              onClick={() => navigate('transfer')}
               className="flex items-center gap-2 rounded-2xl bg-[var(--muted)] px-3 py-3 text-left"
             >
               <span className="grid h-8 w-8 place-items-center  rounded-xl bg-white text-[var(--primary)]">
@@ -428,7 +428,7 @@ export function WalletScreen() {
             </button>
             <button
               type="button"
-              onClick={() => navigate("new_wallet")}
+              onClick={() => navigate('new_wallet')}
               className="flex items-center gap-2 rounded-2xl bg-[var(--muted)] px-3 py-3 text-left"
             >
               <span className="grid h-8 w-8 place-items-center rounded-xl bg-white text-[var(--primary)]">
@@ -444,13 +444,13 @@ export function WalletScreen() {
 
         <div className="mt-5 flex items-center justify-between">
           <p className="text-[13px] font-bold text-[oklch(0.2_0.08_265)]">
-            {budgetMode === "personal" && viewedMember
-              ? `${viewedMember.name.split(" ")[0]}'s wallets`
-              : "Household wallets"}
+            {budgetMode === 'personal' && viewedMember
+              ? `${viewedMember.name.split(' ')[0]}'s wallets`
+              : 'Household wallets'}
           </p>
           <button
             type="button"
-            onClick={() => navigate("new_wallet")}
+            onClick={() => navigate('new_wallet')}
             className="text-[11px] font-bold text-[var(--primary)]"
           >
             Add
@@ -458,22 +458,22 @@ export function WalletScreen() {
         </div>
 
         <div>
-          {sortedWallets.map((wallet) => (
+          {sortedWallets.map(wallet => (
             <button
               key={wallet.id}
               onClick={() => {
-                setSelectedDetailWalletId(wallet.id);
-                navigate("wallet_detail");
+                setSelectedDetailWalletId(wallet.id)
+                navigate('wallet_detail')
               }}
               className="flex w-full items-center gap-3 rounded-2xl bg-white py-3 text-left transition-transform active:scale-[0.99] cursor-pointer"
             >
               <div
                 className="grid h-11 w-11 place-items-center rounded-2xl"
-                style={{ background: "oklch(0.96 0.05 265)", color: wallet.color }}
+                style={{ background: 'oklch(0.96 0.05 265)', color: wallet.color }}
               >
-                {wallet.type === "private" ? (
+                {wallet.type === 'private' ? (
                   <Lock className="h-4 w-4" strokeWidth={2.25} />
-                ) : wallet.type === "connected" ? (
+                ) : wallet.type === 'connected' ? (
                   <PiggyBank className="h-4 w-4" strokeWidth={2.25} />
                 ) : (
                   <Users className="h-4 w-4" strokeWidth={2.25} />
@@ -488,7 +488,7 @@ export function WalletScreen() {
           ))}
           {sortedWallets.length === 0 && (
             <button
-              onClick={() => navigate("new_wallet")}
+              onClick={() => navigate('new_wallet')}
               className="w-full rounded-2xl bg-white py-5 text-center"
             >
               <p className="text-[13px] font-bold text-foreground">No wallet here yet</p>
@@ -504,7 +504,7 @@ export function WalletScreen() {
             <p className="text-[13px] font-bold text-[oklch(0.2_0.08_265)]">Scheduled cashflow</p>
             <button
               type="button"
-              onClick={() => navigate("subscriptions")}
+              onClick={() => navigate('subscriptions')}
               className="text-[11px] font-bold text-[var(--primary)]"
             >
               Manage
@@ -513,7 +513,7 @@ export function WalletScreen() {
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
-              onClick={() => navigate("recurring_income")}
+              onClick={() => navigate('recurring_income')}
               className="rounded-2xl bg-white p-3 text-left shadow-[var(--shadow-soft)]"
             >
               <span className="flex items-center gap-2">
@@ -532,12 +532,12 @@ export function WalletScreen() {
               <span className="mt-2 block truncate text-[10px] text-muted-foreground">
                 {nextIncome
                   ? `${nextIncome.item.label} · ${formatScheduleSubtext(nextIncome.info)}`
-                  : "No scheduled income"}
+                  : 'No scheduled income'}
               </span>
             </button>
             <button
               type="button"
-              onClick={() => navigate("subscriptions")}
+              onClick={() => navigate('subscriptions')}
               className="rounded-2xl bg-white p-3 text-left shadow-[var(--shadow-soft)]"
             >
               <span className="flex items-center gap-2">
@@ -550,7 +550,7 @@ export function WalletScreen() {
               <span className="mt-2 block truncate text-[10px] text-muted-foreground">
                 {nextExpense
                   ? `${nextExpense.item.label} · ${formatScheduleSubtext(nextExpense.info)}`
-                  : "No scheduled bills"}
+                  : 'No scheduled bills'}
               </span>
             </button>
           </div>
@@ -567,7 +567,7 @@ export function WalletScreen() {
             <Money
               usd={scheduledNetUsd}
               size="sm"
-              tone={scheduledNetUsd >= 0 ? "success" : "danger"}
+              tone={scheduledNetUsd >= 0 ? 'success' : 'danger'}
               signed
             />
           </div>
@@ -577,7 +577,7 @@ export function WalletScreen() {
           <p className="text-[13px] font-bold text-[oklch(0.2_0.08_265)]">Category controls</p>
           <button
             type="button"
-            onClick={() => navigate("categories")}
+            onClick={() => navigate('categories')}
             className="text-[11px] font-bold text-[var(--primary)]"
           >
             Manage
@@ -585,13 +585,13 @@ export function WalletScreen() {
         </div>
 
         <div className="mt-2 space-y-2.5">
-          {categoryRows.map((category) => {
-            const Icon = categoryIconMap[category.icon] ?? ShoppingBag;
+          {categoryRows.map(category => {
+            const Icon = categoryIconMap[category.icon] ?? ShoppingBag
             return (
               <button
                 type="button"
                 key={category.id}
-                onClick={() => navigate("categories")}
+                onClick={() => navigate('categories')}
                 className="w-full rounded-2xl bg-white py-2.5 text-left"
               >
                 <div className="flex items-center gap-3">
@@ -614,16 +614,16 @@ export function WalletScreen() {
                     className="h-full rounded-full"
                     style={{
                       width: `${category.pct}%`,
-                      background: category.pct > 80 ? "var(--danger)" : category.color,
+                      background: category.pct > 80 ? 'var(--danger)' : category.color
                     }}
                   />
                 </div>
               </button>
-            );
+            )
           })}
           {categoryRows.length === 0 && (
             <button
-              onClick={() => navigate("new_category")}
+              onClick={() => navigate('new_category')}
               className="w-full rounded-2xl bg-white py-2 text-center"
             >
               <p className="text-[13px] font-bold text-foreground">No limits yet</p>
@@ -638,35 +638,35 @@ export function WalletScreen() {
           <p className="text-[13px] font-bold text-[oklch(0.2_0.08_265)]">Goals</p>
           <button
             type="button"
-            onClick={() => navigate("new_goal")}
+            onClick={() => navigate('new_goal')}
             className="text-[11px] font-bold text-[var(--primary)]"
           >
             New
           </button>
         </div>
         <div className="mt-2">
-          {goals.map((goal) => {
+          {goals.map(goal => {
             const pct = Math.min(
               100,
-              Math.round((goal.savedUsd / Math.max(goal.targetUsd, 1)) * 100),
-            );
-            const goalIconName = normalizeGoalIconName(goal.icon);
+              Math.round((goal.savedUsd / Math.max(goal.targetUsd, 1)) * 100)
+            )
+            const goalIconName = normalizeGoalIconName(goal.icon)
             const targetDateLabel = (() => {
-              const d = goal.targetDate;
-              if (!d || d === "No deadline") return "No deadline";
-              const match = d.match(/^(\d{4})-(\d{2})$/);
-              if (!match) return d;
-              const dt = new Date(parseInt(match[1], 10), parseInt(match[2], 10) - 1, 1);
-              return dt.toLocaleDateString("en-US", { month: "short", year: "numeric" });
-            })();
+              const d = goal.targetDate
+              if (!d || d === 'No deadline') return 'No deadline'
+              const match = d.match(/^(\d{4})-(\d{2})$/)
+              if (!match) return d
+              const dt = new Date(parseInt(match[1], 10), parseInt(match[2], 10) - 1, 1)
+              return dt.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+            })()
 
             return (
               <button
                 key={goal.id}
                 type="button"
                 onClick={() => {
-                  setSelectedGoalId(goal.id);
-                  navigate("goal_detail");
+                  setSelectedGoalId(goal.id)
+                  navigate('goal_detail')
                 }}
                 className="flex w-full items-center gap-3 rounded-2xl bg-white py-3 text-left"
               >
@@ -683,11 +683,11 @@ export function WalletScreen() {
                 </span>
                 <ChevronRight className="h-4 w-4 text-muted-foreground" strokeWidth={2.25} />
               </button>
-            );
+            )
           })}
         </div>
       </div>
       <BottomNav active="wallet" />
     </PhoneFrame>
-  );
+  )
 }

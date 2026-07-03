@@ -1,4 +1,4 @@
-const BASE_PATH = "/ourfund";
+const BASE_PATH = '/ourfund'
 
 export function renderErrorPage(): string {
   return `<!doctype html>
@@ -28,5 +28,5 @@ export function renderErrorPage(): string {
       </div>
     </div>
   </body>
-</html>`;
+</html>`
 }

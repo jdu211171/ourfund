@@ -1,10 +1,10 @@
-import { ArrowLeft, Check } from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { useAppNavigation } from "@/lib/navigation";
-import { useState } from "react";
+import { ArrowLeft, Check } from 'lucide-react'
+import { useState } from 'react'
+import { useAppNavigation } from '@/lib/navigation'
+import { PhoneFrame } from './PhoneFrame'
 
-const sorts = ["Newest", "Oldest", "Highest amount", "Lowest amount"];
-const dateRanges = ["All time", "Today", "This month"];
+const sorts = ['Newest', 'Oldest', 'Highest amount', 'Lowest amount']
+const dateRanges = ['All time', 'Today', 'This month']
 
 export function FilterSortScreen() {
   const {
@@ -15,43 +15,43 @@ export function FilterSortScreen() {
     resetHistoryFilters,
     activeTransactions,
     members,
-    categories,
-  } = useAppNavigation();
-  const [dateRange, setDateRange] = useState(dateRanges[0]);
+    categories
+  } = useAppNavigation()
+  const [dateRange, setDateRange] = useState(dateRanges[0])
   const memberFilters = [
-    "Anyone",
-    ...members.map((member) => member.name.split(" ").filter(Boolean)[0]).filter(Boolean),
-  ];
+    'Anyone',
+    ...members.map(member => member.name.split(' ').filter(Boolean)[0]).filter(Boolean)
+  ]
   const categoryFilters = [
     ...new Set([
-      ...categories.map((category) => category.label),
-      ...activeTransactions.map((transaction) => transaction.category),
-    ]),
-  ];
+      ...categories.map(category => category.label),
+      ...activeTransactions.map(transaction => transaction.category)
+    ])
+  ]
 
   const toggleCategory = (category: string) => {
     setHistoryFilters({
       categories: historyFilters.categories.includes(category)
-        ? historyFilters.categories.filter((c) => c !== category)
-        : [...historyFilters.categories, category],
-    });
-  };
+        ? historyFilters.categories.filter(c => c !== category)
+        : [...historyFilters.categories, category]
+    })
+  }
 
-  const resultCount = activeTransactions.filter((txn) => {
-    if (historyFilters.kind === "Expense" && txn.usd >= 0) return false;
-    if (historyFilters.kind === "Income" && txn.usd <= 0) return false;
-    if (historyFilters.kind === "Goals" && txn.category !== "Goals") return false;
-    if (historyFilters.kind === "Transfer" && txn.category !== "Transfer") return false;
+  const resultCount = activeTransactions.filter(txn => {
+    if (historyFilters.kind === 'Expense' && txn.usd >= 0) return false
+    if (historyFilters.kind === 'Income' && txn.usd <= 0) return false
+    if (historyFilters.kind === 'Goals' && txn.category !== 'Goals') return false
+    if (historyFilters.kind === 'Transfer' && txn.category !== 'Transfer') return false
     if (
-      historyFilters.member !== "Anyone" &&
+      historyFilters.member !== 'Anyone' &&
       !txn.who.toLowerCase().includes(historyFilters.member.toLowerCase())
     )
-      return false;
+      return false
     if (historyFilters.categories.length > 0 && !historyFilters.categories.includes(txn.category))
-      return false;
-    const amount = Math.abs(txn.usd);
-    return amount >= historyFilters.minUsd && amount <= historyFilters.maxUsd;
-  }).length;
+      return false
+    const amount = Math.abs(txn.usd)
+    return amount >= historyFilters.minUsd && amount <= historyFilters.maxUsd
+  }).length
 
   return (
     <PhoneFrame>
@@ -79,11 +79,11 @@ export function FilterSortScreen() {
               Member
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
-              {memberFilters.map((m) => (
+              {memberFilters.map(m => (
                 <button
                   key={m}
                   onClick={() => setHistoryFilters({ member: m })}
-                  className={`rounded-full px-3 py-1.5 text-[11px] font-semibold ${historyFilters.member === m ? "bg-[var(--primary)] text-white" : "bg-white text-foreground shadow-[var(--shadow-soft)]"}`}
+                  className={`rounded-full px-3 py-1.5 text-[11px] font-semibold ${historyFilters.member === m ? 'bg-[var(--primary)] text-white' : 'bg-white text-foreground shadow-[var(--shadow-soft)]'}`}
                 >
                   {m}
                 </button>
@@ -96,18 +96,18 @@ export function FilterSortScreen() {
               Category
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
-              {categoryFilters.map((c) => (
+              {categoryFilters.map(c => (
                 <button
                   key={c}
                   onClick={() => toggleCategory(c)}
-                  className={`rounded-full px-3 py-1.5 text-[11px] font-semibold ${historyFilters.categories.includes(c) ? "bg-[var(--primary)] text-white" : "bg-white text-foreground shadow-[var(--shadow-soft)]"}`}
+                  className={`rounded-full px-3 py-1.5 text-[11px] font-semibold ${historyFilters.categories.includes(c) ? 'bg-[var(--primary)] text-white' : 'bg-white text-foreground shadow-[var(--shadow-soft)]'}`}
                 >
                   {c}
                 </button>
               ))}
               {categoryFilters.length === 0 && (
                 <button
-                  onClick={() => navigate("new_category")}
+                  onClick={() => navigate('new_category')}
                   className="rounded-full bg-white px-3 py-1.5 text-[11px] font-semibold text-foreground shadow-[var(--shadow-soft)]"
                 >
                   Add category
@@ -121,18 +121,18 @@ export function FilterSortScreen() {
               Date range
             </p>
             <div className="mt-2 grid grid-cols-3 gap-2">
-              {dateRanges.map((range) => (
+              {dateRanges.map(range => (
                 <button
                   key={range}
                   onClick={() => setDateRange(range)}
                   className={`rounded-2xl px-3 py-2.5 text-left shadow-[var(--shadow-soft)] ${
                     dateRange === range
-                      ? "bg-[var(--primary)] text-white"
-                      : "bg-white text-foreground"
+                      ? 'bg-[var(--primary)] text-white'
+                      : 'bg-white text-foreground'
                   }`}
                 >
                   <p
-                    className={`text-[10px] ${dateRange === range ? "text-white/70" : "text-muted-foreground"}`}
+                    className={`text-[10px] ${dateRange === range ? 'text-white/70' : 'text-muted-foreground'}`}
                   >
                     Range
                   </p>
@@ -151,9 +151,9 @@ export function FilterSortScreen() {
                 <p className="text-[10px] text-muted-foreground">Min</p>
                 <input
                   value={historyFilters.minUsd}
-                  onChange={(e) =>
+                  onChange={e =>
                     setHistoryFilters({
-                      minUsd: Number(e.target.value.replace(/[^0-9.]/g, "")) || 0,
+                      minUsd: Number(e.target.value.replace(/[^0-9.]/g, '')) || 0
                     })
                   }
                   className="w-full bg-transparent text-[12px] font-bold text-foreground outline-none"
@@ -163,9 +163,9 @@ export function FilterSortScreen() {
                 <p className="text-[10px] text-muted-foreground">Max</p>
                 <input
                   value={historyFilters.maxUsd}
-                  onChange={(e) =>
+                  onChange={e =>
                     setHistoryFilters({
-                      maxUsd: Number(e.target.value.replace(/[^0-9.]/g, "")) || 0,
+                      maxUsd: Number(e.target.value.replace(/[^0-9.]/g, '')) || 0
                     })
                   }
                   className="w-full bg-transparent text-[12px] font-bold text-foreground outline-none"
@@ -183,7 +183,7 @@ export function FilterSortScreen() {
                 <button
                   key={s}
                   onClick={() => setHistoryFilters({ sort: s })}
-                  className={`flex w-full items-center justify-between px-4 py-2.5 text-[12px] font-semibold ${i < sorts.length - 1 ? "border-b border-[oklch(0.94_0.01_265)]" : ""}`}
+                  className={`flex w-full items-center justify-between px-4 py-2.5 text-[12px] font-semibold ${i < sorts.length - 1 ? 'border-b border-[oklch(0.94_0.01_265)]' : ''}`}
                 >
                   {s}
                   {historyFilters.sort === s && (
@@ -196,12 +196,12 @@ export function FilterSortScreen() {
         </div>
 
         <button
-          onClick={() => navigate("history_search")}
+          onClick={() => navigate('history_search')}
           className="mt-auto w-full rounded-full bg-[oklch(0.18_0.04_265)] py-4 text-[15px] font-semibold text-white"
         >
           Show {resultCount} results
         </button>
       </div>
     </PhoneFrame>
-  );
+  )
 }

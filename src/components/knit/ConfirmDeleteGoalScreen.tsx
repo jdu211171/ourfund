@@ -1,20 +1,20 @@
-import { AlertTriangle } from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { useAppNavigation } from "@/lib/navigation";
-import { formatUsdAsCurrency } from "@/lib/currency";
+import { AlertTriangle } from 'lucide-react'
+import { formatUsdAsCurrency } from '@/lib/currency'
+import { useAppNavigation } from '@/lib/navigation'
+import { PhoneFrame } from './PhoneFrame'
 
 export function ConfirmDeleteGoalScreen() {
-  const { goBack, navigate, currency, selectedGoalId, goals, deleteGoal } = useAppNavigation();
+  const { goBack, navigate, currency, selectedGoalId, goals, deleteGoal } = useAppNavigation()
 
   // Find goal
-  const goal = goals.find((g) => g.id === selectedGoalId) || goals[0];
+  const goal = goals.find(g => g.id === selectedGoalId) || goals[0]
 
   const handleDelete = () => {
     if (goal) {
-      deleteGoal(goal.id);
+      deleteGoal(goal.id)
     }
-    navigate("home");
-  };
+    navigate('home')
+  }
 
   return (
     <PhoneFrame>
@@ -38,12 +38,12 @@ export function ConfirmDeleteGoalScreen() {
               Delete savings goal?
             </h3>
             <p className="mt-1 text-[12px] text-muted-foreground">
-              This removes{" "}
+              This removes{' '}
               <span className="font-semibold text-foreground">
                 {goal
                   ? `${goal.title} · ${formatUsdAsCurrency(goal.targetUsd, currency)}`
-                  : "this goal"}
-              </span>{" "}
+                  : 'this goal'}
+              </span>{' '}
               and all its history from the household savings plan. This cannot be undone.
             </p>
           </div>
@@ -64,5 +64,5 @@ export function ConfirmDeleteGoalScreen() {
         </div>
       </div>
     </PhoneFrame>
-  );
+  )
 }

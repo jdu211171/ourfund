@@ -1,9 +1,9 @@
-import { ArrowLeft, TrendingUp } from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
-import { useAppNavigation } from "@/lib/navigation";
-import { Money } from "./Money";
-import { formatUsdAsCurrency } from "@/lib/currency";
+import { ArrowLeft, TrendingUp } from 'lucide-react'
+import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, XAxis, YAxis } from 'recharts'
+import { formatUsdAsCurrency } from '@/lib/currency'
+import { useAppNavigation } from '@/lib/navigation'
+import { Money } from './Money'
+import { PhoneFrame } from './PhoneFrame'
 
 export function AnalyticsScreen() {
   const {
@@ -14,41 +14,41 @@ export function AnalyticsScreen() {
     currency,
     categorySpentUsd,
     incomeUsd,
-    spentUsd,
-  } = useAppNavigation();
-  const expenses = currentMonthTransactions.filter((transaction) => transaction.usd < 0);
+    spentUsd
+  } = useAppNavigation()
+  const expenses = currentMonthTransactions.filter(transaction => transaction.usd < 0)
   const pieData = (
     categories.length > 0
-      ? categories.map((category) => ({
+      ? categories.map(category => ({
           name: category.label,
           value: categorySpentUsd(category.label),
-          color: category.color,
+          color: category.color
         }))
-      : Array.from(new Set(expenses.map((transaction) => transaction.category))).map(
+      : Array.from(new Set(expenses.map(transaction => transaction.category))).map(
           (category, index) => ({
             name: category,
             value: expenses
-              .filter((transaction) => transaction.category === category)
+              .filter(transaction => transaction.category === category)
               .reduce((sum, transaction) => sum + Math.abs(transaction.usd), 0),
             color: [
-              "oklch(0.55 0.24 265)",
-              "oklch(0.65 0.22 200)",
-              "oklch(0.7 0.18 150)",
-              "oklch(0.65 0.22 30)",
-              "oklch(0.65 0.22 320)",
-            ][index % 5],
-          }),
+              'oklch(0.55 0.24 265)',
+              'oklch(0.65 0.22 200)',
+              'oklch(0.7 0.18 150)',
+              'oklch(0.65 0.22 30)',
+              'oklch(0.65 0.22 320)'
+            ][index % 5]
+          })
         )
-  ).filter((item) => item.value > 0);
-  const bars = ["1", "2", "3", "4", "5"].map((label, index) => {
-    const txn = currentMonthTransactions[index];
+  ).filter(item => item.value > 0)
+  const bars = ['1', '2', '3', '4', '5'].map((label, index) => {
+    const txn = currentMonthTransactions[index]
     return {
       m: label,
       income: txn && txn.usd > 0 ? txn.usd : 0,
-      expense: txn && txn.usd < 0 ? Math.abs(txn.usd) : 0,
-    };
-  });
-  const savedUsd = incomeUsd - spentUsd;
+      expense: txn && txn.usd < 0 ? Math.abs(txn.usd) : 0
+    }
+  })
+  const savedUsd = incomeUsd - spentUsd
 
   return (
     <PhoneFrame>
@@ -76,7 +76,7 @@ export function AnalyticsScreen() {
               </div>
               <p className="mt-0.5 inline-flex items-center gap-1 text-[10px] font-semibold text-[var(--success)]">
                 <TrendingUp className="h-3 w-3" strokeWidth={2.5} />
-                {savedUsd >= 0 ? "Income covers spending" : "Spending above income"}
+                {savedUsd >= 0 ? 'Income covers spending' : 'Spending above income'}
               </p>
             </div>
             <div className="h-[110px] w-[110px]">
@@ -90,7 +90,7 @@ export function AnalyticsScreen() {
                     paddingAngle={2}
                     stroke="none"
                   >
-                    {pieData.map((d) => (
+                    {pieData.map(d => (
                       <Cell key={d.name} fill={d.color} />
                     ))}
                   </Pie>
@@ -99,7 +99,7 @@ export function AnalyticsScreen() {
             </div>
           </div>
           <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1">
-            {pieData.map((d) => (
+            {pieData.map(d => (
               <div key={d.name} className="flex items-center gap-2 text-[10px]">
                 <span className="h-2 w-2 rounded-full" style={{ background: d.color }} />
                 <span className="text-muted-foreground">{d.name}</span>
@@ -111,7 +111,7 @@ export function AnalyticsScreen() {
           </div>
           {pieData.length === 0 && (
             <button
-              onClick={() => navigate("add_expense")}
+              onClick={() => navigate('add_expense')}
               className="mt-3 w-full rounded-2xl bg-[var(--muted)] py-3 text-[12px] font-semibold text-foreground"
             >
               Add expense to build analytics
@@ -128,7 +128,7 @@ export function AnalyticsScreen() {
                   dataKey="m"
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fontSize: 10, fill: "oklch(0.55 0.02 260)" }}
+                  tick={{ fontSize: 10, fill: 'oklch(0.55 0.02 260)' }}
                 />
                 <YAxis hide />
                 <Bar
@@ -159,17 +159,17 @@ export function AnalyticsScreen() {
         <div className="mt-3 grid grid-cols-3 gap-2 text-center">
           {[
             {
-              l: "Saved",
-              v: formatUsdAsCurrency(savedUsd, currency, { maximumFractionDigits: 0 }),
+              l: 'Saved',
+              v: formatUsdAsCurrency(savedUsd, currency, { maximumFractionDigits: 0 })
             },
             {
-              l: "Avg txn",
+              l: 'Avg txn',
               v: formatUsdAsCurrency(spentUsd / Math.max(expenses.length, 1), currency, {
-                maximumFractionDigits: 0,
-              }),
+                maximumFractionDigits: 0
+              })
             },
-            { l: "Entries", v: `${currentMonthTransactions.length}` },
-          ].map((s) => (
+            { l: 'Entries', v: `${currentMonthTransactions.length}` }
+          ].map(s => (
             <div key={s.l} className="rounded-2xl bg-white py-3 shadow-[var(--shadow-soft)]">
               <p className="text-[10px] text-muted-foreground">{s.l}</p>
               <p className="mt-0.5 text-[13px] font-extrabold text-foreground">{s.v}</p>
@@ -178,5 +178,5 @@ export function AnalyticsScreen() {
         </div>
       </div>
     </PhoneFrame>
-  );
+  )
 }

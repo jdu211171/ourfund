@@ -1,30 +1,30 @@
-import { ArrowLeft, Users } from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { useAppNavigation } from "@/lib/navigation";
-import { useState } from "react";
+import { ArrowLeft, Users } from 'lucide-react'
+import { useState } from 'react'
+import { useAppNavigation } from '@/lib/navigation'
+import { PhoneFrame } from './PhoneFrame'
 
 export function JoinFamilyScreen() {
-  const { navigate, goBack, validateInviteCode } = useAppNavigation();
-  const [code, setCode] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const { navigate, goBack, validateInviteCode } = useAppNavigation()
+  const [code, setCode] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const submitCode = async () => {
-    if (!code.trim()) return;
-    setError("");
-    setLoading(true);
+    if (!code.trim()) return
+    setError('')
+    setLoading(true)
     try {
-      const invite = await validateInviteCode(code);
+      const invite = await validateInviteCode(code)
       if (invite) {
-        navigate("confirm_invite");
-        return;
+        navigate('confirm_invite')
+        return
       }
-      setError("Invalid or expired code. Double-check with your admin.");
-      navigate("join_family_error");
+      setError('Invalid or expired code. Double-check with your admin.')
+      navigate('join_family_error')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <PhoneFrame>
@@ -41,7 +41,7 @@ export function JoinFamilyScreen() {
           <div
             className="grid h-14 w-14 place-items-center rounded-2xl text-white shadow-[var(--shadow-tile)]"
             style={{
-              background: "linear-gradient(135deg, oklch(0.65 0.22 265), oklch(0.45 0.24 265))",
+              background: 'linear-gradient(135deg, oklch(0.65 0.22 265), oklch(0.45 0.24 265))'
             }}
           >
             <Users className="h-6 w-6" strokeWidth={2.25} />
@@ -61,9 +61,9 @@ export function JoinFamilyScreen() {
           <input
             type="text"
             value={code}
-            onChange={(e) => {
-              setCode(e.target.value.toUpperCase());
-              setError("");
+            onChange={e => {
+              setCode(e.target.value.toUpperCase())
+              setError('')
             }}
             placeholder="Enter code"
             className="mt-2 w-full rounded-2xl bg-white px-4 py-4 text-center text-[18px] font-extrabold tracking-[0.3em] text-foreground shadow-[var(--shadow-soft)] outline-none ring-2 ring-[var(--primary)]/40 focus:ring-[var(--primary)]"
@@ -83,9 +83,9 @@ export function JoinFamilyScreen() {
           disabled={!code.trim() || loading}
           className="mt-auto w-full rounded-full bg-[oklch(0.18_0.04_265)] py-4 text-[15px] font-semibold text-white active:scale-95 transition-transform cursor-pointer disabled:opacity-50"
         >
-          {loading ? "Checking..." : "Join"}
+          {loading ? 'Checking...' : 'Join'}
         </button>
       </div>
     </PhoneFrame>
-  );
+  )
 }

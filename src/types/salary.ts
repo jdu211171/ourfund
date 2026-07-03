@@ -1,8 +1,8 @@
-import { SalaryCalculationPeriod } from "./core";
+import type { SalaryCalculationPeriod } from './core'
 
 export interface SalaryCalculatorSettings {
-  country: string;
-  period: SalaryCalculationPeriod;
-  amount: number | null;
-  insurance: Record<string, boolean>;
+  country: string
+  period: SalaryCalculationPeriod
+  amount: number | null
+  insurance: Record<string, boolean>
 }

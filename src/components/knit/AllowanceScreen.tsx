@@ -1,24 +1,24 @@
-import { ArrowLeft, Plus, Calendar } from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { useState } from "react";
-import { useAppNavigation } from "@/lib/navigation";
-import { currencyAdornment, currencyValueToUsd, formatUsdAsCurrency } from "@/lib/currency";
+import { ArrowLeft, Calendar, Plus } from 'lucide-react'
+import { useState } from 'react'
+import { currencyAdornment, currencyValueToUsd, formatUsdAsCurrency } from '@/lib/currency'
+import { useAppNavigation } from '@/lib/navigation'
+import { PhoneFrame } from './PhoneFrame'
 
-const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 export function AllowanceScreen() {
   const { navigate, goBack, currency, members, updateMember, scheduleAllowance } =
-    useAppNavigation();
-  const kids = members.filter((m) => m.role === "Teen" || m.role === "Kid");
-  const [selectedKidId, setSelectedKidId] = useState(kids[0]?.id ?? "");
-  const [newAmount, setNewAmount] = useState("15");
-  const [selectedDayIdx, setSelectedDayIdx] = useState(6);
-  const { prefix, suffix } = currencyAdornment(currency);
+    useAppNavigation()
+  const kids = members.filter(m => m.role === 'Teen' || m.role === 'Kid')
+  const [selectedKidId, setSelectedKidId] = useState(kids[0]?.id ?? '')
+  const [newAmount, setNewAmount] = useState('15')
+  const [selectedDayIdx, setSelectedDayIdx] = useState(6)
+  const { prefix, suffix } = currencyAdornment(currency)
 
   const toggleKidAllowance = (idx: number) => {
-    const kid = kids[idx];
-    if (kid) updateMember(kid.id, { allowanceOn: !kid.allowanceOn });
-  };
+    const kid = kids[idx]
+    if (kid) updateMember(kid.id, { allowanceOn: !kid.allowanceOn })
+  }
 
   return (
     <PhoneFrame>
@@ -33,7 +33,7 @@ export function AllowanceScreen() {
           </button>
           <h2 className="text-[17px] font-bold tracking-tight">Allowance</h2>
           <button
-            onClick={() => navigate("invite_member")}
+            onClick={() => navigate('invite_member')}
             className="grid h-9 w-9 place-items-center rounded-full bg-[var(--muted)] hover:bg-slate-200 transition-colors cursor-pointer active:scale-95"
             aria-label="Add family member"
           >
@@ -56,18 +56,18 @@ export function AllowanceScreen() {
                 <div
                   className="grid h-10 w-10 place-items-center rounded-xl text-white text-[12px] font-bold"
                   style={{
-                    background: idx % 2 === 0 ? "oklch(0.65 0.22 320)" : "oklch(0.65 0.22 200)",
+                    background: idx % 2 === 0 ? 'oklch(0.65 0.22 320)' : 'oklch(0.65 0.22 200)'
                   }}
                 >
                   {k.name[0]}
                 </div>
                 <div className="flex-1 leading-tight">
                   <p className="text-[12px] font-bold text-foreground">
-                    {k.name.split(" ")[0]} ·{" "}
-                    <span className="text-muted-foreground">{k.age ?? "child"}y</span>
+                    {k.name.split(' ')[0]} ·{' '}
+                    <span className="text-muted-foreground">{k.age ?? 'child'}y</span>
                   </p>
                   <p className="text-[10px] text-muted-foreground">
-                    Weekly · {k.allowanceDay ?? "Sun"} · tap to {k.allowanceOn ? "pause" : "resume"}
+                    Weekly · {k.allowanceDay ?? 'Sun'} · tap to {k.allowanceOn ? 'pause' : 'resume'}
                   </p>
                 </div>
                 <div className="text-right">
@@ -75,9 +75,9 @@ export function AllowanceScreen() {
                     {formatUsdAsCurrency(k.allowanceUsd ?? 0, currency)}
                   </p>
                   <p
-                    className={`text-[10px] font-semibold transition-colors ${k.allowanceOn ? "text-[var(--success)]" : "text-muted-foreground"}`}
+                    className={`text-[10px] font-semibold transition-colors ${k.allowanceOn ? 'text-[var(--success)]' : 'text-muted-foreground'}`}
                   >
-                    {k.allowanceOn ? "On" : "Paused"}
+                    {k.allowanceOn ? 'On' : 'Paused'}
                   </p>
                 </div>
               </div>
@@ -85,7 +85,7 @@ export function AllowanceScreen() {
           ))}
           {kids.length === 0 && (
             <button
-              onClick={() => navigate("invite_member")}
+              onClick={() => navigate('invite_member')}
               className="w-full rounded-2xl bg-white px-4 py-5 text-center shadow-[var(--shadow-soft)]"
             >
               <p className="text-[13px] font-bold text-foreground">No kids or teens yet</p>
@@ -101,13 +101,13 @@ export function AllowanceScreen() {
             New allowance
           </p>
           <div className="mt-2 flex gap-1">
-            {kids.map((kid) => (
+            {kids.map(kid => (
               <button
                 key={kid.id}
                 onClick={() => setSelectedKidId(kid.id)}
-                className={`flex-1 rounded-xl py-1.5 text-[10px] font-semibold ${selectedKidId === kid.id ? "bg-[var(--primary)] text-white" : "bg-[var(--muted)] text-foreground"}`}
+                className={`flex-1 rounded-xl py-1.5 text-[10px] font-semibold ${selectedKidId === kid.id ? 'bg-[var(--primary)] text-white' : 'bg-[var(--muted)] text-foreground'}`}
               >
-                {kid.name.split(" ")[0]}
+                {kid.name.split(' ')[0]}
               </button>
             ))}
           </div>
@@ -118,7 +118,7 @@ export function AllowanceScreen() {
             <input
               type="text"
               value={newAmount}
-              onChange={(e) => setNewAmount(e.target.value.replace(/[^0-9.]/g, ""))}
+              onChange={e => setNewAmount(e.target.value.replace(/[^0-9.]/g, ''))}
               className="w-20 bg-transparent text-[28px] font-extrabold tracking-tight text-foreground outline-none border-none p-0 focus:ring-0"
               placeholder="0"
             />
@@ -136,8 +136,8 @@ export function AllowanceScreen() {
                 onClick={() => setSelectedDayIdx(i)}
                 className={`flex-1 rounded-xl py-1.5 text-[10px] font-semibold transition-all active:scale-90 cursor-pointer ${
                   i === selectedDayIdx
-                    ? "bg-[var(--primary)] text-white shadow-sm"
-                    : "bg-[var(--muted)] text-foreground hover:bg-slate-200"
+                    ? 'bg-[var(--primary)] text-white shadow-sm'
+                    : 'bg-[var(--muted)] text-foreground hover:bg-slate-200'
                 }`}
               >
                 {d}
@@ -149,23 +149,23 @@ export function AllowanceScreen() {
         <button
           onClick={() => {
             if (kids.length === 0) {
-              navigate("invite_member");
-              return;
+              navigate('invite_member')
+              return
             }
-            const targetKidId = selectedKidId || kids[0]?.id;
+            const targetKidId = selectedKidId || kids[0]?.id
             if (targetKidId)
               scheduleAllowance(
                 targetKidId,
-                currencyValueToUsd(parseFloat(newAmount || "0"), currency),
-                days[selectedDayIdx],
-              );
-            navigate("family");
+                currencyValueToUsd(parseFloat(newAmount || '0'), currency),
+                days[selectedDayIdx]
+              )
+            navigate('family')
           }}
           className="mt-auto w-full rounded-full bg-[oklch(0.18_0.04_265)] py-4 text-[15px] font-semibold text-white active:scale-95 transition-all cursor-pointer"
         >
-          {kids.length === 0 ? "Invite child" : "Schedule allowance"}
+          {kids.length === 0 ? 'Invite child' : 'Schedule allowance'}
         </button>
       </div>
     </PhoneFrame>
-  );
+  )
 }

@@ -1,14 +1,14 @@
-import { createFileRoute, notFound, Link } from "@tanstack/react-router";
-import { SCREEN_MAP } from "@/lib/screen-registry";
+import { createFileRoute, Link, notFound } from '@tanstack/react-router'
+import { SCREEN_MAP } from '@/lib/screen-registry'
 
-export const Route = createFileRoute("/app/$screen")({
+export const Route = createFileRoute('/app/$screen')({
   component: ScreenPage,
   notFoundComponent: () => (
     <div className="py-20 text-center">
       <p className="font-display text-[22px] text-foreground">Screen not found</p>
       <Link
         to="/app/$screen"
-        params={{ screen: "home" }}
+        params={{ screen: 'home' }}
         className="mt-3 inline-block text-[13px] text-[var(--primary)] font-semibold"
       >
         Go home
@@ -28,15 +28,15 @@ export const Route = createFileRoute("/app/$screen")({
     </div>
   ),
   loader: ({ params }) => {
-    const entry = SCREEN_MAP[params.screen];
-    if (!entry) throw notFound();
-    return { slug: entry.slug, label: entry.label };
-  },
-});
+    const entry = SCREEN_MAP[params.screen]
+    if (!entry) throw notFound()
+    return { slug: entry.slug, label: entry.label }
+  }
+})
 
 function ScreenPage() {
-  const { screen } = Route.useParams();
-  const entry = SCREEN_MAP[screen];
-  if (!entry) return null;
-  return <div className="w-full">{entry.render()}</div>;
+  const { screen } = Route.useParams()
+  const entry = SCREEN_MAP[screen]
+  if (!entry) return null
+  return <div className="w-full">{entry.render()}</div>
 }

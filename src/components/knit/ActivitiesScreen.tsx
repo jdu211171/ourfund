@@ -3,34 +3,36 @@ import {
   ArrowDownLeft,
   ArrowUpRight,
   BarChart3,
+  Landmark,
   Search,
   ShoppingBag,
-  SlidersHorizontal,
-  Landmark,
-} from "lucide-react";
-import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis, ReferenceLine } from "recharts";
-import { PhoneFrame } from "./PhoneFrame";
-import { BottomNav } from "./BottomNav";
-import { BudgetModeToggle } from "./BudgetModeToggle";
-import { Money } from "./Money";
-import { useAppNavigation, type ReportPeriod } from "@/lib/navigation";
-import { categoryIconMap } from "./categoryOptions";
+  SlidersHorizontal
+} from 'lucide-react'
+import { Area, AreaChart, ReferenceLine, ResponsiveContainer, XAxis, YAxis } from 'recharts'
+import { type ReportPeriod, useAppNavigation } from '@/lib/navigation'
+import { BottomNav } from './BottomNav'
+import { BudgetModeToggle } from './BudgetModeToggle'
+import { categoryIconMap } from './categoryOptions'
+import { Money } from './Money'
+import { PhoneFrame } from './PhoneFrame'
 
 const labels: Record<ReportPeriod, string[]> = {
-  Week: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-  Month: ["W1", "W2", "W3", "W4"],
-  Year: ["Jan", "Mar", "May", "Jul", "Sep", "Nov"],
-};
+  Week: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+  Month: ['W1', 'W2', 'W3', 'W4'],
+  Year: ['Jan', 'Mar', 'May', 'Jul', 'Sep', 'Nov']
+}
 
 const tabLabels: Record<ReportPeriod, string> = {
-  Week: "This week",
-  Month: "This month",
-  Year: "This year",
-};
+  Week: 'This week',
+  Month: 'This month',
+  Year: 'This year'
+}
 
 export function ActivitiesScreen({
-  initial = "Month" as ReportPeriod,
-}: { initial?: ReportPeriod } = {}) {
+  initial = 'Month' as ReportPeriod
+}: {
+  initial?: ReportPeriod
+} = {}) {
   const {
     navigate,
     budgetMode,
@@ -40,60 +42,60 @@ export function ActivitiesScreen({
     spentUsd,
     currentMonthTransactions,
     categories,
-    categorySpentUsd,
-  } = useAppNavigation();
-  const tab = reportPeriod ?? initial;
-  const expenses = currentMonthTransactions.filter((transaction) => transaction.usd < 0);
-  const incomeTransactions = currentMonthTransactions.filter((transaction) => transaction.usd > 0);
+    categorySpentUsd
+  } = useAppNavigation()
+  const tab = reportPeriod ?? initial
+  const expenses = currentMonthTransactions.filter(transaction => transaction.usd < 0)
+  const incomeTransactions = currentMonthTransactions.filter(transaction => transaction.usd > 0)
   const chartData = labels[tab].map((label, index) => {
-    const expense = expenses[index];
-    const income = incomeTransactions[index];
+    const expense = expenses[index]
+    const income = incomeTransactions[index]
     return {
       m: label,
       spent: Math.abs(expense?.usd ?? 0),
-      income: income?.usd ?? 0,
-    };
-  });
+      income: income?.usd ?? 0
+    }
+  })
   const peak = chartData.reduce(
     (max, item) => (item.spent > max.spent ? item : max),
-    chartData[0] ?? { m: "-", spent: 0, income: 0 },
-  );
-  const netUsd = incomeUsd - spentUsd;
-  const avgExpenseUsd = spentUsd / Math.max(expenses.length, 1);
+    chartData[0] ?? { m: '-', spent: 0, income: 0 }
+  )
+  const netUsd = incomeUsd - spentUsd
+  const avgExpenseUsd = spentUsd / Math.max(expenses.length, 1)
   const categoryRows = (
     categories.length > 0
-      ? categories.map((category) => {
-          const usedUsd = categorySpentUsd(category.label);
+      ? categories.map(category => {
+          const usedUsd = categorySpentUsd(category.label)
           const pct =
             category.limitUsd > 0
               ? Math.min(100, Math.round((usedUsd / category.limitUsd) * 100))
-              : 0;
+              : 0
           return {
             Icon: categoryIconMap[category.icon] ?? ShoppingBag,
             name: category.label,
             note: `${pct}% of limit`,
             usd: -usedUsd,
             color: category.color,
-            pct,
-          };
+            pct
+          }
         })
-      : Array.from(new Set(expenses.map((transaction) => transaction.category))).map((name) => {
-          const matching = expenses.filter((transaction) => transaction.category === name);
-          const usedUsd = matching.reduce((sum, transaction) => sum + Math.abs(transaction.usd), 0);
+      : Array.from(new Set(expenses.map(transaction => transaction.category))).map(name => {
+          const matching = expenses.filter(transaction => transaction.category === name)
+          const usedUsd = matching.reduce((sum, transaction) => sum + Math.abs(transaction.usd), 0)
           return {
             Icon: ShoppingBag,
             name,
             note: `${matching.length} transactions`,
             usd: -usedUsd,
-            color: "oklch(0.55 0.24 265)",
-            pct: spentUsd > 0 ? Math.round((usedUsd / spentUsd) * 100) : 0,
-          };
+            color: 'oklch(0.55 0.24 265)',
+            pct: spentUsd > 0 ? Math.round((usedUsd / spentUsd) * 100) : 0
+          }
         })
   )
-    .filter((row) => row.usd !== 0)
-    .sort((a, b) => Math.abs(b.usd) - Math.abs(a.usd));
-  const topCategory = categoryRows[0] ?? null;
-  const riskyCategories = categoryRows.filter((row) => row.pct >= 80);
+    .filter(row => row.usd !== 0)
+    .sort((a, b) => Math.abs(b.usd) - Math.abs(a.usd))
+  const topCategory = categoryRows[0] ?? null
+  const riskyCategories = categoryRows.filter(row => row.pct >= 80)
 
   return (
     <PhoneFrame>
@@ -104,7 +106,7 @@ export function ActivitiesScreen({
               Reports
             </h2>
             <p className="text-[11px] text-muted-foreground">
-              {budgetMode === "personal" ? "Personal" : "Family"} insights
+              {budgetMode === 'personal' ? 'Personal' : 'Family'} insights
             </p>
           </div>
           <BudgetModeToggle className="scale-95 origin-right" />
@@ -113,7 +115,7 @@ export function ActivitiesScreen({
         <div className="mt-2 flex items-center justify-end gap-3">
           <button
             type="button"
-            onClick={() => navigate("analytics")}
+            onClick={() => navigate('analytics')}
             className="text-[11px] font-bold text-[var(--primary)]"
           >
             Analytics
@@ -121,14 +123,14 @@ export function ActivitiesScreen({
         </div>
 
         <div className="mt-4 grid grid-cols-3 rounded-full bg-[var(--muted)] p-1 text-[12px] font-semibold">
-          {(["Week", "Month", "Year"] as ReportPeriod[]).map((period) => (
+          {(['Week', 'Month', 'Year'] as ReportPeriod[]).map(period => (
             <button
               key={period}
               onClick={() => setReportPeriod(period)}
               className={`rounded-full py-2 transition ${
                 period === tab
-                  ? "bg-white text-foreground shadow-[var(--shadow-soft)]"
-                  : "text-muted-foreground"
+                  ? 'bg-white text-foreground shadow-[var(--shadow-soft)]'
+                  : 'text-muted-foreground'
               }`}
             >
               {period}
@@ -171,7 +173,7 @@ export function ActivitiesScreen({
               </div>
             </div>
             <span className="rounded-full bg-[var(--muted)] px-2.5 py-1 text-[10px] font-semibold text-muted-foreground">
-              peak {peak?.m ?? "-"}
+              peak {peak?.m ?? '-'}
             </span>
           </div>
 
@@ -188,7 +190,7 @@ export function ActivitiesScreen({
                   dataKey="m"
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fontSize: 10, fill: "oklch(0.55 0.02 260)" }}
+                  tick={{ fontSize: 10, fill: 'oklch(0.55 0.02 260)' }}
                 />
                 <YAxis hide />
                 <ReferenceLine x={peak?.m} stroke="oklch(0.55 0.02 260)" strokeDasharray="2 3" />
@@ -198,8 +200,8 @@ export function ActivitiesScreen({
                   stroke="oklch(0.6 0.22 25)"
                   strokeWidth={2.5}
                   fill="url(#nestSpentFill)"
-                  dot={{ r: 3, fill: "white", stroke: "oklch(0.6 0.22 25)", strokeWidth: 2 }}
-                  activeDot={{ r: 5, fill: "white", stroke: "oklch(0.2 0.08 265)", strokeWidth: 2 }}
+                  dot={{ r: 3, fill: 'white', stroke: 'oklch(0.6 0.22 25)', strokeWidth: 2 }}
+                  activeDot={{ r: 5, fill: 'white', stroke: 'oklch(0.2 0.08 265)', strokeWidth: 2 }}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -208,10 +210,10 @@ export function ActivitiesScreen({
 
         <div className="grid grid-cols-4 gap-2">
           {[
-            { label: "Deep dive", Icon: BarChart3, screen: "analytics" },
-            { label: "Filter", Icon: SlidersHorizontal, screen: "filter_sort" },
-            { label: "Search", Icon: Search, screen: "history_search" },
-            { label: "Months", Icon: Landmark, screen: "monthly_history" },
+            { label: 'Deep dive', Icon: BarChart3, screen: 'analytics' },
+            { label: 'Filter', Icon: SlidersHorizontal, screen: 'filter_sort' },
+            { label: 'Search', Icon: Search, screen: 'history_search' },
+            { label: 'Months', Icon: Landmark, screen: 'monthly_history' }
           ].map(({ label, Icon, screen }) => (
             <button
               key={label}
@@ -235,11 +237,11 @@ export function ActivitiesScreen({
         </div>
 
         <div className="mt-2 space-y-2">
-          {categoryRows.slice(0, 5).map((row) => (
+          {categoryRows.slice(0, 5).map(row => (
             <button
               key={row.name}
               type="button"
-              onClick={() => navigate("categories")}
+              onClick={() => navigate('categories')}
               className="w-full rounded-2xl bg-white py-2.5 text-left"
             >
               <div className="flex items-center gap-3">
@@ -260,7 +262,7 @@ export function ActivitiesScreen({
                   className="h-full rounded-full"
                   style={{
                     width: `${Math.min(row.pct, 100)}%`,
-                    background: row.pct > 80 ? "var(--danger)" : row.color,
+                    background: row.pct > 80 ? 'var(--danger)' : row.color
                   }}
                 />
               </div>
@@ -268,7 +270,7 @@ export function ActivitiesScreen({
           ))}
           {categoryRows.length === 0 && (
             <button
-              onClick={() => navigate("add_expense")}
+              onClick={() => navigate('add_expense')}
               className="w-full rounded-2xl bg-white px-4 py-5 text-center"
             >
               <p className="text-[13px] font-bold text-foreground">No spending yet</p>
@@ -287,10 +289,10 @@ export function ActivitiesScreen({
             </span>
             <div className="min-w-0 flex-1">
               <p className="truncate text-[12px] font-bold text-foreground">
-                {topCategory ? `${topCategory.name} leads spending` : "No top category yet"}
+                {topCategory ? `${topCategory.name} leads spending` : 'No top category yet'}
               </p>
               <p className="text-[10px] text-muted-foreground">
-                {topCategory ? topCategory.note : "Create categories for better insights"}
+                {topCategory ? topCategory.note : 'Create categories for better insights'}
               </p>
             </div>
           </div>
@@ -298,8 +300,8 @@ export function ActivitiesScreen({
             <span
               className={`grid h-10 w-10 place-items-center rounded-xl ${
                 riskyCategories.length > 0
-                  ? "bg-[oklch(0.96_0.05_25)] text-[var(--danger)]"
-                  : "bg-[oklch(0.96_0.04_145)] text-[var(--success)]"
+                  ? 'bg-[oklch(0.96_0.05_25)] text-[var(--danger)]'
+                  : 'bg-[oklch(0.96_0.04_145)] text-[var(--success)]'
               }`}
             >
               <AlertTriangle className="h-4 w-4" strokeWidth={2.25} />
@@ -308,10 +310,10 @@ export function ActivitiesScreen({
               <p className="truncate text-[12px] font-bold text-foreground">
                 {riskyCategories.length > 0
                   ? `${riskyCategories.length} categories near limit`
-                  : "Budgets look controlled"}
+                  : 'Budgets look controlled'}
               </p>
               <p className="text-[10px] text-muted-foreground">
-                {netUsd >= 0 ? "Income still covers this period" : "Spending is above income"}
+                {netUsd >= 0 ? 'Income still covers this period' : 'Spending is above income'}
               </p>
             </div>
           </div>
@@ -319,5 +321,5 @@ export function ActivitiesScreen({
       </div>
       <BottomNav active="activity" />
     </PhoneFrame>
-  );
+  )
 }

@@ -1,26 +1,26 @@
-import { ArrowLeft, Delete, Fingerprint } from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { useAppNavigation } from "@/lib/navigation";
-import { useState } from "react";
+import { ArrowLeft, Delete, Fingerprint } from 'lucide-react'
+import { useState } from 'react'
+import { useAppNavigation } from '@/lib/navigation'
+import { PhoneFrame } from './PhoneFrame'
 
-const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "del"];
+const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del']
 
 export function PasscodeScreen() {
-  const { goBack, navigate, setPasscode, faceIdEnabled, setFaceIdEnabled } = useAppNavigation();
-  const [draft, setDraft] = useState("");
-  const filled = draft.length;
+  const { goBack, navigate, setPasscode, faceIdEnabled, setFaceIdEnabled } = useAppNavigation()
+  const [draft, setDraft] = useState('')
+  const filled = draft.length
   const press = (key: string) => {
-    if (key === "del") {
-      setDraft((prev) => prev.slice(0, -1));
-      return;
+    if (key === 'del') {
+      setDraft(prev => prev.slice(0, -1))
+      return
     }
-    const next = `${draft}${key}`.slice(0, 4);
-    setDraft(next);
+    const next = `${draft}${key}`.slice(0, 4)
+    setDraft(next)
     if (next.length === 4) {
-      setPasscode(next);
-      navigate("settings");
+      setPasscode(next)
+      navigate('settings')
     }
-  };
+  }
 
   return (
     <PhoneFrame>
@@ -43,18 +43,18 @@ export function PasscodeScreen() {
         </div>
 
         <div className="mt-6 flex justify-center gap-4">
-          {[0, 1, 2, 3].map((i) => (
+          {[0, 1, 2, 3].map(i => (
             <div
               key={i}
-              className={`h-4 w-4 rounded-full ${i < filled ? "bg-[var(--primary)]" : "border border-[oklch(0.85_0.02_265)] bg-white"}`}
+              className={`h-4 w-4 rounded-full ${i < filled ? 'bg-[var(--primary)]' : 'border border-[oklch(0.85_0.02_265)] bg-white'}`}
             />
           ))}
         </div>
 
         <div className="mt-8 grid grid-cols-3 gap-3">
           {keys.map((k, i) => {
-            if (k === "") return <div key={i} />;
-            if (k === "del")
+            if (k === '') return <div key={i} />
+            if (k === 'del')
               return (
                 <button
                   key={i}
@@ -63,7 +63,7 @@ export function PasscodeScreen() {
                 >
                   <Delete className="h-5 w-5" strokeWidth={2.25} />
                 </button>
-              );
+              )
             return (
               <button
                 key={i}
@@ -72,7 +72,7 @@ export function PasscodeScreen() {
               >
                 {k}
               </button>
-            );
+            )
           })}
         </div>
 
@@ -80,10 +80,10 @@ export function PasscodeScreen() {
           onClick={() => setFaceIdEnabled(!faceIdEnabled)}
           className="mt-auto flex w-full items-center justify-center gap-2 rounded-full bg-[var(--muted)] py-3 text-[12px] font-semibold text-foreground"
         >
-          <Fingerprint className="h-4 w-4" strokeWidth={2.25} />{" "}
-          {faceIdEnabled ? "Disable" : "Enable"} Face ID
+          <Fingerprint className="h-4 w-4" strokeWidth={2.25} />{' '}
+          {faceIdEnabled ? 'Disable' : 'Enable'} Face ID
         </button>
       </div>
     </PhoneFrame>
-  );
+  )
 }

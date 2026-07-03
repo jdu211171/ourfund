@@ -1,51 +1,51 @@
-import { useMemo, useState } from "react";
-import { ArrowLeft, TrendingDown, TrendingUp, Store, Sparkles } from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { useAppNavigation } from "@/lib/navigation";
-import { PURCHASE_HISTORY, allProducts, priceHistoryFor, fmtYen } from "@/lib/buy-list-history";
+import { ArrowLeft, Sparkles, Store, TrendingDown, TrendingUp } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { allProducts, fmtYen, PURCHASE_HISTORY, priceHistoryFor } from '@/lib/buy-list-history'
+import { useAppNavigation } from '@/lib/navigation'
+import { PhoneFrame } from './PhoneFrame'
 
 export function PriceHistoryScreen() {
-  const { goBack, trackedProducts } = useAppNavigation();
+  const { goBack, trackedProducts } = useAppNavigation()
 
-  const products = useMemo(() => allProducts(trackedProducts), [trackedProducts]);
-  const [selected, setSelected] = useState<string>(products[0] ?? "Milk 1L");
+  const products = useMemo(() => allProducts(trackedProducts), [trackedProducts])
+  const [selected, setSelected] = useState<string>(products[0] ?? 'Milk 1L')
 
   const records = useMemo(
     () => priceHistoryFor(selected, trackedProducts),
-    [selected, trackedProducts],
-  );
+    [selected, trackedProducts]
+  )
 
   const stats = useMemo(() => {
-    if (!records.length) return null;
-    const cheapest = records.reduce((a, b) => (a.price <= b.price ? a : b));
-    const recent = records[0]; // sorted ascending by daysAgo
-    const oldest = records[records.length - 1];
-    const min = cheapest.price;
-    const max = records.reduce((a, b) => (a.price >= b.price ? a : b)).price;
-    const avg = Math.round(records.reduce((s, r) => s + r.price, 0) / records.length);
-    const trend = recent.price - oldest.price; // negative = dropping
-    return { cheapest, recent, min, max, avg, trend };
-  }, [records]);
+    if (!records.length) return null
+    const cheapest = records.reduce((a, b) => (a.price <= b.price ? a : b))
+    const recent = records[0] // sorted ascending by daysAgo
+    const oldest = records[records.length - 1]
+    const min = cheapest.price
+    const max = records.reduce((a, b) => (a.price >= b.price ? a : b)).price
+    const avg = Math.round(records.reduce((s, r) => s + r.price, 0) / records.length)
+    const trend = recent.price - oldest.price // negative = dropping
+    return { cheapest, recent, min, max, avg, trend }
+  }, [records])
 
   const trending = useMemo(() => {
-    const allProductNames = allProducts(trackedProducts);
+    const allProductNames = allProducts(trackedProducts)
     return allProductNames
-      .map((name) => {
-        const list = priceHistoryFor(name, trackedProducts);
-        const recent = list[0];
-        const oldest = list[list.length - 1];
-        if (!recent || !oldest) return { name, delta: 0, recent: 0 };
-        return { name, delta: recent.price - oldest.price, recent: recent.price };
+      .map(name => {
+        const list = priceHistoryFor(name, trackedProducts)
+        const recent = list[0]
+        const oldest = list[list.length - 1]
+        if (!recent || !oldest) return { name, delta: 0, recent: 0 }
+        return { name, delta: recent.price - oldest.price, recent: recent.price }
       })
       .sort((a, b) => a.delta - b.delta)
-      .slice(0, 4);
-  }, [trackedProducts]);
+      .slice(0, 4)
+  }, [trackedProducts])
 
   const yAxis = (() => {
-    if (!stats) return { min: 0, max: 100 };
-    const pad = Math.max(20, (stats.max - stats.min) * 0.2);
-    return { min: Math.max(0, stats.min - pad), max: stats.max + pad };
-  })();
+    if (!stats) return { min: 0, max: 100 }
+    const pad = Math.max(20, (stats.max - stats.min) * 0.2)
+    return { min: Math.max(0, stats.min - pad), max: stats.max + pad }
+  })()
 
   return (
     <PhoneFrame>
@@ -67,10 +67,10 @@ export function PriceHistoryScreen() {
           <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Product</p>
           <select
             value={selected}
-            onChange={(e) => setSelected(e.target.value)}
+            onChange={e => setSelected(e.target.value)}
             className="mt-1 w-full rounded-2xl bg-white px-3 py-3 text-[13px] font-bold text-foreground shadow-[var(--shadow-soft)] outline-none"
           >
-            {products.map((p) => (
+            {products.map(p => (
               <option key={p} value={p}>
                 {p}
               </option>
@@ -96,8 +96,8 @@ export function PriceHistoryScreen() {
               )}
               <p className="text-[11px] font-semibold">
                 {stats.trend === 0
-                  ? "Price is flat across history"
-                  : `${stats.trend < 0 ? "Down" : "Up"} ${fmtYen(Math.abs(stats.trend))} vs oldest record`}
+                  ? 'Price is flat across history'
+                  : `${stats.trend < 0 ? 'Down' : 'Up'} ${fmtYen(Math.abs(stats.trend))} vs oldest record`}
               </p>
             </div>
           </div>
@@ -113,9 +113,9 @@ export function PriceHistoryScreen() {
               </p>
             </div>
             <div className="mt-2 flex h-24 items-end gap-1">
-              {[...records].reverse().map((r) => {
-                const h = ((r.price - yAxis.min) / (yAxis.max - yAxis.min)) * 100;
-                const isMin = r.price === stats.min;
+              {[...records].reverse().map(r => {
+                const h = ((r.price - yAxis.min) / (yAxis.max - yAxis.min)) * 100
+                const isMin = r.price === stats.min
                 return (
                   <div
                     key={`${r.shop}-${r.daysAgo}`}
@@ -123,13 +123,13 @@ export function PriceHistoryScreen() {
                   >
                     <div className="flex h-full w-full items-end">
                       <div
-                        className={`w-full rounded-md ${isMin ? "bg-[var(--primary)]" : "bg-[var(--muted)]"}`}
+                        className={`w-full rounded-md ${isMin ? 'bg-[var(--primary)]' : 'bg-[var(--muted)]'}`}
                         style={{ height: `${Math.max(8, h)}%` }}
                       />
                     </div>
                     <span className="text-[8px] text-muted-foreground">{r.daysAgo}d</span>
                   </div>
-                );
+                )
               })}
             </div>
           </div>
@@ -140,8 +140,8 @@ export function PriceHistoryScreen() {
           <p className="px-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
             By shop
           </p>
-          {records.map((r) => {
-            const isMin = stats && r.price === stats.min;
+          {records.map(r => {
+            const isMin = stats && r.price === stats.min
             return (
               <div
                 key={`${r.shop}-${r.daysAgo}`}
@@ -165,7 +165,7 @@ export function PriceHistoryScreen() {
                   )}
                 </div>
               </div>
-            );
+            )
           })}
         </div>
 
@@ -178,7 +178,7 @@ export function PriceHistoryScreen() {
             </p>
           </div>
           <div className="mt-2 space-y-1.5">
-            {trending.map((t) => (
+            {trending.map(t => (
               <button
                 key={t.name}
                 onClick={() => setSelected(t.name)}
@@ -186,9 +186,9 @@ export function PriceHistoryScreen() {
               >
                 <span className="text-[12px] font-semibold text-foreground">{t.name}</span>
                 <span
-                  className={`text-[11px] font-bold tabular-nums ${t.delta < 0 ? "text-[var(--success)]" : t.delta > 0 ? "text-[var(--danger)]" : "text-muted-foreground"}`}
+                  className={`text-[11px] font-bold tabular-nums ${t.delta < 0 ? 'text-[var(--success)]' : t.delta > 0 ? 'text-[var(--danger)]' : 'text-muted-foreground'}`}
                 >
-                  {t.delta === 0 ? "—" : `${t.delta < 0 ? "▼" : "▲"} ${fmtYen(Math.abs(t.delta))}`}
+                  {t.delta === 0 ? '—' : `${t.delta < 0 ? '▼' : '▲'} ${fmtYen(Math.abs(t.delta))}`}
                 </span>
               </button>
             ))}
@@ -196,5 +196,5 @@ export function PriceHistoryScreen() {
         </div>
       </div>
     </PhoneFrame>
-  );
+  )
 }

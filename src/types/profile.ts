@@ -1,14 +1,14 @@
-import { CurrencyCode } from "./core";
+import type { CurrencyCode } from './core'
 
 export interface Profile {
-  name: string;
-  email: string;
-  phone: string;
-  pronouns: string;
-  initials: string;
+  name: string
+  email: string
+  phone: string
+  pronouns: string
+  initials: string
 }
 
 export interface CurrencySettings {
-  personal: CurrencyCode;
-  family: CurrencyCode;
+  personal: CurrencyCode
+  family: CurrencyCode
 }

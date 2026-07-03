@@ -1,25 +1,23 @@
-import { ArrowLeft, Search, Shield, Lock } from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { useAppNavigation } from "@/lib/navigation";
-import { useState } from "react";
+import { ArrowLeft, Lock, Search, Shield } from 'lucide-react'
+import { useState } from 'react'
+import { useAppNavigation } from '@/lib/navigation'
+import { PhoneFrame } from './PhoneFrame'
 
 const banks = [
-  { name: "Chase", color: "oklch(0.45 0.18 250)" },
-  { name: "Bank of America", color: "oklch(0.55 0.22 25)" },
-  { name: "Wells Fargo", color: "oklch(0.6 0.22 60)" },
-  { name: "Citibank", color: "oklch(0.55 0.2 220)" },
-  { name: "Capital One", color: "oklch(0.55 0.22 0)" },
-  { name: "Ally Bank", color: "oklch(0.65 0.22 320)" },
-  { name: "USAA", color: "oklch(0.4 0.1 240)" },
-  { name: "PNC", color: "oklch(0.5 0.2 30)" },
-];
+  { name: 'Chase', color: 'oklch(0.45 0.18 250)' },
+  { name: 'Bank of America', color: 'oklch(0.55 0.22 25)' },
+  { name: 'Wells Fargo', color: 'oklch(0.6 0.22 60)' },
+  { name: 'Citibank', color: 'oklch(0.55 0.2 220)' },
+  { name: 'Capital One', color: 'oklch(0.55 0.22 0)' },
+  { name: 'Ally Bank', color: 'oklch(0.65 0.22 320)' },
+  { name: 'USAA', color: 'oklch(0.4 0.1 240)' },
+  { name: 'PNC', color: 'oklch(0.5 0.2 30)' }
+]
 
 export function BankConnectScreen() {
-  const { goBack, navigate, selectedBankName, setSelectedBankName } = useAppNavigation();
-  const [query, setQuery] = useState("");
-  const filteredBanks = banks.filter((bank) =>
-    bank.name.toLowerCase().includes(query.toLowerCase()),
-  );
+  const { goBack, navigate, selectedBankName, setSelectedBankName } = useAppNavigation()
+  const [query, setQuery] = useState('')
+  const filteredBanks = banks.filter(bank => bank.name.toLowerCase().includes(query.toLowerCase()))
 
   return (
     <PhoneFrame>
@@ -40,7 +38,7 @@ export function BankConnectScreen() {
           <Search className="h-4 w-4 text-muted-foreground" strokeWidth={2.25} />
           <input
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={e => setQuery(e.target.value)}
             placeholder="Search 12,000+ banks"
             className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground"
           />
@@ -58,11 +56,11 @@ export function BankConnectScreen() {
         </p>
 
         <div className="mt-2 grid grid-cols-2 gap-2 overflow-hidden">
-          {filteredBanks.map((b) => (
+          {filteredBanks.map(b => (
             <button
               key={b.name}
               onClick={() => setSelectedBankName(b.name)}
-              className={`flex items-center gap-2 rounded-2xl p-3 text-left shadow-[var(--shadow-soft)] hover:bg-slate-50 transition-colors active:scale-95 cursor-pointer ${selectedBankName === b.name ? "bg-[var(--accent)]" : "bg-white"}`}
+              className={`flex items-center gap-2 rounded-2xl p-3 text-left shadow-[var(--shadow-soft)] hover:bg-slate-50 transition-colors active:scale-95 cursor-pointer ${selectedBankName === b.name ? 'bg-[var(--accent)]' : 'bg-white'}`}
             >
               <div
                 className="grid h-9 w-9 place-items-center rounded-xl text-white text-[12px] font-bold"
@@ -76,12 +74,12 @@ export function BankConnectScreen() {
         </div>
 
         <button
-          onClick={() => navigate("plaid_connecting")}
+          onClick={() => navigate('plaid_connecting')}
           className="mt-auto flex w-full items-center justify-center gap-2 rounded-full bg-[oklch(0.18_0.04_265)] py-4 text-[15px] font-semibold text-white active:scale-95 transition-transform cursor-pointer"
         >
           <Lock className="h-4 w-4" strokeWidth={2.25} /> Continue with {selectedBankName}
         </button>
       </div>
     </PhoneFrame>
-  );
+  )
 }

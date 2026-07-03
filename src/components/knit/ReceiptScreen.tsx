@@ -1,14 +1,14 @@
-import { ArrowLeft, Upload, Camera, Share2 } from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { useAppNavigation } from "@/lib/navigation";
-import { useState } from "react";
-import { Money } from "./Money";
+import { ArrowLeft, Camera, Share2, Upload } from 'lucide-react'
+import { useState } from 'react'
+import { useAppNavigation } from '@/lib/navigation'
+import { Money } from './Money'
+import { PhoneFrame } from './PhoneFrame'
 
 export function ReceiptScreen() {
-  const { navigate, goBack, selectedTransactionId, transactions } = useAppNavigation();
-  const [status, setStatus] = useState("imported receipt");
+  const { navigate, goBack, selectedTransactionId, transactions } = useAppNavigation()
+  const [status, setStatus] = useState('imported receipt')
   const txn =
-    transactions.find((t) => t.id === selectedTransactionId) ?? transactions.find((t) => t.usd < 0);
+    transactions.find(t => t.id === selectedTransactionId) ?? transactions.find(t => t.usd < 0)
 
   if (!txn) {
     return (
@@ -26,7 +26,7 @@ export function ReceiptScreen() {
             <span className="h-9 w-9" />
           </header>
           <button
-            onClick={() => navigate("add_expense")}
+            onClick={() => navigate('add_expense')}
             className="m-auto rounded-3xl bg-white px-5 py-6 text-center shadow-[var(--shadow-soft)]"
           >
             <p className="text-[14px] font-bold text-foreground">No receipt yet</p>
@@ -36,11 +36,11 @@ export function ReceiptScreen() {
           </button>
         </div>
       </PhoneFrame>
-    );
+    )
   }
 
-  const total = Math.abs(txn.usd);
-  const merchant = txn.name;
+  const total = Math.abs(txn.usd)
+  const merchant = txn.name
 
   return (
     <PhoneFrame>
@@ -55,7 +55,7 @@ export function ReceiptScreen() {
           </button>
           <h2 className="text-[17px] font-bold tracking-tight">Receipt</h2>
           <button
-            onClick={() => setStatus("shared with family")}
+            onClick={() => setStatus('shared with family')}
             className="grid h-9 w-9 place-items-center rounded-full"
             aria-label="Share"
           >
@@ -68,7 +68,7 @@ export function ReceiptScreen() {
             <div>
               <p className="font-display text-[20px] tracking-tight text-foreground">{merchant}</p>
               <p className="mt-1 text-[10px] leading-snug text-muted-foreground">
-                {txn?.date ?? "today"} · {status}
+                {txn?.date ?? 'today'} · {status}
               </p>
             </div>
             <span className="rounded-full bg-[var(--muted)] px-2.5 py-1 text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
@@ -92,13 +92,13 @@ export function ReceiptScreen() {
 
         <div className="mt-auto flex gap-3">
           <button
-            onClick={() => setStatus("replacement uploaded")}
+            onClick={() => setStatus('replacement uploaded')}
             className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[var(--muted)] py-3 text-[13px] font-semibold text-foreground"
           >
             <Upload className="h-4 w-4" strokeWidth={2.25} /> Replace
           </button>
           <button
-            onClick={() => navigate("scan_receipt")}
+            onClick={() => navigate('scan_receipt')}
             className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[oklch(0.18_0.04_265)] py-3 text-[13px] font-semibold text-white"
           >
             <Camera className="h-4 w-4" strokeWidth={2.25} /> Scan new
@@ -106,5 +106,5 @@ export function ReceiptScreen() {
         </div>
       </div>
     </PhoneFrame>
-  );
+  )
 }

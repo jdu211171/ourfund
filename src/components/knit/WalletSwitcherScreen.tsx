@@ -1,7 +1,7 @@
-import { ArrowLeft, Check, Lock, Plus, Users, PiggyBank } from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { Money } from "./Money";
-import { useAppNavigation } from "@/lib/navigation";
+import { ArrowLeft, Check, Lock, PiggyBank, Plus, Users } from 'lucide-react'
+import { useAppNavigation } from '@/lib/navigation'
+import { Money } from './Money'
+import { PhoneFrame } from './PhoneFrame'
 
 /**
  * Wallet switcher — opens from the Home header chip. Selecting a wallet
@@ -14,18 +14,18 @@ export function WalletSwitcherScreen() {
     setSelectedWalletId,
     goBack,
     navigate,
-    walletBalanceUsd,
-  } = useAppNavigation();
+    walletBalanceUsd
+  } = useAppNavigation()
 
   const currentActiveId =
-    selectedWalletId && activeWallets.some((w) => w.id === selectedWalletId)
+    selectedWalletId && activeWallets.some(w => w.id === selectedWalletId)
       ? selectedWalletId
-      : (activeWallets[0]?.id ?? "");
+      : (activeWallets[0]?.id ?? '')
 
   const handleSelect = (walletId: string) => {
-    setSelectedWalletId(walletId);
-    goBack();
-  };
+    setSelectedWalletId(walletId)
+    goBack()
+  }
 
   return (
     <PhoneFrame>
@@ -47,25 +47,25 @@ export function WalletSwitcherScreen() {
         </p>
 
         <div className="mt-3 space-y-2 flex-1 overflow-y-auto pr-1">
-          {activeWallets.map((w) => {
-            const isActive = w.id === currentActiveId;
+          {activeWallets.map(w => {
+            const isActive = w.id === currentActiveId
             return (
               <button
                 key={w.id}
                 onClick={() => handleSelect(w.id)}
                 className={`flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left shadow-[var(--shadow-soft)] transition-all cursor-pointer active:scale-[0.99] border-2 ${
                   isActive
-                    ? "bg-[var(--accent)] border-[var(--primary)]"
-                    : "bg-white border-transparent hover:bg-slate-50"
+                    ? 'bg-[var(--accent)] border-[var(--primary)]'
+                    : 'bg-white border-transparent hover:bg-slate-50'
                 }`}
               >
                 <div
                   className="grid h-11 w-11 place-items-center rounded-2xl"
-                  style={{ background: "oklch(0.96 0.05 265)", color: w.color }}
+                  style={{ background: 'oklch(0.96 0.05 265)', color: w.color }}
                 >
-                  {w.type === "private" ? (
+                  {w.type === 'private' ? (
                     <Lock className="h-4 w-4" strokeWidth={2.25} />
-                  ) : w.type === "connected" ? (
+                  ) : w.type === 'connected' ? (
                     <PiggyBank className="h-4 w-4" strokeWidth={2.25} />
                   ) : (
                     <Users className="h-4 w-4" strokeWidth={2.25} />
@@ -84,12 +84,12 @@ export function WalletSwitcherScreen() {
                   )}
                 </div>
               </button>
-            );
+            )
           })}
         </div>
 
         <button
-          onClick={() => navigate("new_wallet")}
+          onClick={() => navigate('new_wallet')}
           className="mt-3 flex items-center justify-center gap-2 rounded-2xl bg-[oklch(0.97_0.01_265)] py-3 text-[12px] font-semibold text-[var(--primary)] hover:bg-[oklch(0.94_0.02_265)] active:scale-[0.98] transition-all cursor-pointer"
         >
           <Plus className="h-4 w-4" strokeWidth={2.25} />
@@ -109,5 +109,5 @@ export function WalletSwitcherScreen() {
         </button>
       </div>
     </PhoneFrame>
-  );
+  )
 }

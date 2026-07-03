@@ -1,37 +1,37 @@
-import { ArrowLeft, Search, Check } from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { useAppNavigation, type BudgetMode, type CurrencyCode } from "@/lib/navigation";
-import { useState } from "react";
+import { ArrowLeft, Check, Search } from 'lucide-react'
+import { useState } from 'react'
+import { type BudgetMode, type CurrencyCode, useAppNavigation } from '@/lib/navigation'
+import { PhoneFrame } from './PhoneFrame'
 
 const popular = [
-  ["JPY", "Japanese Yen", "¥"],
-  ["UZS", "Uzbek So'm", "so'm"],
-  ["USD", "US Dollar", "$"],
-  ["EUR", "Euro", "€"],
-  ["GBP", "British Pound", "£"],
-];
+  ['JPY', 'Japanese Yen', '¥'],
+  ['UZS', "Uzbek So'm", "so'm"],
+  ['USD', 'US Dollar', '$'],
+  ['EUR', 'Euro', '€'],
+  ['GBP', 'British Pound', '£']
+]
 const all = [
-  ["AUD", "Australian Dollar", "$"],
-  ["CHF", "Swiss Franc", "Fr"],
-  ["SEK", "Swedish Krona", "kr"],
-  ["NOK", "Norwegian Krone", "kr"],
-  ["DKK", "Danish Krone", "kr"],
-  ["MXN", "Mexican Peso", "$"],
-  ["BRL", "Brazilian Real", "R$"],
-];
+  ['AUD', 'Australian Dollar', '$'],
+  ['CHF', 'Swiss Franc', 'Fr'],
+  ['SEK', 'Swedish Krona', 'kr'],
+  ['NOK', 'Norwegian Krone', 'kr'],
+  ['DKK', 'Danish Krone', 'kr'],
+  ['MXN', 'Mexican Peso', '$'],
+  ['BRL', 'Brazilian Real', 'R$']
+]
 
 function Row({
   code,
   name,
   sym,
   active,
-  onClick,
+  onClick
 }: {
-  code: CurrencyCode;
-  name: string;
-  sym: string;
-  active?: boolean;
-  onClick: () => void;
+  code: CurrencyCode
+  name: string
+  sym: string
+  active?: boolean
+  onClick: () => void
 }) {
   return (
     <button onClick={onClick} className="flex w-full items-center gap-3 px-4 py-2.5 text-left">
@@ -44,18 +44,18 @@ function Row({
       </div>
       {active && <Check className="h-4 w-4 text-[var(--primary)]" strokeWidth={3} />}
     </button>
-  );
+  )
 }
 
 export function CurrencyPickerScreen() {
   const { goBack, currencies, currencyTarget, setCurrencyTarget, setCurrencyForMode } =
-    useAppNavigation();
-  const [query, setQuery] = useState("");
-  const activeCurrency = currencies[currencyTarget];
+    useAppNavigation()
+  const [query, setQuery] = useState('')
+  const activeCurrency = currencies[currencyTarget]
   const popularRows = popular.filter(([c, n]) =>
-    `${c} ${n}`.toLowerCase().includes(query.toLowerCase()),
-  );
-  const allRows = all.filter(([c, n]) => `${c} ${n}`.toLowerCase().includes(query.toLowerCase()));
+    `${c} ${n}`.toLowerCase().includes(query.toLowerCase())
+  )
+  const allRows = all.filter(([c, n]) => `${c} ${n}`.toLowerCase().includes(query.toLowerCase()))
 
   return (
     <PhoneFrame>
@@ -76,21 +76,21 @@ export function CurrencyPickerScreen() {
           <Search className="h-4 w-4 text-muted-foreground" strokeWidth={2.25} />
           <input
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={e => setQuery(e.target.value)}
             placeholder="Search currency"
             className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground"
           />
         </div>
 
         <div className="mt-4 grid grid-cols-2 rounded-2xl bg-white p-1 shadow-[var(--shadow-soft)]">
-          {(["personal", "family"] as BudgetMode[]).map((target) => (
+          {(['personal', 'family'] as BudgetMode[]).map(target => (
             <button
               key={target}
               onClick={() => setCurrencyTarget(target)}
               className={`rounded-xl py-2 text-[12px] font-semibold capitalize transition-all ${
                 currencyTarget === target
-                  ? "bg-[var(--primary)] text-white"
-                  : "text-muted-foreground hover:bg-slate-50"
+                  ? 'bg-[var(--primary)] text-white'
+                  : 'text-muted-foreground hover:bg-slate-50'
               }`}
             >
               {target}
@@ -135,5 +135,5 @@ export function CurrencyPickerScreen() {
         </div>
       </div>
     </PhoneFrame>
-  );
+  )
 }

@@ -1,27 +1,27 @@
 import {
-  ChevronRight,
-  Shield,
   Bell,
-  Tag,
+  Check,
+  ChevronRight,
+  Crown,
   HelpCircle,
   LogOut,
   Settings,
-  Crown,
+  Shield,
+  Tag,
   UserPlus,
-  Check,
-  Users,
-} from "lucide-react";
-import { PhoneFrame, useFrameMode } from "./PhoneFrame";
-import { BottomNav } from "./BottomNav";
-import { useAppNavigation } from "@/lib/navigation";
-import { formatUsdAsCurrency } from "@/lib/currency";
+  Users
+} from 'lucide-react'
+import { formatUsdAsCurrency } from '@/lib/currency'
+import { useAppNavigation } from '@/lib/navigation'
+import { BottomNav } from './BottomNav'
+import { PhoneFrame, useFrameMode } from './PhoneFrame'
 
 const items = [
-  { Icon: Tag, label: "Categories", hint: "Budget limits", screen: "categories" as const },
-  { Icon: Shield, label: "Permissions", hint: "Roles", screen: "permissions" as const },
-  { Icon: Bell, label: "Alert thresholds", hint: "80% / 100%", screen: "notif_prefs" as const },
-  { Icon: HelpCircle, label: "Allowance", hint: "Kids", screen: "allowance" as const },
-];
+  { Icon: Tag, label: 'Categories', hint: 'Budget limits', screen: 'categories' as const },
+  { Icon: Shield, label: 'Permissions', hint: 'Roles', screen: 'permissions' as const },
+  { Icon: Bell, label: 'Alert thresholds', hint: '80% / 100%', screen: 'notif_prefs' as const },
+  { Icon: HelpCircle, label: 'Allowance', hint: 'Kids', screen: 'allowance' as const }
+]
 
 export function ProfileScreen() {
   const {
@@ -34,20 +34,20 @@ export function ProfileScreen() {
     selectedMemberIds,
     setSelectedMemberIds,
     setBudgetMode,
-    currency,
-  } = useAppNavigation();
+    currency
+  } = useAppNavigation()
 
-  const mode = useFrameMode();
+  const mode = useFrameMode()
 
   const toggleRemoval = (memberId: string) => {
     setSelectedMemberIds(
       selectedMemberIds.includes(memberId)
-        ? selectedMemberIds.filter((id) => id !== memberId)
-        : [...selectedMemberIds, memberId],
-    );
-  };
+        ? selectedMemberIds.filter(id => id !== memberId)
+        : [...selectedMemberIds, memberId]
+    )
+  }
 
-  if (mode === "web") {
+  if (mode === 'web') {
     return (
       <div className="space-y-6">
         {/* Title row */}
@@ -61,7 +61,7 @@ export function ProfileScreen() {
               {household ? (
                 <>
                   <span className="font-semibold text-[var(--primary)]">{household.name}</span>
-                  {" · "}Invite code:{" "}
+                  {' · '}Invite code:{' '}
                   <span className="font-bold text-foreground">{household.inviteCode}</span>
                 </>
               ) : (
@@ -71,14 +71,14 @@ export function ProfileScreen() {
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => navigate("invite_member")}
+              onClick={() => navigate('invite_member')}
               className="inline-flex items-center gap-2 rounded-xl bg-[var(--primary)] px-4 py-2.5 text-[12px] font-bold text-white shadow-[0_12px_30px_-12px_oklch(0.55_0.24_265/0.7)] transition hover:opacity-90 cursor-pointer"
             >
               <UserPlus className="h-4 w-4" strokeWidth={2.5} />
               Invite member
             </button>
             <button
-              onClick={() => navigate("settings")}
+              onClick={() => navigate('settings')}
               className="inline-flex items-center gap-2 rounded-xl bg-[var(--card)] px-3.5 py-2.5 text-[12px] font-semibold text-foreground border border-[var(--border)] transition hover:bg-[var(--muted)]/50"
             >
               <Settings className="h-4 w-4" />
@@ -97,7 +97,7 @@ export function ProfileScreen() {
                 </p>
                 {selectedMemberIds.length > 0 && (
                   <button
-                    onClick={() => navigate("remove_member")}
+                    onClick={() => navigate('remove_member')}
                     className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-[var(--danger)] hover:opacity-80 cursor-pointer"
                   >
                     <LogOut className="h-3.5 w-3.5" />
@@ -106,9 +106,9 @@ export function ProfileScreen() {
                 )}
               </div>
               <div className="divide-y divide-[var(--border)]">
-                {members.map((m) => {
-                  const removalSelected = selectedMemberIds.includes(m.id);
-                  const canRemove = m.id !== currentMemberId;
+                {members.map(m => {
+                  const removalSelected = selectedMemberIds.includes(m.id)
+                  const canRemove = m.id !== currentMemberId
                   return (
                     <div key={m.id} className="flex items-center gap-4 px-6 py-4">
                       <button
@@ -117,8 +117,8 @@ export function ProfileScreen() {
                         onClick={() => toggleRemoval(m.id)}
                         className={`grid h-5 w-5 shrink-0 place-items-center rounded-md border ${
                           removalSelected
-                            ? "border-[var(--primary)] bg-[var(--primary)] text-white"
-                            : "border-[var(--border)]"
+                            ? 'border-[var(--primary)] bg-[var(--primary)] text-white'
+                            : 'border-[var(--border)]'
                         } disabled:opacity-30`}
                         aria-label={`Select ${m.name} for removal`}
                       >
@@ -128,7 +128,7 @@ export function ProfileScreen() {
                         className="grid h-10 w-10 place-items-center rounded-full text-white text-[12px] font-bold shrink-0"
                         style={{
                           background:
-                            "linear-gradient(135deg, oklch(0.65 0.22 265), oklch(0.45 0.24 265))",
+                            'linear-gradient(135deg, oklch(0.65 0.22 265), oklch(0.45 0.24 265))'
                         }}
                       >
                         {m.initials}
@@ -147,16 +147,16 @@ export function ProfileScreen() {
                           {m.role}
                           {m.allowanceUsd
                             ? ` · ${formatUsdAsCurrency(m.allowanceUsd, currency)} allowance`
-                            : ""}
+                            : ''}
                         </p>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <button
                           type="button"
                           onClick={() => {
-                            setSelectedMemberId(m.id);
-                            setBudgetMode("personal");
-                            navigate("wallet");
+                            setSelectedMemberId(m.id)
+                            setBudgetMode('personal')
+                            navigate('wallet')
                           }}
                           className="text-[11px] font-semibold text-[var(--primary)] hover:opacity-80 cursor-pointer"
                         >
@@ -165,8 +165,8 @@ export function ProfileScreen() {
                         <button
                           type="button"
                           onClick={() => {
-                            setSelectedMemberId(m.id);
-                            navigate("permissions");
+                            setSelectedMemberId(m.id)
+                            navigate('permissions')
                           }}
                           className="grid h-8 w-8 place-items-center rounded-lg bg-[var(--muted)] text-muted-foreground hover:text-foreground transition"
                           aria-label={`Edit ${m.name} permissions`}
@@ -175,7 +175,7 @@ export function ProfileScreen() {
                         </button>
                       </div>
                     </div>
-                  );
+                  )
                 })}
                 {members.length === 0 && (
                   <div className="px-6 py-10 text-center">
@@ -188,7 +188,7 @@ export function ProfileScreen() {
                       Create a household or join one with an invite code.
                     </p>
                     <button
-                      onClick={() => navigate("signup")}
+                      onClick={() => navigate('signup')}
                       className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[var(--primary)] px-4 py-2 text-[12px] font-bold text-white cursor-pointer"
                     >
                       Get started
@@ -227,7 +227,7 @@ export function ProfileScreen() {
           </aside>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -238,7 +238,7 @@ export function ProfileScreen() {
             Family
           </h2>
           <button
-            onClick={() => navigate("settings")}
+            onClick={() => navigate('settings')}
             className="grid h-9 w-9 place-items-center rounded-full bg-[var(--muted)] hover:bg-slate-200 transition-colors active:scale-95 cursor-pointer"
             aria-label="Settings"
           >
@@ -249,16 +249,16 @@ export function ProfileScreen() {
         <div className="rounded-2xl bg-white p-4 shadow-[var(--shadow-soft)]">
           <p className="text-[11px] uppercase tracking-widest text-muted-foreground">Household</p>
           <p className="mt-1 font-display text-[22px] leading-tight tracking-tight">
-            {household?.name ?? "Create or join a household"}
+            {household?.name ?? 'Create or join a household'}
           </p>
           <p className="text-[11px] text-muted-foreground">
             {household ? (
               <>
-                {members.length} members · Invite code{" "}
+                {members.length} members · Invite code{' '}
                 <span className="font-bold text-foreground">{household.inviteCode}</span>
               </>
             ) : (
-              "Start a household to invite your family."
+              'Start a household to invite your family.'
             )}
           </p>
         </div>
@@ -266,7 +266,7 @@ export function ProfileScreen() {
         <div className="flex items-center justify-between">
           <p className="text-[13px] font-bold text-foreground">Members</p>
           <button
-            onClick={() => navigate("invite_member")}
+            onClick={() => navigate('invite_member')}
             className="grid h-8 w-8 place-items-center rounded-full bg-[var(--muted)] text-foreground"
           >
             <UserPlus className="h-4 w-4" strokeWidth={2.25} />
@@ -274,13 +274,13 @@ export function ProfileScreen() {
         </div>
 
         <div className="mt-1 space-y-1">
-          {members.map((m) => {
-            const removalSelected = selectedMemberIds.includes(m.id);
-            const canRemove = m.id !== currentMemberId;
+          {members.map(m => {
+            const removalSelected = selectedMemberIds.includes(m.id)
+            const canRemove = m.id !== currentMemberId
             return (
               <div
                 key={m.id}
-                className={`flex w-full items-center gap-3 rounded-2xl bg-white py-2.5 text-left shadow-[var(--shadow-soft)] ${selectedMemberId === m.id ? "ring-2 ring-[var(--primary)]" : ""}`}
+                className={`flex w-full items-center gap-3 rounded-2xl bg-white py-2.5 text-left shadow-[var(--shadow-soft)] ${selectedMemberId === m.id ? 'ring-2 ring-[var(--primary)]' : ''}`}
               >
                 <button
                   type="button"
@@ -288,8 +288,8 @@ export function ProfileScreen() {
                   onClick={() => toggleRemoval(m.id)}
                   className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border ${
                     removalSelected
-                      ? "border-[var(--primary)] bg-[var(--primary)] text-white"
-                      : "border-slate-300 bg-white"
+                      ? 'border-[var(--primary)] bg-[var(--primary)] text-white'
+                      : 'border-slate-300 bg-white'
                   } disabled:opacity-40`}
                   aria-label={`Select ${m.name} for removal`}
                 >
@@ -298,9 +298,9 @@ export function ProfileScreen() {
                 <button
                   type="button"
                   onClick={() => {
-                    setSelectedMemberId(m.id);
-                    setBudgetMode("personal");
-                    navigate("wallet");
+                    setSelectedMemberId(m.id)
+                    setBudgetMode('personal')
+                    navigate('wallet')
                   }}
                   className="-m-2 flex min-w-0 flex-1 items-center gap-3 rounded-2xl p-2 text-left"
                 >
@@ -308,7 +308,7 @@ export function ProfileScreen() {
                     className="grid h-10 w-10 place-items-center rounded-full text-white text-[12px] font-bold"
                     style={{
                       background:
-                        "linear-gradient(135deg, oklch(0.65 0.22 265), oklch(0.45 0.24 265))",
+                        'linear-gradient(135deg, oklch(0.65 0.22 265), oklch(0.45 0.24 265))'
                     }}
                   >
                     {m.initials}
@@ -319,7 +319,7 @@ export function ProfileScreen() {
                       {m.role}
                       {m.allowanceUsd
                         ? ` · ${formatUsdAsCurrency(m.allowanceUsd, currency)} allowance`
-                        : ""}
+                        : ''}
                     </p>
                   </div>
                 </button>
@@ -329,8 +329,8 @@ export function ProfileScreen() {
                 <button
                   type="button"
                   onClick={() => {
-                    setSelectedMemberId(m.id);
-                    navigate("permissions");
+                    setSelectedMemberId(m.id)
+                    navigate('permissions')
                   }}
                   className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[var(--muted)] text-muted-foreground"
                   aria-label={`Edit ${m.name} permissions`}
@@ -338,11 +338,11 @@ export function ProfileScreen() {
                   <Shield className="h-4 w-4" strokeWidth={2.25} />
                 </button>
               </div>
-            );
+            )
           })}
           {members.length === 0 && (
             <button
-              onClick={() => navigate("signup")}
+              onClick={() => navigate('signup')}
               className="w-full rounded-2xl bg-white px-4 py-5 text-center shadow-[var(--shadow-soft)]"
             >
               <p className="text-[13px] font-bold text-foreground">No members yet</p>
@@ -371,17 +371,17 @@ export function ProfileScreen() {
         </div>
 
         <button
-          onClick={() => navigate("remove_member")}
+          onClick={() => navigate('remove_member')}
           disabled={selectedMemberIds.length === 0}
           className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-[var(--muted)] py-3 text-[13px] font-semibold text-[var(--danger)] disabled:opacity-50"
         >
           <LogOut className="h-4 w-4" strokeWidth={2.25} />
           {selectedMemberIds.length > 0
             ? `Remove ${selectedMemberIds.length} selected`
-            : "Select members to remove"}
+            : 'Select members to remove'}
         </button>
       </div>
       <BottomNav active="user" />
     </PhoneFrame>
-  );
+  )
 }

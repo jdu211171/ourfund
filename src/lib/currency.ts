@@ -1,94 +1,94 @@
-import type { CurrencyCode } from "./navigation";
+import type { CurrencyCode } from './navigation'
 
 export const currencyMeta: Record<CurrencyCode, { symbol: string; rate: number; suffix?: string }> =
   {
-    UZS: { symbol: "", rate: 12600, suffix: " so'm" },
-    USD: { symbol: "$", rate: 1 },
-    EUR: { symbol: "€", rate: 0.92 },
-    GBP: { symbol: "£", rate: 0.79 },
-    AUD: { symbol: "$", rate: 1.52 },
-    JPY: { symbol: "¥", rate: 159.4 },
-    CHF: { symbol: "Fr ", rate: 0.89 },
-    SEK: { symbol: "kr ", rate: 10.6 },
-    NOK: { symbol: "kr ", rate: 10.9 },
-    DKK: { symbol: "kr ", rate: 6.86 },
-    MXN: { symbol: "$", rate: 17.1 },
-    BRL: { symbol: "R$", rate: 5.15 },
-  };
+    UZS: { symbol: '', rate: 12600, suffix: " so'm" },
+    USD: { symbol: '$', rate: 1 },
+    EUR: { symbol: '€', rate: 0.92 },
+    GBP: { symbol: '£', rate: 0.79 },
+    AUD: { symbol: '$', rate: 1.52 },
+    JPY: { symbol: '¥', rate: 159.4 },
+    CHF: { symbol: 'Fr ', rate: 0.89 },
+    SEK: { symbol: 'kr ', rate: 10.6 },
+    NOK: { symbol: 'kr ', rate: 10.9 },
+    DKK: { symbol: 'kr ', rate: 6.86 },
+    MXN: { symbol: '$', rate: 17.1 },
+    BRL: { symbol: 'R$', rate: 5.15 }
+  }
 
 export function usdToCurrencyValue(usd: number, currency: CurrencyCode) {
-  const meta = currencyMeta[currency];
-  return Math.abs(usd) * meta.rate;
+  const meta = currencyMeta[currency]
+  return Math.abs(usd) * meta.rate
 }
 
 export function currencyValueToUsd(value: number, currency: CurrencyCode) {
-  const meta = currencyMeta[currency];
-  return value / meta.rate;
+  const meta = currencyMeta[currency]
+  return value / meta.rate
 }
 
 export function currencyFractionDigits(currency: CurrencyCode) {
-  return currency === "UZS" || currency === "JPY" ? 0 : 2;
+  return currency === 'UZS' || currency === 'JPY' ? 0 : 2
 }
 
 export function currencyAdornment(currency: CurrencyCode) {
-  const meta = currencyMeta[currency];
+  const meta = currencyMeta[currency]
   return {
     prefix: meta.symbol,
-    suffix: meta.suffix?.trim() ?? "",
-  };
+    suffix: meta.suffix?.trim() ?? ''
+  }
 }
 
 type FormatCurrencyOptions = {
-  signed?: boolean;
-  maximumFractionDigits?: number;
-};
+  signed?: boolean
+  maximumFractionDigits?: number
+}
 
-let compactMoneyMode = false;
+let compactMoneyMode = false
 
 export function setCompactMoneyMode(enabled: boolean) {
-  compactMoneyMode = enabled;
+  compactMoneyMode = enabled
 }
 
 export function formatCurrencyValue(
   value: number,
   currency: CurrencyCode,
-  options: FormatCurrencyOptions = {},
+  options: FormatCurrencyOptions = {}
 ) {
-  const meta = currencyMeta[currency];
-  const signed = options.signed ?? false;
-  const amount = Number.isFinite(value) ? (Math.abs(value) < 0.000001 ? 0 : value) : 0;
-  const abs = Math.abs(amount);
-  const useCompact = compactMoneyMode && abs >= 1_000;
-  const digits = options.maximumFractionDigits ?? currencyFractionDigits(currency);
+  const meta = currencyMeta[currency]
+  const signed = options.signed ?? false
+  const amount = Number.isFinite(value) ? (Math.abs(value) < 0.000001 ? 0 : value) : 0
+  const abs = Math.abs(amount)
+  const useCompact = compactMoneyMode && abs >= 1_000
+  const digits = options.maximumFractionDigits ?? currencyFractionDigits(currency)
   const formatted = new Intl.NumberFormat(
-    "en-US",
+    'en-US',
     useCompact
       ? {
-          notation: "compact",
-          compactDisplay: "short",
-          maximumFractionDigits: options.maximumFractionDigits ?? 1,
+          notation: 'compact',
+          compactDisplay: 'short',
+          maximumFractionDigits: options.maximumFractionDigits ?? 1
         }
       : {
           minimumFractionDigits: digits,
-          maximumFractionDigits: digits,
-        },
-  ).format(abs);
-  const sign = signed ? (amount > 0 ? "+ " : amount < 0 ? "- " : "") : amount < 0 ? "-" : "";
+          maximumFractionDigits: digits
+        }
+  ).format(abs)
+  const sign = signed ? (amount > 0 ? '+ ' : amount < 0 ? '- ' : '') : amount < 0 ? '-' : ''
 
-  return `${sign}${meta.symbol}${formatted}${meta.suffix ?? ""}`;
+  return `${sign}${meta.symbol}${formatted}${meta.suffix ?? ''}`
 }
 
 export function formatUsdAsCurrency(
   usd: number,
   currency: CurrencyCode,
-  options: FormatCurrencyOptions = {},
+  options: FormatCurrencyOptions = {}
 ) {
-  const meta = currencyMeta[currency];
-  return formatCurrencyValue((Number.isFinite(usd) ? usd : 0) * meta.rate, currency, options);
+  const meta = currencyMeta[currency]
+  return formatCurrencyValue((Number.isFinite(usd) ? usd : 0) * meta.rate, currency, options)
 }
 
 export function currencyInputLabel(currency: CurrencyCode) {
-  const meta = currencyMeta[currency];
-  const display = `${meta.symbol || ""}${meta.suffix?.trim() ?? ""}` || currency;
-  return `${currency} · ${display}`;
+  const meta = currencyMeta[currency]
+  const display = `${meta.symbol || ''}${meta.suffix?.trim() ?? ''}` || currency
+  return `${currency} · ${display}`
 }

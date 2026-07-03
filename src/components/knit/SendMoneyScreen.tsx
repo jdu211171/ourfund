@@ -1,13 +1,13 @@
-import { useState } from "react";
-import { ArrowLeft, ShoppingBag, Users, Delete } from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { Money } from "./Money";
-import { currencyValueToUsd, formatUsdAsCurrency } from "@/lib/currency";
-import { useAppNavigation } from "@/lib/navigation";
-import { formatISODate } from "@/context/helpers";
-import { OptionSelect } from "./OptionSelect";
+import { ArrowLeft, Delete, ShoppingBag, Users } from 'lucide-react'
+import { useState } from 'react'
+import { formatISODate } from '@/context/helpers'
+import { currencyValueToUsd, formatUsdAsCurrency } from '@/lib/currency'
+import { useAppNavigation } from '@/lib/navigation'
+import { Money } from './Money'
+import { OptionSelect } from './OptionSelect'
+import { PhoneFrame } from './PhoneFrame'
 
-const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "del"] as const;
+const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'del'] as const
 
 export function SendMoneyScreen() {
   const {
@@ -18,37 +18,37 @@ export function SendMoneyScreen() {
     addTransaction,
     categories,
     activeWallets,
-    selectedWalletId,
-  } = useAppNavigation();
-  const [amount, setAmount] = useState("0");
-  const amountUsd = currencyValueToUsd(parseFloat(amount || "0"), currency);
-  const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "");
+    selectedWalletId
+  } = useAppNavigation()
+  const [amount, setAmount] = useState('0')
+  const amountUsd = currencyValueToUsd(parseFloat(amount || '0'), currency)
+  const [categoryId, setCategoryId] = useState(categories[0]?.id ?? '')
   const defaultWalletId =
-    selectedWalletId && activeWallets.some((w) => w.id === selectedWalletId)
+    selectedWalletId && activeWallets.some(w => w.id === selectedWalletId)
       ? selectedWalletId
-      : (activeWallets[0]?.id ?? "");
-  const [walletId, setWalletId] = useState(defaultWalletId);
-  const category = categories.find((item) => item.id === categoryId) ?? categories[0];
-  const wallet = activeWallets.find((item) => item.id === walletId) ?? activeWallets[0];
-  const hasWallet = Boolean(wallet);
+      : (activeWallets[0]?.id ?? '')
+  const [walletId, setWalletId] = useState(defaultWalletId)
+  const category = categories.find(item => item.id === categoryId) ?? categories[0]
+  const wallet = activeWallets.find(item => item.id === walletId) ?? activeWallets[0]
+  const hasWallet = Boolean(wallet)
 
   const handleKeyPress = (k: (typeof keys)[number]) => {
-    if (k === "del") {
-      setAmount((prev) => {
-        const next = prev.slice(0, -1);
-        return next === "" ? "0" : next;
-      });
-    } else if (k === ".") {
-      if (!amount.includes(".")) {
-        setAmount((prev) => prev + ".");
+    if (k === 'del') {
+      setAmount(prev => {
+        const next = prev.slice(0, -1)
+        return next === '' ? '0' : next
+      })
+    } else if (k === '.') {
+      if (!amount.includes('.')) {
+        setAmount(prev => prev + '.')
       }
     } else {
-      setAmount((prev) => {
-        if (prev === "0") return k;
-        return prev + k;
-      });
+      setAmount(prev => {
+        if (prev === '0') return k
+        return prev + k
+      })
     }
-  };
+  }
 
   return (
     <PhoneFrame>
@@ -75,11 +75,11 @@ export function SendMoneyScreen() {
         <div className="mt-7 space-y-3">
           <OptionSelect
             label="Category"
-            value={category?.id ?? ""}
-            options={categories.map((item) => ({
+            value={category?.id ?? ''}
+            options={categories.map(item => ({
               value: item.id,
               label: item.label,
-              description: `${formatUsdAsCurrency(item.limitUsd, currency)} monthly limit`,
+              description: `${formatUsdAsCurrency(item.limitUsd, currency)} monthly limit`
             }))}
             onChange={setCategoryId}
             emptyLabel="No categories yet"
@@ -88,11 +88,11 @@ export function SendMoneyScreen() {
 
           <OptionSelect
             label="Paid from"
-            value={wallet?.id ?? ""}
-            options={activeWallets.map((item) => ({
+            value={wallet?.id ?? ''}
+            options={activeWallets.map(item => ({
               value: item.id,
               label: item.label,
-              description: item.sub,
+              description: item.sub
             }))}
             onChange={setWalletId}
             emptyLabel="Create a wallet first"
@@ -101,14 +101,14 @@ export function SendMoneyScreen() {
         </div>
 
         <div className="mt-6 grid flex-1 grid-cols-3 place-items-center gap-y-1">
-          {keys.map((k) => (
+          {keys.map(k => (
             <button
               key={k}
               onClick={() => handleKeyPress(k)}
               className="grid h-12 w-12 place-items-center text-[26px] font-semibold text-foreground transition-colors active:bg-[var(--muted)] rounded-full hover:bg-slate-50 cursor-pointer"
-              aria-label={k === "del" ? "Delete" : k}
+              aria-label={k === 'del' ? 'Delete' : k}
             >
-              {k === "del" ? (
+              {k === 'del' ? (
                 <span className="grid h-9 w-10 place-items-center rounded-lg bg-[var(--muted)] text-muted-foreground">
                   <Delete className="h-4 w-4" strokeWidth={2.25} />
                 </span>
@@ -122,26 +122,26 @@ export function SendMoneyScreen() {
         <button
           onClick={() => {
             if (!hasWallet) {
-              navigate("new_wallet");
-              return;
+              navigate('new_wallet')
+              return
             }
             if (amountUsd > 0) {
               addTransaction({
-                name: category?.label ? `${category.label} expense` : "Expense",
-                who: profile.name.split(" ").filter(Boolean)[0] ?? "You",
+                name: category?.label ? `${category.label} expense` : 'Expense',
+                who: profile.name.split(' ').filter(Boolean)[0] ?? 'You',
                 usd: -amountUsd,
-                category: category?.label ?? "Uncategorized",
+                category: category?.label ?? 'Uncategorized',
                 wallet: wallet.label,
-                date: formatISODate(new Date()),
-              });
+                date: formatISODate(new Date())
+              })
             }
-            goBack();
+            goBack()
           }}
           className="mt-4 w-full rounded-full bg-[oklch(0.18_0.04_265)] py-4 text-[15px] font-semibold text-white active:scale-95 transition-transform cursor-pointer"
         >
-          {hasWallet ? "Save expense" : "Create a wallet first"}
+          {hasWallet ? 'Save expense' : 'Create a wallet first'}
         </button>
       </div>
     </PhoneFrame>
-  );
+  )
 }

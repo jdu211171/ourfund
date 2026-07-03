@@ -1,41 +1,41 @@
-import type { BudgetMode } from "@/lib/navigation";
-import { useAppNavigation } from "@/lib/navigation";
+import type { BudgetMode } from '@/lib/navigation'
+import { useAppNavigation } from '@/lib/navigation'
 
-type ToggleVariant = "horizontal" | "vertical";
+type ToggleVariant = 'horizontal' | 'vertical'
 
 export function BudgetModeToggle({
-  className = "",
-  variant = "horizontal",
+  className = '',
+  variant = 'horizontal'
 }: {
-  className?: string;
-  variant?: ToggleVariant;
+  className?: string
+  variant?: ToggleVariant
 }) {
-  const { budgetMode, setBudgetMode } = useAppNavigation();
+  const { budgetMode, setBudgetMode } = useAppNavigation()
 
-  const isVertical = variant === "vertical";
+  const isVertical = variant === 'vertical'
 
   return (
     <div
       className={`inline-flex rounded-2xl bg-[var(--muted)] p-1 text-[11px] font-bold ${className} ${
-        isVertical ? "flex-col" : ""
+        isVertical ? 'flex-col' : ''
       }`}
     >
-      {(["personal", "family"] as BudgetMode[]).map((mode) => (
+      {(['personal', 'family'] as BudgetMode[]).map(mode => (
         <button
           key={mode}
           type="button"
-          onClick={() => setBudgetMode(budgetMode === "personal" ? "family" : "personal")}
+          onClick={() => setBudgetMode(budgetMode === 'personal' ? 'family' : 'personal')}
           className={`rounded-xl capitalize transition-all ${
-            isVertical ? "w-full text-left px-4 py-2.5" : "px-3 py-1.5"
+            isVertical ? 'w-full text-left px-4 py-2.5' : 'px-3 py-1.5'
           } ${
             budgetMode === mode
-              ? "bg-white text-foreground shadow-[var(--shadow-soft)]"
-              : "text-muted-foreground hover:bg-white/50"
+              ? 'bg-white text-foreground shadow-[var(--shadow-soft)]'
+              : 'text-muted-foreground hover:bg-white/50'
           }`}
         >
           {mode}
         </button>
       ))}
     </div>
-  );
+  )
 }

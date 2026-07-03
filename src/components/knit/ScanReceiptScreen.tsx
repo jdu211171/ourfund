@@ -6,184 +6,184 @@ import {
   RotateCcw,
   Sparkles,
   Store,
-  Tag,
-} from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { useAppNavigation, type ReceiptScan } from "@/lib/navigation";
-import { PhoneFrame } from "./PhoneFrame";
-import { Money } from "./Money";
-import { compressImage } from "@/lib/image-compress";
-import { usdToCurrencyValue, currencyValueToUsd } from "@/lib/currency";
+  Tag
+} from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { currencyValueToUsd, usdToCurrencyValue } from '@/lib/currency'
+import { compressImage } from '@/lib/image-compress'
+import { type ReceiptScan, useAppNavigation } from '@/lib/navigation'
+import { Money } from './Money'
+import { PhoneFrame } from './PhoneFrame'
 
-const PENDING_RECEIPT_IMAGE_KEY = "ourfund:pending-receipt-image";
+const PENDING_RECEIPT_IMAGE_KEY = 'ourfund:pending-receipt-image'
 const TEMPORARY_SCAN_MESSAGE =
-  "AI receipt scanning is busy right now. We tried another model and saved this image so you can retry when it is available.";
+  'AI receipt scanning is busy right now. We tried another model and saved this image so you can retry when it is available.'
 const TEMPORARY_SCAN_UNSAVED_MESSAGE =
-  "AI receipt scanning is busy right now. We tried another model, but the service is still overloaded. Please try again shortly.";
+  'AI receipt scanning is busy right now. We tried another model, but the service is still overloaded. Please try again shortly.'
 const SAVED_SCAN_MESSAGE =
-  "Your last receipt image is saved here because AI scanning was busy. Try scanning it again when it is available.";
+  'Your last receipt image is saved here because AI scanning was busy. Try scanning it again when it is available.'
 
 interface PendingReceiptImage {
-  imageDataUrl: string;
-  savedAt: string;
+  imageDataUrl: string
+  savedAt: string
 }
 
 function isTemporaryReceiptScanError(error: unknown) {
-  const message = error instanceof Error ? error.message : String(error || "");
-  const normalized = message.toLowerCase();
+  const message = error instanceof Error ? error.message : String(error || '')
+  const normalized = message.toLowerCase()
   return (
-    normalized.includes("busy right now") ||
-    normalized.includes("high demand") ||
-    normalized.includes("unavailable") ||
-    normalized.includes("overloaded") ||
-    normalized.includes("resource_exhausted") ||
-    normalized.includes("503")
-  );
+    normalized.includes('busy right now') ||
+    normalized.includes('high demand') ||
+    normalized.includes('unavailable') ||
+    normalized.includes('overloaded') ||
+    normalized.includes('resource_exhausted') ||
+    normalized.includes('503')
+  )
 }
 
 function receiptScanErrorMessage(error: unknown, imageSaved: boolean) {
-  const message = error instanceof Error ? error.message : String(error || "");
+  const message = error instanceof Error ? error.message : String(error || '')
 
   if (isTemporaryReceiptScanError(error)) {
-    return imageSaved ? TEMPORARY_SCAN_MESSAGE : TEMPORARY_SCAN_UNSAVED_MESSAGE;
+    return imageSaved ? TEMPORARY_SCAN_MESSAGE : TEMPORARY_SCAN_UNSAVED_MESSAGE
   }
 
   if (
-    message.includes("Gemini receipt scan failed") ||
+    message.includes('Gemini receipt scan failed') ||
     message.includes('"error"') ||
-    message.includes("{")
+    message.includes('{')
   ) {
-    return "AI receipt scanning could not finish. Please try again shortly.";
+    return 'AI receipt scanning could not finish. Please try again shortly.'
   }
 
-  return message || "Receipt scan failed. Please try again.";
+  return message || 'Receipt scan failed. Please try again.'
 }
 
 function savePendingReceiptImage(imageDataUrl: string) {
-  if (typeof window === "undefined") return null;
+  if (typeof window === 'undefined') return null
 
-  const pending = { imageDataUrl, savedAt: new Date().toISOString() };
+  const pending = { imageDataUrl, savedAt: new Date().toISOString() }
 
   try {
-    window.localStorage.setItem(PENDING_RECEIPT_IMAGE_KEY, JSON.stringify(pending));
-    return pending;
+    window.localStorage.setItem(PENDING_RECEIPT_IMAGE_KEY, JSON.stringify(pending))
+    return pending
   } catch {
-    return null;
+    return null
   }
 }
 
 function loadPendingReceiptImage(): PendingReceiptImage | null {
-  if (typeof window === "undefined") return null;
+  if (typeof window === 'undefined') return null
 
   try {
-    const raw = window.localStorage.getItem(PENDING_RECEIPT_IMAGE_KEY);
-    if (!raw) return null;
+    const raw = window.localStorage.getItem(PENDING_RECEIPT_IMAGE_KEY)
+    if (!raw) return null
 
-    const pending = JSON.parse(raw) as Partial<PendingReceiptImage>;
+    const pending = JSON.parse(raw) as Partial<PendingReceiptImage>
     if (
-      typeof pending.imageDataUrl !== "string" ||
-      !pending.imageDataUrl.startsWith("data:image/")
+      typeof pending.imageDataUrl !== 'string' ||
+      !pending.imageDataUrl.startsWith('data:image/')
     ) {
-      window.localStorage.removeItem(PENDING_RECEIPT_IMAGE_KEY);
-      return null;
+      window.localStorage.removeItem(PENDING_RECEIPT_IMAGE_KEY)
+      return null
     }
 
     return {
       imageDataUrl: pending.imageDataUrl,
-      savedAt: typeof pending.savedAt === "string" ? pending.savedAt : new Date().toISOString(),
-    };
+      savedAt: typeof pending.savedAt === 'string' ? pending.savedAt : new Date().toISOString()
+    }
   } catch {
-    window.localStorage.removeItem(PENDING_RECEIPT_IMAGE_KEY);
-    return null;
+    window.localStorage.removeItem(PENDING_RECEIPT_IMAGE_KEY)
+    return null
   }
 }
 
 function clearPendingReceiptImage() {
-  if (typeof window === "undefined") return;
-  window.localStorage.removeItem(PENDING_RECEIPT_IMAGE_KEY);
+  if (typeof window === 'undefined') return
+  window.localStorage.removeItem(PENDING_RECEIPT_IMAGE_KEY)
 }
 
 export function ScanReceiptScreen() {
-  const { navigate, goBack, scanReceiptImage, saveReceiptScan, categories } = useAppNavigation();
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [preview, setPreview] = useState("");
-  const [scan, setScan] = useState<ReceiptScan | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
-  const [pendingReceipt, setPendingReceipt] = useState<PendingReceiptImage | null>(null);
+  const { navigate, goBack, scanReceiptImage, saveReceiptScan, categories } = useAppNavigation()
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [preview, setPreview] = useState('')
+  const [scan, setScan] = useState<ReceiptScan | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
+  const [pendingReceipt, setPendingReceipt] = useState<PendingReceiptImage | null>(null)
 
   useEffect(() => {
-    const pending = loadPendingReceiptImage();
-    if (!pending) return;
+    const pending = loadPendingReceiptImage()
+    if (!pending) return
 
-    setPendingReceipt(pending);
-    setPreview(pending.imageDataUrl);
-    setNotice(SAVED_SCAN_MESSAGE);
-  }, []);
+    setPendingReceipt(pending)
+    setPreview(pending.imageDataUrl)
+    setNotice(SAVED_SCAN_MESSAGE)
+  }, [])
 
   const scanImageDataUrl = async (imageDataUrl: string) => {
-    setError("");
-    setNotice("");
-    setLoading(true);
-    setPreview(imageDataUrl);
-    setScan(null);
+    setError('')
+    setNotice('')
+    setLoading(true)
+    setPreview(imageDataUrl)
+    setScan(null)
 
     try {
-      const result = await scanReceiptImage(imageDataUrl);
-      clearPendingReceiptImage();
-      setPendingReceipt(null);
-      setScan(result);
+      const result = await scanReceiptImage(imageDataUrl)
+      clearPendingReceiptImage()
+      setPendingReceipt(null)
+      setScan(result)
     } catch (err) {
       const pending = isTemporaryReceiptScanError(err)
         ? savePendingReceiptImage(imageDataUrl)
-        : null;
+        : null
       if (pending) {
-        setPendingReceipt(pending);
+        setPendingReceipt(pending)
       }
-      setError(receiptScanErrorMessage(err, Boolean(pending)));
+      setError(receiptScanErrorMessage(err, Boolean(pending)))
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleFile = async (file?: File) => {
-    if (!file) return;
-    setError("");
-    setNotice("");
-    setPendingReceipt(null);
-    clearPendingReceiptImage();
-    setLoading(true);
+    if (!file) return
+    setError('')
+    setNotice('')
+    setPendingReceipt(null)
+    clearPendingReceiptImage()
+    setLoading(true)
     try {
-      const compressedDataUrl = await compressImage(file);
-      await scanImageDataUrl(compressedDataUrl);
+      const compressedDataUrl = await compressImage(file)
+      await scanImageDataUrl(compressedDataUrl)
     } catch (err) {
-      setError(receiptScanErrorMessage(err, false));
-      setLoading(false);
+      setError(receiptScanErrorMessage(err, false))
+      setLoading(false)
     }
-  };
+  }
 
-  const detectedCount = scan?.items.length ?? 0;
-  const total = scan?.totalUsd ?? 0;
+  const detectedCount = scan?.items.length ?? 0
+  const total = scan?.totalUsd ?? 0
   const primaryLabel = scan
     ? `Save ${detectedCount} items`
     : preview
-      ? "Retry scan"
-      : "Scan receipt";
+      ? 'Retry scan'
+      : 'Scan receipt'
   const handlePrimaryAction = () => {
     if (scan) {
-      saveReceiptScan(scan);
-      navigate("product_tracker");
-      return;
+      saveReceiptScan(scan)
+      navigate('product_tracker')
+      return
     }
 
     if (preview) {
-      void scanImageDataUrl(preview);
-      return;
+      void scanImageDataUrl(preview)
+      return
     }
 
-    inputRef.current?.click();
-  };
+    inputRef.current?.click()
+  }
 
   return (
     <PhoneFrame>
@@ -199,12 +199,12 @@ export function ScanReceiptScreen() {
           <h2 className="text-[17px] font-bold tracking-tight">Scan receipt</h2>
           <button
             onClick={() => {
-              setPreview("");
-              setScan(null);
-              setError("");
-              setNotice("");
-              setPendingReceipt(null);
-              clearPendingReceiptImage();
+              setPreview('')
+              setScan(null)
+              setError('')
+              setNotice('')
+              setPendingReceipt(null)
+              clearPendingReceiptImage()
             }}
             className="grid h-9 w-9 place-items-center rounded-full text-muted-foreground"
             aria-label="Rescan"
@@ -219,10 +219,10 @@ export function ScanReceiptScreen() {
           accept="image/*"
           capture="environment"
           className="hidden"
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            event.currentTarget.value = "";
-            void handleFile(file);
+          onChange={event => {
+            const file = event.target.files?.[0]
+            event.currentTarget.value = ''
+            void handleFile(file)
           }}
         />
 
@@ -240,7 +240,7 @@ export function ScanReceiptScreen() {
                 <div className="h-2 w-20 rounded-sm bg-foreground/80" />
                 <div className="mt-1.5 h-1.5 w-14 rounded-sm bg-muted-foreground/40" />
                 <div className="mt-2.5 space-y-1">
-                  {[1, 2, 3, 4, 5].map((item) => (
+                  {[1, 2, 3, 4, 5].map(item => (
                     <div key={item} className="flex justify-between">
                       <span className="h-1 w-12 rounded-sm bg-muted-foreground/40" />
                       <span className="h-1 w-6 rounded-sm bg-foreground/70" />
@@ -252,25 +252,25 @@ export function ScanReceiptScreen() {
             </>
           )}
           {[
-            "top-3 left-3 border-t-2 border-l-2 rounded-tl-md",
-            "top-3 right-3 border-t-2 border-r-2 rounded-tr-md",
-            "bottom-3 left-3 border-b-2 border-l-2 rounded-bl-md",
-            "bottom-3 right-3 border-b-2 border-r-2 rounded-br-md",
-          ].map((className) => (
+            'top-3 left-3 border-t-2 border-l-2 rounded-tl-md',
+            'top-3 right-3 border-t-2 border-r-2 rounded-tr-md',
+            'bottom-3 left-3 border-b-2 border-l-2 rounded-bl-md',
+            'bottom-3 right-3 border-b-2 border-r-2 rounded-br-md'
+          ].map(className => (
             <span key={className} className={`absolute h-6 w-6 border-white/90 ${className}`} />
           ))}
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5">
             <Sparkles className="h-3 w-3 text-[var(--primary)]" strokeWidth={2.75} />
             <span className="text-[10px] font-bold tracking-wide text-foreground">
               {loading
-                ? "Reading receipt..."
+                ? 'Reading receipt...'
                 : detectedCount
                   ? `AI detected ${detectedCount} items`
                   : pendingReceipt
-                    ? "Saved receipt ready"
+                    ? 'Saved receipt ready'
                     : preview
-                      ? "Receipt ready to retry"
-                      : "Tap to scan receipt"}
+                      ? 'Receipt ready to retry'
+                      : 'Tap to scan receipt'}
             </span>
           </div>
         </button>
@@ -295,7 +295,7 @@ export function ScanReceiptScreen() {
                 <input
                   type="text"
                   value={scan.storeName}
-                  onChange={(e) => setScan({ ...scan, storeName: e.target.value })}
+                  onChange={e => setScan({ ...scan, storeName: e.target.value })}
                   className="flex-1 bg-transparent font-bold text-foreground border-b border-dashed border-muted-foreground/30 focus:border-[var(--primary)] focus:outline-none py-0.5 text-[12px]"
                   placeholder="Store name"
                 />
@@ -306,7 +306,7 @@ export function ScanReceiptScreen() {
                   <input
                     type="text"
                     value={scan.purchasedAt}
-                    onChange={(e) => setScan({ ...scan, purchasedAt: e.target.value })}
+                    onChange={e => setScan({ ...scan, purchasedAt: e.target.value })}
                     className="flex-1 bg-transparent text-muted-foreground border-b border-dashed border-muted-foreground/30 focus:border-[var(--primary)] focus:outline-none py-0.5"
                     placeholder="Date"
                   />
@@ -319,8 +319,8 @@ export function ScanReceiptScreen() {
 
             <div className="mt-3 space-y-1.5 pr-1">
               {scan.items.map((item, index) => {
-                const currencySymbol = scan.currency === "JPY" ? "¥" : "$";
-                const localValue = Math.round(usdToCurrencyValue(item.totalUsd, scan.currency));
+                const currencySymbol = scan.currency === 'JPY' ? '¥' : '$'
+                const localValue = Math.round(usdToCurrencyValue(item.totalUsd, scan.currency))
 
                 return (
                   <div
@@ -330,12 +330,12 @@ export function ScanReceiptScreen() {
                     <button
                       type="button"
                       onClick={() => {
-                        const newItems = scan.items.filter((_, i) => i !== index);
+                        const newItems = scan.items.filter((_, i) => i !== index)
                         setScan({
                           ...scan,
                           items: newItems,
-                          totalUsd: newItems.reduce((sum, it) => sum + it.totalUsd, 0),
-                        });
+                          totalUsd: newItems.reduce((sum, it) => sum + it.totalUsd, 0)
+                        })
                       }}
                       className="grid h-5 w-5 place-items-center rounded-full bg-[var(--danger)]/10 text-[var(--danger)] mt-0.5 cursor-pointer shrink-0 hover:bg-[var(--danger)]/20 text-[11px] font-bold"
                       title="Remove item"
@@ -347,10 +347,10 @@ export function ScanReceiptScreen() {
                       <input
                         type="text"
                         value={item.name}
-                        onChange={(e) => {
-                          const newItems = [...scan.items];
-                          newItems[index] = { ...item, name: e.target.value };
-                          setScan({ ...scan, items: newItems });
+                        onChange={e => {
+                          const newItems = [...scan.items]
+                          newItems[index] = { ...item, name: e.target.value }
+                          setScan({ ...scan, items: newItems })
                         }}
                         className="w-full bg-transparent font-bold text-foreground border-b border-dashed border-muted-foreground/20 focus:border-[var(--primary)] focus:outline-none text-[11.5px] py-0.5"
                         placeholder="Item name"
@@ -359,17 +359,17 @@ export function ScanReceiptScreen() {
                       <div className="flex items-center gap-2">
                         <select
                           value={item.category}
-                          onChange={(e) => {
-                            const newItems = [...scan.items];
-                            newItems[index] = { ...item, category: e.target.value };
-                            setScan({ ...scan, items: newItems });
+                          onChange={e => {
+                            const newItems = [...scan.items]
+                            newItems[index] = { ...item, category: e.target.value }
+                            setScan({ ...scan, items: newItems })
                           }}
                           className="bg-transparent text-muted-foreground text-[9.5px] border-b border-dashed border-muted-foreground/20 focus:border-[var(--primary)] focus:outline-none py-0.5 cursor-pointer max-w-[100px] truncate"
                         >
-                          {categories.every((c) => c.label !== item.category) && (
+                          {categories.every(c => c.label !== item.category) && (
                             <option value={item.category}>{item.category} (New)</option>
                           )}
-                          {categories.map((c) => (
+                          {categories.map(c => (
                             <option key={c.id} value={c.label}>
                               {c.label}
                             </option>
@@ -384,15 +384,15 @@ export function ScanReceiptScreen() {
                             type="number"
                             value={item.quantity}
                             min={1}
-                            onChange={(e) => {
-                              const qty = Math.max(1, parseInt(e.target.value) || 1);
-                              const newItems = [...scan.items];
+                            onChange={e => {
+                              const qty = Math.max(1, parseInt(e.target.value) || 1)
+                              const newItems = [...scan.items]
                               newItems[index] = {
                                 ...item,
                                 quantity: qty,
-                                unitPriceUsd: item.totalUsd / qty,
-                              };
-                              setScan({ ...scan, items: newItems });
+                                unitPriceUsd: item.totalUsd / qty
+                              }
+                              setScan({ ...scan, items: newItems })
                             }}
                             className="w-6 bg-transparent text-muted-foreground border-b border-dashed border-muted-foreground/20 focus:border-[var(--primary)] focus:outline-none text-center"
                           />
@@ -407,44 +407,44 @@ export function ScanReceiptScreen() {
                       <input
                         type="number"
                         value={localValue}
-                        onChange={(e) => {
-                          const val = parseFloat(e.target.value) || 0;
-                          const newItems = [...scan.items];
-                          const newTotalUsd = currencyValueToUsd(val, scan.currency);
+                        onChange={e => {
+                          const val = parseFloat(e.target.value) || 0
+                          const newItems = [...scan.items]
+                          const newTotalUsd = currencyValueToUsd(val, scan.currency)
                           newItems[index] = {
                             ...item,
                             totalUsd: newTotalUsd,
                             unitPriceUsd: newTotalUsd / Math.max(item.quantity, 1),
-                            originalPrice: val,
-                          };
+                            originalPrice: val
+                          }
                           setScan({
                             ...scan,
                             items: newItems,
-                            totalUsd: newItems.reduce((sum, it) => sum + it.totalUsd, 0),
-                          });
+                            totalUsd: newItems.reduce((sum, it) => sum + it.totalUsd, 0)
+                          })
                         }}
                         className="w-16 bg-transparent text-right font-bold text-foreground border-b border-dashed border-muted-foreground/20 focus:border-[var(--primary)] focus:outline-none text-[11.5px] py-0.5"
                       />
                     </div>
                   </div>
-                );
+                )
               })}
 
               <button
                 type="button"
                 onClick={() => {
-                  const defaultCategory = categories[0]?.label ?? "Groceries";
+                  const defaultCategory = categories[0]?.label ?? 'Groceries'
                   const newItem = {
-                    name: "",
+                    name: '',
                     category: defaultCategory,
                     quantity: 1,
                     unitPriceUsd: 0,
-                    totalUsd: 0,
-                  };
+                    totalUsd: 0
+                  }
                   setScan({
                     ...scan,
-                    items: [...scan.items, newItem],
-                  });
+                    items: [...scan.items, newItem]
+                  })
                 }}
                 className="mt-1.5 flex items-center justify-center gap-1.5 w-full rounded-xl border border-dashed border-muted-foreground/25 py-2 text-[11px] font-bold text-muted-foreground hover:bg-white/50 cursor-pointer"
               >
@@ -478,12 +478,12 @@ export function ScanReceiptScreen() {
         </div>
         <button
           type="button"
-          onClick={() => navigate("add_expense")}
+          onClick={() => navigate('add_expense')}
           className="mt-2 w-full rounded-full bg-white py-2.5 text-[12px] font-semibold text-[var(--primary)]"
         >
           Enter manually
         </button>
       </div>
     </PhoneFrame>
-  );
+  )
 }

@@ -1,10 +1,10 @@
-import { TxnKind } from "./core";
+import type { TxnKind } from './core'
 
 export interface HistoryFilters {
-  kind: TxnKind;
-  member: string;
-  categories: string[];
-  sort: string;
-  minUsd: number;
-  maxUsd: number;
+  kind: TxnKind
+  member: string
+  categories: string[]
+  sort: string
+  minUsd: number
+  maxUsd: number
 }

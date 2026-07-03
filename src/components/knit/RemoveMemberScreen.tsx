@@ -1,6 +1,6 @@
-import { UserMinus } from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { useAppNavigation } from "@/lib/navigation";
+import { UserMinus } from 'lucide-react'
+import { useAppNavigation } from '@/lib/navigation'
+import { PhoneFrame } from './PhoneFrame'
 
 export function RemoveMemberScreen() {
   const {
@@ -10,17 +10,17 @@ export function RemoveMemberScreen() {
     selectedMemberId,
     selectedMemberIds,
     setSelectedMemberIds,
-    removeMembers,
-  } = useAppNavigation();
+    removeMembers
+  } = useAppNavigation()
   const targetIds =
-    selectedMemberIds.length > 0 ? selectedMemberIds : selectedMemberId ? [selectedMemberId] : [];
-  const selectedMembers = members.filter((member) => targetIds.includes(member.id));
+    selectedMemberIds.length > 0 ? selectedMemberIds : selectedMemberId ? [selectedMemberId] : []
+  const selectedMembers = members.filter(member => targetIds.includes(member.id))
   const memberName =
     selectedMembers.length === 1
       ? selectedMembers[0].name
       : selectedMembers.length > 1
         ? `${selectedMembers.length} members`
-        : "No member selected";
+        : 'No member selected'
 
   return (
     <PhoneFrame>
@@ -43,19 +43,19 @@ export function RemoveMemberScreen() {
               <UserMinus className="h-5 w-5" strokeWidth={2.25} />
             </div>
             <h3 className="mt-3 font-display text-[20px] tracking-tight text-foreground">
-              {selectedMembers.length > 0 ? `Remove ${memberName}?` : "No member selected"}
+              {selectedMembers.length > 0 ? `Remove ${memberName}?` : 'No member selected'}
             </h3>
             <p className="mt-1 text-[12px] text-muted-foreground">
-              <span className="font-semibold text-foreground">{memberName}</span>{" "}
+              <span className="font-semibold text-foreground">{memberName}</span>{' '}
               {selectedMembers.length > 0
-                ? "will lose access to shared wallets, goals and the family ledger. Their personal wallet stays intact."
-                : "Create or invite a member before removing access."}
+                ? 'will lose access to shared wallets, goals and the family ledger. Their personal wallet stays intact.'
+                : 'Create or invite a member before removing access.'}
             </p>
           </div>
 
           {selectedMembers.length > 1 && (
             <div className="mt-4 max-h-28 space-y-1 overflow-y-auto rounded-2xl bg-[var(--muted)] p-2">
-              {selectedMembers.map((member) => (
+              {selectedMembers.map(member => (
                 <div
                   key={member.id}
                   className="flex items-center justify-between rounded-xl bg-white px-3 py-2 text-[11px]"
@@ -68,7 +68,7 @@ export function RemoveMemberScreen() {
           )}
 
           <div className="mt-4 rounded-2xl bg-[var(--muted)] px-3 py-2.5 text-[11px] text-muted-foreground">
-            Tip: switch role to <span className="font-semibold text-foreground">View only</span>{" "}
+            Tip: switch role to <span className="font-semibold text-foreground">View only</span>{' '}
             instead if you just want to pause access.
           </div>
 
@@ -82,20 +82,20 @@ export function RemoveMemberScreen() {
             <button
               onClick={() => {
                 if (selectedMembers.length === 0) {
-                  navigate("invite_member");
-                  return;
+                  navigate('invite_member')
+                  return
                 }
-                removeMembers(selectedMembers.map((member) => member.id));
-                setSelectedMemberIds([]);
-                navigate("family");
+                removeMembers(selectedMembers.map(member => member.id))
+                setSelectedMemberIds([])
+                navigate('family')
               }}
               className="flex-1 rounded-full bg-[var(--danger)] py-3 text-[13px] font-semibold text-white"
             >
-              {selectedMembers.length > 0 ? "Remove" : "Invite member"}
+              {selectedMembers.length > 0 ? 'Remove' : 'Invite member'}
             </button>
           </div>
         </div>
       </div>
     </PhoneFrame>
-  );
+  )
 }

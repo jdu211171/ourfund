@@ -1,47 +1,47 @@
-import { ArrowLeft, Mail, MessageSquare, Link2, Copy, Check } from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { useState } from "react";
-import { useAppNavigation } from "@/lib/navigation";
-import { InviteeEmailField, isValidEmail } from "./InviteeEmailField";
+import { ArrowLeft, Check, Copy, Link2, Mail, MessageSquare } from 'lucide-react'
+import { useState } from 'react'
+import { useAppNavigation } from '@/lib/navigation'
+import { InviteeEmailField, isValidEmail } from './InviteeEmailField'
+import { PhoneFrame } from './PhoneFrame'
 
-const roles = ["Admin", "Adult", "Teen", "Kid"];
+const roles = ['Admin', 'Adult', 'Teen', 'Kid']
 
 export function InviteMemberScreen() {
-  const { navigate, goBack, household, inviteMember } = useAppNavigation();
-  const [selectedRoleIdx, setSelectedRoleIdx] = useState(2);
-  const [copied, setCopied] = useState(false);
-  const [inviteMethod, setInviteMethod] = useState<"email" | "sms" | "link">("email");
-  const [email, setEmail] = useState("");
-  const [error, setError] = useState("");
-  const inviteCode = household?.inviteCode ?? "CREATE";
+  const { navigate, goBack, household, inviteMember } = useAppNavigation()
+  const [selectedRoleIdx, setSelectedRoleIdx] = useState(2)
+  const [copied, setCopied] = useState(false)
+  const [inviteMethod, setInviteMethod] = useState<'email' | 'sms' | 'link'>('email')
+  const [email, setEmail] = useState('')
+  const [error, setError] = useState('')
+  const inviteCode = household?.inviteCode ?? 'CREATE'
 
   const handleCopy = () => {
-    if (household) void navigator.clipboard?.writeText(inviteCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+    if (household) void navigator.clipboard?.writeText(inviteCode)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   const sendInvite = () => {
     if (!household) {
-      navigate("signup");
-      return;
+      navigate('signup')
+      return
     }
-    if (inviteMethod !== "email") return;
-    const trimmedEmail = email.trim();
+    if (inviteMethod !== 'email') return
+    const trimmedEmail = email.trim()
     if (!trimmedEmail) {
-      setError("Enter an email address to send the invite.");
-      return;
+      setError('Enter an email address to send the invite.')
+      return
     }
     if (!isValidEmail(trimmedEmail)) {
-      setError("Enter a valid email address before sending.");
-      return;
+      setError('Enter a valid email address before sending.')
+      return
     }
-    setError("");
-    inviteMember(roles[selectedRoleIdx] as "Admin" | "Adult" | "Teen" | "Kid", trimmedEmail);
-    navigate("permissions");
-  };
+    setError('')
+    inviteMember(roles[selectedRoleIdx] as 'Admin' | 'Adult' | 'Teen' | 'Kid', trimmedEmail)
+    navigate('permissions')
+  }
 
-  const canSendEmail = inviteMethod === "email" && isValidEmail(email);
+  const canSendEmail = inviteMethod === 'email' && isValidEmail(email)
 
   return (
     <PhoneFrame>
@@ -77,11 +77,11 @@ export function InviteMemberScreen() {
           <p className="text-[11px] opacity-80">
             {copied
               ? household
-                ? "Copied code!"
-                : "Create a household first"
+                ? 'Copied code!'
+                : 'Create a household first'
               : household
-                ? "Code expires in 7 days"
-                : "Create a household to invite members"}
+                ? 'Code expires in 7 days'
+                : 'Create a household to invite members'}
           </p>
         </div>
 
@@ -112,75 +112,75 @@ export function InviteMemberScreen() {
         <div className="mt-2 space-y-2">
           {[
             {
-              key: "email" as const,
+              key: 'email' as const,
               Icon: Mail,
-              label: "Email invitation",
-              sub: "Send to an email address",
-              enabled: true,
+              label: 'Email invitation',
+              sub: 'Send to an email address',
+              enabled: true
             },
             {
-              key: "sms" as const,
+              key: 'sms' as const,
               Icon: MessageSquare,
-              label: "SMS / iMessage",
-              sub: "Text the invite to a phone",
-              enabled: false,
+              label: 'SMS / iMessage',
+              sub: 'Text the invite to a phone',
+              enabled: false
             },
             {
-              key: "link" as const,
+              key: 'link' as const,
               Icon: Link2,
-              label: "Share link",
-              sub: "Copy a one-time invite link",
-              enabled: false,
-            },
-          ].map((m) => (
+              label: 'Share link',
+              sub: 'Copy a one-time invite link',
+              enabled: false
+            }
+          ].map(m => (
             <button
               key={m.label}
               onClick={() => {
-                if (!m.enabled) return;
-                setInviteMethod(m.key);
-                setError("");
+                if (!m.enabled) return
+                setInviteMethod(m.key)
+                setError('')
               }}
               disabled={!m.enabled}
               className={`flex w-full items-center gap-3 rounded-2xl px-3 py-3 shadow-[var(--shadow-soft)] transition-colors ${
                 m.enabled
                   ? inviteMethod === m.key
-                    ? "bg-[var(--accent)] ring-2 ring-[var(--primary)]"
-                    : "bg-[var(--card)] hover:bg-[var(--muted)] active:scale-[0.98] cursor-pointer"
-                  : "bg-[var(--card)]/70 cursor-not-allowed"
+                    ? 'bg-[var(--accent)] ring-2 ring-[var(--primary)]'
+                    : 'bg-[var(--card)] hover:bg-[var(--muted)] active:scale-[0.98] cursor-pointer'
+                  : 'bg-[var(--card)]/70 cursor-not-allowed'
               }`}
             >
               <div
                 className={`grid h-10 w-10 place-items-center rounded-xl ${
                   m.enabled
-                    ? "bg-[var(--muted)] text-[var(--primary)]"
-                    : "bg-[var(--danger)]/15 text-[var(--danger)]"
+                    ? 'bg-[var(--muted)] text-[var(--primary)]'
+                    : 'bg-[var(--danger)]/15 text-[var(--danger)]'
                 }`}
               >
                 <m.Icon className="h-4 w-4" strokeWidth={2.25} />
               </div>
               <div className="flex-1 text-left leading-tight">
                 <p
-                  className={`text-[12px] font-bold ${m.enabled ? "text-foreground" : "text-[var(--danger)]"}`}
+                  className={`text-[12px] font-bold ${m.enabled ? 'text-foreground' : 'text-[var(--danger)]'}`}
                 >
                   {m.label}
                 </p>
                 <p
-                  className={`text-[10px] ${m.enabled ? "text-muted-foreground" : "text-[var(--danger)]/80"}`}
+                  className={`text-[10px] ${m.enabled ? 'text-muted-foreground' : 'text-[var(--danger)]/80'}`}
                 >
-                  {m.enabled ? m.sub : "Coming soon"}
+                  {m.enabled ? m.sub : 'Coming soon'}
                 </p>
               </div>
             </button>
           ))}
         </div>
 
-        {inviteMethod === "email" && (
+        {inviteMethod === 'email' && (
           <div className="mt-3">
             <InviteeEmailField
               value={email}
-              onChange={(next) => {
-                setEmail(next);
-                if (error) setError("");
+              onChange={next => {
+                setEmail(next)
+                if (error) setError('')
               }}
               externalError={error || null}
             />
@@ -192,9 +192,9 @@ export function InviteMemberScreen() {
           disabled={household ? !canSendEmail : false}
           className="mt-auto w-full rounded-full bg-[var(--primary)] py-4 text-[15px] font-semibold text-[var(--primary-foreground)] active:scale-95 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {household ? "Send invite" : "Create household"}
+          {household ? 'Send invite' : 'Create household'}
         </button>
       </div>
     </PhoneFrame>
-  );
+  )
 }

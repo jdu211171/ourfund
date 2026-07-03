@@ -1,84 +1,84 @@
 export type ScreenName =
-  | "onboarding"
-  | "login"
-  | "signup"
-  | "reset_password"
-  | "join_family"
-  | "join_family_error"
-  | "confirm_invite"
-  | "home"
-  | "more"
-  | "wallet"
-  | "new_wallet"
-  | "wallet_switcher"
-  | "wallet_detail"
-  | "connect_bank"
-  | "plaid_connecting"
-  | "plaid_success"
-  | "categories"
-  | "new_category"
-  | "subscriptions"
-  | "recurring_income"
-  | "new_goal"
-  | "goal_detail"
-  | "monthly_history"
-  | "edit_goal"
-  | "goal_withdraw"
-  | "goal_achieved"
-  | "reports_week"
-  | "reports_month"
-  | "reports_year"
-  | "analytics"
-  | "alerts"
-  | "family"
-  | "invite_member"
-  | "permissions"
-  | "allowance"
-  | "settings"
-  | "edit_profile"
-  | "passcode"
-  | "notif_prefs"
-  | "currency"
-  | "empty_history"
-  | "remove_member"
-  | "add_expense"
-  | "add_income"
-  | "transfer"
-  | "expense_detail"
-  | "income_detail"
-  | "edit_expense"
-  | "delete_confirm"
-  | "delete_goal_confirm"
-  | "filter_sort"
-  | "receipt"
-  | "history_search"
-  | "lend_borrow"
-  | "calc_salary"
-  | "product_tracker"
-  | "scan_receipt"
-  | "buy_list"
-  | "saved_lists"
-  | "price_history";
+  | 'onboarding'
+  | 'login'
+  | 'signup'
+  | 'reset_password'
+  | 'join_family'
+  | 'join_family_error'
+  | 'confirm_invite'
+  | 'home'
+  | 'more'
+  | 'wallet'
+  | 'new_wallet'
+  | 'wallet_switcher'
+  | 'wallet_detail'
+  | 'connect_bank'
+  | 'plaid_connecting'
+  | 'plaid_success'
+  | 'categories'
+  | 'new_category'
+  | 'subscriptions'
+  | 'recurring_income'
+  | 'new_goal'
+  | 'goal_detail'
+  | 'monthly_history'
+  | 'edit_goal'
+  | 'goal_withdraw'
+  | 'goal_achieved'
+  | 'reports_week'
+  | 'reports_month'
+  | 'reports_year'
+  | 'analytics'
+  | 'alerts'
+  | 'family'
+  | 'invite_member'
+  | 'permissions'
+  | 'allowance'
+  | 'settings'
+  | 'edit_profile'
+  | 'passcode'
+  | 'notif_prefs'
+  | 'currency'
+  | 'empty_history'
+  | 'remove_member'
+  | 'add_expense'
+  | 'add_income'
+  | 'transfer'
+  | 'expense_detail'
+  | 'income_detail'
+  | 'edit_expense'
+  | 'delete_confirm'
+  | 'delete_goal_confirm'
+  | 'filter_sort'
+  | 'receipt'
+  | 'history_search'
+  | 'lend_borrow'
+  | 'calc_salary'
+  | 'product_tracker'
+  | 'scan_receipt'
+  | 'buy_list'
+  | 'saved_lists'
+  | 'price_history'
 
-export type BudgetMode = "personal" | "family";
-export type SalaryCalculationPeriod = "monthly" | "annual";
-export type ReportPeriod = "Week" | "Month" | "Year";
+export type BudgetMode = 'personal' | 'family'
+export type SalaryCalculationPeriod = 'monthly' | 'annual'
+export type ReportPeriod = 'Week' | 'Month' | 'Year'
 export type CurrencyCode =
-  | "UZS"
-  | "USD"
-  | "EUR"
-  | "GBP"
-  | "AUD"
-  | "JPY"
-  | "CHF"
-  | "SEK"
-  | "NOK"
-  | "DKK"
-  | "MXN"
-  | "BRL";
-export type WalletType = "shared" | "private" | "connected";
-export type MemberRole = "Admin" | "Adult" | "Teen" | "Kid";
-export type NotificationTone = "success" | "danger" | "warn" | "primary";
-export type TxnKind = "All" | "Expense" | "Income" | "Goals" | "Transfer";
-export type LoanDirection = "lent" | "borrowed";
-export type LoanStatus = "pending" | "paid" | "overdue";
+  | 'UZS'
+  | 'USD'
+  | 'EUR'
+  | 'GBP'
+  | 'AUD'
+  | 'JPY'
+  | 'CHF'
+  | 'SEK'
+  | 'NOK'
+  | 'DKK'
+  | 'MXN'
+  | 'BRL'
+export type WalletType = 'shared' | 'private' | 'connected'
+export type MemberRole = 'Admin' | 'Adult' | 'Teen' | 'Kid'
+export type NotificationTone = 'success' | 'danger' | 'warn' | 'primary'
+export type TxnKind = 'All' | 'Expense' | 'Income' | 'Goals' | 'Transfer'
+export type LoanDirection = 'lent' | 'borrowed'
+export type LoanStatus = 'pending' | 'paid' | 'overdue'

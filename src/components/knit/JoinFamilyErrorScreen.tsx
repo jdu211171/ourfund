@@ -1,23 +1,23 @@
-import { ArrowLeft, Users, AlertCircle } from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { useAppNavigation } from "@/lib/navigation";
-import { useState } from "react";
+import { AlertCircle, ArrowLeft, Users } from 'lucide-react'
+import { useState } from 'react'
+import { useAppNavigation } from '@/lib/navigation'
+import { PhoneFrame } from './PhoneFrame'
 
 export function JoinFamilyErrorScreen() {
-  const { goBack, navigate, validateInviteCode } = useAppNavigation();
-  const [code, setCode] = useState("");
-  const [loading, setLoading] = useState(false);
+  const { goBack, navigate, validateInviteCode } = useAppNavigation()
+  const [code, setCode] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const tryCode = async () => {
-    if (!code.trim()) return;
-    setLoading(true);
+    if (!code.trim()) return
+    setLoading(true)
     try {
-      const invite = await validateInviteCode(code);
-      navigate(invite ? "confirm_invite" : "join_family_error");
+      const invite = await validateInviteCode(code)
+      navigate(invite ? 'confirm_invite' : 'join_family_error')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <PhoneFrame>
@@ -34,7 +34,7 @@ export function JoinFamilyErrorScreen() {
           <div
             className="grid h-14 w-14 place-items-center rounded-2xl text-white shadow-[var(--shadow-tile)]"
             style={{
-              background: "linear-gradient(135deg, oklch(0.65 0.22 265), oklch(0.45 0.24 265))",
+              background: 'linear-gradient(135deg, oklch(0.65 0.22 265), oklch(0.45 0.24 265))'
             }}
           >
             <Users className="h-6 w-6" strokeWidth={2.25} />
@@ -54,7 +54,7 @@ export function JoinFamilyErrorScreen() {
           <input
             type="text"
             value={code}
-            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            onChange={e => setCode(e.target.value.toUpperCase())}
             placeholder="Enter code"
             className="mt-2 w-full rounded-2xl bg-white px-4 py-4 text-center text-[18px] font-extrabold tracking-[0.3em] text-foreground shadow-[var(--shadow-soft)] outline-none ring-2 ring-[var(--danger)]/60"
           />
@@ -69,11 +69,11 @@ export function JoinFamilyErrorScreen() {
         <button
           onClick={tryCode}
           disabled={!code.trim() || loading}
-          className={`mt-auto w-full rounded-full py-4 text-[15px] font-semibold transition-opacity ${code.trim() && !loading ? "bg-[oklch(0.18_0.04_265)] text-white" : "bg-[var(--muted)] text-muted-foreground opacity-50"}`}
+          className={`mt-auto w-full rounded-full py-4 text-[15px] font-semibold transition-opacity ${code.trim() && !loading ? 'bg-[oklch(0.18_0.04_265)] text-white' : 'bg-[var(--muted)] text-muted-foreground opacity-50'}`}
         >
-          {loading ? "Checking..." : "Try code"}
+          {loading ? 'Checking...' : 'Try code'}
         </button>
       </div>
     </PhoneFrame>
-  );
+  )
 }

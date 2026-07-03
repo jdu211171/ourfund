@@ -1,36 +1,36 @@
-import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Plus, ShoppingCart, Copy, Trash2, ChevronRight } from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { useAppNavigation } from "@/lib/navigation";
-import { findCheapest, fmtYen } from "@/lib/buy-list-history";
+import { ArrowLeft, ChevronRight, Copy, Plus, ShoppingCart, Trash2 } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { findCheapest, fmtYen } from '@/lib/buy-list-history'
+import { useAppNavigation } from '@/lib/navigation'
+import { PhoneFrame } from './PhoneFrame'
 
-type Unit = "pcs" | "kg" | "g" | "L" | "ml" | "pack";
-type Item = { id: string; name: string; qty: number; unit: Unit; done?: boolean };
-type BuyList = { id: string; name: string; items: Item[]; updatedAt?: number };
+type Unit = 'pcs' | 'kg' | 'g' | 'L' | 'ml' | 'pack'
+type Item = { id: string; name: string; qty: number; unit: Unit; done?: boolean }
+type BuyList = { id: string; name: string; items: Item[]; updatedAt?: number }
 
-const STORAGE_KEY = "nest.buylists.v1";
+const STORAGE_KEY = 'nest.buylists.v1'
 
 const uid = () =>
-  (typeof crypto !== "undefined" && "randomUUID" in crypto
+  (typeof crypto !== 'undefined' && 'randomUUID' in crypto
     ? crypto.randomUUID()
-    : Math.random().toString(36).slice(2)) as string;
+    : Math.random().toString(36).slice(2)) as string
 
 function loadLists(): BuyList[] {
-  if (typeof window === "undefined") return [];
+  if (typeof window === 'undefined') return []
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as BuyList[];
-    return Array.isArray(parsed) ? parsed : [];
+    const raw = window.localStorage.getItem(STORAGE_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw) as BuyList[]
+    return Array.isArray(parsed) ? parsed : []
   } catch {
-    return [];
+    return []
   }
 }
 
 function saveLists(lists: BuyList[]) {
-  if (typeof window === "undefined") return;
+  if (typeof window === 'undefined') return
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(lists));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(lists))
   } catch {
     /* ignore */
   }
@@ -38,114 +38,114 @@ function saveLists(lists: BuyList[]) {
 
 function estimateTotal(items: Item[], dbProducts: any[] = []): number {
   return items.reduce((sum, it) => {
-    const c = findCheapest(it.name, dbProducts);
-    return c ? sum + c.price * it.qty : sum;
-  }, 0);
+    const c = findCheapest(it.name, dbProducts)
+    return c ? sum + c.price * it.qty : sum
+  }, 0)
 }
 
 function relativeTime(ts?: number): string {
-  if (!ts) return "Never edited";
-  const diff = Date.now() - ts;
-  const mins = Math.round(diff / 60000);
-  if (mins < 1) return "Just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.round(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.round(hrs / 24);
-  if (days < 30) return `${days}d ago`;
-  return `${Math.round(days / 30)}mo ago`;
+  if (!ts) return 'Never edited'
+  const diff = Date.now() - ts
+  const mins = Math.round(diff / 60000)
+  if (mins < 1) return 'Just now'
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.round(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  const days = Math.round(hrs / 24)
+  if (days < 30) return `${days}d ago`
+  return `${Math.round(days / 30)}mo ago`
 }
 
 export function SavedListsScreen() {
-  const { goBack, trackedProducts } = useAppNavigation();
-  const [lists, setLists] = useState<BuyList[]>([]);
-  const [hydrated, setHydrated] = useState(false);
+  const { goBack, trackedProducts } = useAppNavigation()
+  const [lists, setLists] = useState<BuyList[]>([])
+  const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
-    const loaded = loadLists();
+    const loaded = loadLists()
     if (loaded.length) {
-      setLists(loaded);
+      setLists(loaded)
     } else {
       const seed: BuyList[] = [
         {
           id: uid(),
-          name: "Weekly groceries",
+          name: 'Weekly groceries',
           updatedAt: Date.now() - 1000 * 60 * 60 * 5,
           items: [
-            { id: uid(), name: "Milk 1L", qty: 2, unit: "pcs" },
-            { id: uid(), name: "Rice 5kg", qty: 1, unit: "pcs" },
-            { id: uid(), name: "Bananas", qty: 1, unit: "kg" },
-            { id: uid(), name: "Tomatoes", qty: 3, unit: "pcs", done: true },
-          ],
+            { id: uid(), name: 'Milk 1L', qty: 2, unit: 'pcs' },
+            { id: uid(), name: 'Rice 5kg', qty: 1, unit: 'pcs' },
+            { id: uid(), name: 'Bananas', qty: 1, unit: 'kg' },
+            { id: uid(), name: 'Tomatoes', qty: 3, unit: 'pcs', done: true }
+          ]
         },
         {
           id: uid(),
-          name: "Birthday party",
+          name: 'Birthday party',
           updatedAt: Date.now() - 1000 * 60 * 60 * 28,
           items: [
-            { id: uid(), name: "Bread loaf", qty: 2, unit: "pcs" },
-            { id: uid(), name: "Chicken breast 1kg", qty: 2, unit: "pcs" },
-          ],
+            { id: uid(), name: 'Bread loaf', qty: 2, unit: 'pcs' },
+            { id: uid(), name: 'Chicken breast 1kg', qty: 2, unit: 'pcs' }
+          ]
         },
         {
           id: uid(),
-          name: "Pantry restock",
+          name: 'Pantry restock',
           updatedAt: Date.now() - 1000 * 60 * 60 * 24 * 6,
           items: [
-            { id: uid(), name: "Pasta 500g", qty: 4, unit: "pcs" },
-            { id: uid(), name: "Olive oil 1L", qty: 1, unit: "pcs" },
-            { id: uid(), name: "Coffee beans 200g", qty: 2, unit: "pcs" },
-          ],
-        },
-      ];
-      setLists(seed);
+            { id: uid(), name: 'Pasta 500g', qty: 4, unit: 'pcs' },
+            { id: uid(), name: 'Olive oil 1L', qty: 1, unit: 'pcs' },
+            { id: uid(), name: 'Coffee beans 200g', qty: 2, unit: 'pcs' }
+          ]
+        }
+      ]
+      setLists(seed)
     }
-    setHydrated(true);
-  }, []);
+    setHydrated(true)
+  }, [])
 
   useEffect(() => {
-    if (hydrated) saveLists(lists);
-  }, [lists, hydrated]);
+    if (hydrated) saveLists(lists)
+  }, [lists, hydrated])
 
   const summaries = useMemo(
     () =>
-      lists.map((l) => {
-        const done = l.items.filter((i) => i.done).length;
+      lists.map(l => {
+        const done = l.items.filter(i => i.done).length
         return {
           ...l,
           total: estimateTotal(l.items, trackedProducts),
-          progress: l.items.length ? done / l.items.length : 0,
-        };
+          progress: l.items.length ? done / l.items.length : 0
+        }
       }),
-    [lists, trackedProducts],
-  );
+    [lists, trackedProducts]
+  )
 
-  const totalEstimate = summaries.reduce((s, l) => s + l.total, 0);
+  const totalEstimate = summaries.reduce((s, l) => s + l.total, 0)
 
   const newList = () => {
     const l: BuyList = {
       id: uid(),
       name: `List ${lists.length + 1}`,
       items: [],
-      updatedAt: Date.now(),
-    };
-    setLists((s) => [l, ...s]);
-  };
+      updatedAt: Date.now()
+    }
+    setLists(s => [l, ...s])
+  }
 
   const duplicate = (id: string) => {
-    const src = lists.find((l) => l.id === id);
-    if (!src) return;
+    const src = lists.find(l => l.id === id)
+    if (!src) return
     const copy: BuyList = {
       ...src,
       id: uid(),
       name: `${src.name} copy`,
-      items: src.items.map((it) => ({ ...it, id: uid(), done: false })),
-      updatedAt: Date.now(),
-    };
-    setLists((s) => [copy, ...s]);
-  };
+      items: src.items.map(it => ({ ...it, id: uid(), done: false })),
+      updatedAt: Date.now()
+    }
+    setLists(s => [copy, ...s])
+  }
 
-  const remove = (id: string) => setLists((s) => s.filter((l) => l.id !== id));
+  const remove = (id: string) => setLists(s => s.filter(l => l.id !== id))
 
   return (
     <PhoneFrame>
@@ -171,7 +171,7 @@ export function SavedListsScreen() {
         {/* Summary */}
         <div className="mt-4 rounded-2xl bg-[var(--primary)] px-4 py-3 text-white shadow-[var(--shadow-soft)]">
           <p className="text-[10px] uppercase tracking-widest opacity-80">
-            Across {summaries.length} list{summaries.length === 1 ? "" : "s"}
+            Across {summaries.length} list{summaries.length === 1 ? '' : 's'}
           </p>
           <p className="mt-0.5 font-display text-[26px] leading-none tracking-tight tabular-nums">
             {fmtYen(totalEstimate)}
@@ -195,7 +195,7 @@ export function SavedListsScreen() {
             </div>
           )}
 
-          {summaries.map((l) => (
+          {summaries.map(l => (
             <article
               key={l.id}
               className="rounded-2xl bg-white px-3 py-3 shadow-[var(--shadow-soft)]"
@@ -210,7 +210,7 @@ export function SavedListsScreen() {
                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </div>
                   <p className="mt-0.5 text-[10px] text-muted-foreground">
-                    {l.items.length} item{l.items.length === 1 ? "" : "s"} · {fmtYen(l.total)} ·{" "}
+                    {l.items.length} item{l.items.length === 1 ? '' : 's'} · {fmtYen(l.total)} ·{' '}
                     {relativeTime(l.updatedAt)}
                   </p>
                   <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-[var(--muted)]">
@@ -242,5 +242,5 @@ export function SavedListsScreen() {
         </div>
       </div>
     </PhoneFrame>
-  );
+  )
 }

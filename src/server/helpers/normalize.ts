@@ -1,50 +1,50 @@
-import { currencyMeta } from "../../lib/currency";
+import { currencyMeta } from '../../lib/currency'
 
 export const defaultNotificationPrefs = {
-  "Category at 80%": true,
-  "Category over budget": true,
-  "Large transaction": false,
-  "New member expense": true,
-  "Transfer requests": true,
-  "Goal contributions": false,
-  "Daily digest": true,
-  "Weekly report": true,
-  "Bill reminders": true,
-};
+  'Category at 80%': true,
+  'Category over budget': true,
+  'Large transaction': false,
+  'New member expense': true,
+  'Transfer requests': true,
+  'Goal contributions': false,
+  'Daily digest': true,
+  'Weekly report': true,
+  'Bill reminders': true
+}
 
 export const defaultHistoryFilters = {
-  kind: "All",
-  member: "Anyone",
+  kind: 'All',
+  member: 'Anyone',
   categories: [],
-  sort: "Newest",
+  sort: 'Newest',
   minUsd: 0,
-  maxUsd: 5000,
-};
+  maxUsd: 5000
+}
 
 export function asRecord(value: unknown): Record<string, any> {
-  return value && typeof value === "object" && !Array.isArray(value)
+  return value && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, any>)
-    : {};
+    : {}
 }
 
 export function normalizeBudgetMode(value: unknown) {
-  return value === "family" ? "family" : "personal";
+  return value === 'family' ? 'family' : 'personal'
 }
 
 export function normalizeReportPeriod(value: unknown) {
-  return value === "Week" || value === "Year" ? value : "Month";
+  return value === 'Week' || value === 'Year' ? value : 'Month'
 }
 
 export function normalizeHistoryFilters(value: unknown) {
-  const filters = asRecord(value);
-  const kind = ["All", "Expense", "Income", "Goals", "Transfer"].includes(String(filters.kind))
+  const filters = asRecord(value)
+  const kind = ['All', 'Expense', 'Income', 'Goals', 'Transfer'].includes(String(filters.kind))
     ? String(filters.kind)
-    : defaultHistoryFilters.kind;
-  const sort = ["Newest", "Oldest", "Highest amount", "Lowest amount"].includes(
-    String(filters.sort),
+    : defaultHistoryFilters.kind
+  const sort = ['Newest', 'Oldest', 'Highest amount', 'Lowest amount'].includes(
+    String(filters.sort)
   )
     ? String(filters.sort)
-    : defaultHistoryFilters.sort;
+    : defaultHistoryFilters.sort
   return {
     ...defaultHistoryFilters,
     ...filters,
@@ -56,12 +56,12 @@ export function normalizeHistoryFilters(value: unknown) {
       : defaultHistoryFilters.minUsd,
     maxUsd: Number.isFinite(Number(filters.maxUsd))
       ? Number(filters.maxUsd)
-      : defaultHistoryFilters.maxUsd,
-  };
+      : defaultHistoryFilters.maxUsd
+  }
 }
 
 export function normalizeCurrencyCode(value: unknown, fallback: string) {
-  const upper = String(value || fallback || "JPY").toUpperCase();
-  const normalized = upper === "YEN" ? "JPY" : upper;
-  return normalized in currencyMeta ? normalized : fallback in currencyMeta ? fallback : "JPY";
+  const upper = String(value || fallback || 'JPY').toUpperCase()
+  const normalized = upper === 'YEN' ? 'JPY' : upper
+  return normalized in currencyMeta ? normalized : fallback in currencyMeta ? fallback : 'JPY'
 }

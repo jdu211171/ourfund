@@ -1,174 +1,174 @@
-import { Mail, Lock, Eye } from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { useState, useEffect, useRef, useCallback } from "react";
-import { useAppNavigation } from "@/lib/navigation";
+import { Eye, Lock, Mail } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useAppNavigation } from '@/lib/navigation'
 import {
   loginWithEmailServerFn,
   loginWithGoogleServerFn,
-  requestPasswordResetServerFn,
-} from "@/lib/server-fns";
+  requestPasswordResetServerFn
+} from '@/lib/server-fns'
+import { PhoneFrame } from './PhoneFrame'
 
-const GOOGLE_CLIENT_ID = "648158368972-tl49o2fco00r73tor6c4es4kqs9ash9m.apps.googleusercontent.com";
-const GSI_SRC = "https://accounts.google.com/gsi/client";
+const GOOGLE_CLIENT_ID = '648158368972-tl49o2fco00r73tor6c4es4kqs9ash9m.apps.googleusercontent.com'
+const GSI_SRC = 'https://accounts.google.com/gsi/client'
 
 interface GoogleCredentialResponse {
-  credential: string;
+  credential: string
 }
 
 interface GoogleAccountsClient {
   accounts: {
     id: {
       initialize: (options: {
-        client_id: string;
-        callback: (response: GoogleCredentialResponse) => void;
-        ux_mode: "popup";
-      }) => void;
+        client_id: string
+        callback: (response: GoogleCredentialResponse) => void
+        ux_mode: 'popup'
+      }) => void
       renderButton: (
         element: HTMLElement,
         options: {
-          theme: "outline";
-          size: "large";
-          width: number;
-          text: "signin_with";
-          shape: "pill";
-        },
-      ) => void;
-    };
-  };
+          theme: 'outline'
+          size: 'large'
+          width: number
+          text: 'signin_with'
+          shape: 'pill'
+        }
+      ) => void
+    }
+  }
 }
 
-type GoogleWindow = Window & typeof globalThis & { google?: GoogleAccountsClient };
+type GoogleWindow = Window & typeof globalThis & { google?: GoogleAccountsClient }
 
 function errorMessage(err: unknown, fallback: string) {
-  return err instanceof Error ? err.message : fallback;
+  return err instanceof Error ? err.message : fallback
 }
 
 function loadGsi(): Promise<GoogleAccountsClient | null> {
-  if (typeof window === "undefined") return Promise.resolve(null);
-  const win = window as GoogleWindow;
+  if (typeof window === 'undefined') return Promise.resolve(null)
+  const win = window as GoogleWindow
   if (win.google && win.google.accounts && win.google.accounts.id) {
-    return Promise.resolve(win.google);
+    return Promise.resolve(win.google)
   }
   return new Promise((resolve, reject) => {
-    const existing = document.querySelector(`script[src="${GSI_SRC}"]`);
+    const existing = document.querySelector(`script[src="${GSI_SRC}"]`)
     if (existing) {
-      existing.addEventListener("load", () => resolve(win.google ?? null));
-      existing.addEventListener("error", reject);
-      return;
+      existing.addEventListener('load', () => resolve(win.google ?? null))
+      existing.addEventListener('error', reject)
+      return
     }
-    const s = document.createElement("script");
-    s.src = GSI_SRC;
-    s.async = true;
-    s.defer = true;
-    s.onload = () => resolve(win.google ?? null);
-    s.onerror = reject;
-    document.head.appendChild(s);
-  });
+    const s = document.createElement('script')
+    s.src = GSI_SRC
+    s.async = true
+    s.defer = true
+    s.onload = () => resolve(win.google ?? null)
+    s.onerror = reject
+    document.head.appendChild(s)
+  })
 }
 
 export function LoginScreen() {
-  const { navigate, profile, pendingInvite, syncDataAfterLogin } = useAppNavigation();
-  const invitedEmail = pendingInvite?.invitedEmail ?? "";
-  const [email, setEmail] = useState(invitedEmail || profile.email);
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [resetSent, setResetSent] = useState(false);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const googleBtnRef = useRef<HTMLDivElement>(null);
+  const { navigate, profile, pendingInvite, syncDataAfterLogin } = useAppNavigation()
+  const invitedEmail = pendingInvite?.invitedEmail ?? ''
+  const [email, setEmail] = useState(invitedEmail || profile.email)
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [resetSent, setResetSent] = useState(false)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const googleBtnRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (invitedEmail) setEmail(invitedEmail);
-  }, [invitedEmail]);
+    if (invitedEmail) setEmail(invitedEmail)
+  }, [invitedEmail])
 
   const handleSignIn = async () => {
-    if (!email || !password) return;
-    setError("");
-    setLoading(true);
+    if (!email || !password) return
+    setError('')
+    setLoading(true)
     try {
-      await loginWithEmailServerFn({ data: { email, passwordHash: password } });
-      const restored = await syncDataAfterLogin();
+      await loginWithEmailServerFn({ data: { email, passwordHash: password } })
+      const restored = await syncDataAfterLogin()
       if (!restored) {
-        throw new Error("Sign-in completed, but the session could not be restored.");
+        throw new Error('Sign-in completed, but the session could not be restored.')
       }
-      if (pendingInvite) navigate("confirm_invite");
+      if (pendingInvite) navigate('confirm_invite')
     } catch (err: unknown) {
-      setError(errorMessage(err, "Invalid credentials"));
+      setError(errorMessage(err, 'Invalid credentials'))
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleForgotPassword = async () => {
     if (!email) {
-      setError("Enter your email to reset password");
-      return;
+      setError('Enter your email to reset password')
+      return
     }
-    setError("");
-    setLoading(true);
+    setError('')
+    setLoading(true)
     try {
       await requestPasswordResetServerFn({
         data: {
           email,
           inviteCode: pendingInvite?.code,
-          invitedEmail: pendingInvite?.invitedEmail,
-        },
-      });
-      setResetSent(true);
-      setTimeout(() => setResetSent(false), 3000);
+          invitedEmail: pendingInvite?.invitedEmail
+        }
+      })
+      setResetSent(true)
+      setTimeout(() => setResetSent(false), 3000)
     } catch (err: unknown) {
-      setError(errorMessage(err, "Failed to send reset link"));
+      setError(errorMessage(err, 'Failed to send reset link'))
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleGoogleCredential = useCallback(
     async (response: GoogleCredentialResponse) => {
-      setError("");
-      setLoading(true);
+      setError('')
+      setLoading(true)
       try {
-        await loginWithGoogleServerFn({ data: { credential: response.credential } });
-        const restored = await syncDataAfterLogin();
+        await loginWithGoogleServerFn({ data: { credential: response.credential } })
+        const restored = await syncDataAfterLogin()
         if (!restored) {
-          throw new Error("Sign-in completed, but the session could not be restored.");
+          throw new Error('Sign-in completed, but the session could not be restored.')
         }
-        if (pendingInvite) navigate("confirm_invite");
+        if (pendingInvite) navigate('confirm_invite')
       } catch (err: unknown) {
-        setError(errorMessage(err, "Google sign-in failed"));
+        setError(errorMessage(err, 'Google sign-in failed'))
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
     },
-    [navigate, pendingInvite, syncDataAfterLogin],
-  );
+    [navigate, pendingInvite, syncDataAfterLogin]
+  )
 
   useEffect(() => {
-    if (!googleBtnRef.current) return;
-    let cancelled = false;
+    if (!googleBtnRef.current) return
+    let cancelled = false
     loadGsi()
-      .then((google) => {
-        if (cancelled || !google || !googleBtnRef.current) return;
+      .then(google => {
+        if (cancelled || !google || !googleBtnRef.current) return
         google.accounts.id.initialize({
           client_id: GOOGLE_CLIENT_ID,
           callback: handleGoogleCredential,
-          ux_mode: "popup",
-        });
+          ux_mode: 'popup'
+        })
         google.accounts.id.renderButton(googleBtnRef.current, {
-          theme: "outline",
-          size: "large",
+          theme: 'outline',
+          size: 'large',
           width: 275,
-          text: "signin_with",
-          shape: "pill",
-        });
+          text: 'signin_with',
+          shape: 'pill'
+        })
       })
-      .catch((err) => {
-        console.error("GSI Load error", err);
-      });
+      .catch(err => {
+        console.error('GSI Load error', err)
+      })
     return () => {
-      cancelled = true;
-    };
-  }, [handleGoogleCredential]);
+      cancelled = true
+    }
+  }, [handleGoogleCredential])
 
   return (
     <PhoneFrame>
@@ -177,7 +177,7 @@ export function LoginScreen() {
           <div
             className="grid h-12 w-12 place-items-center rounded-2xl text-white shadow-[var(--shadow-tile)]"
             style={{
-              background: "linear-gradient(135deg, oklch(0.65 0.22 265), oklch(0.45 0.24 265))",
+              background: 'linear-gradient(135deg, oklch(0.65 0.22 265), oklch(0.45 0.24 265))'
             }}
           >
             <span className="font-display text-[18px] leading-none">N</span>
@@ -195,7 +195,7 @@ export function LoginScreen() {
               <p className="text-[10px] text-muted-foreground">Email</p>
               <input
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={e => setEmail(e.target.value)}
                 readOnly={Boolean(invitedEmail)}
                 className="w-full bg-transparent text-[13px] font-semibold text-foreground outline-none"
                 type="email"
@@ -208,13 +208,13 @@ export function LoginScreen() {
               <p className="text-[10px] text-muted-foreground">Password</p>
               <input
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={e => setPassword(e.target.value)}
                 className="w-full bg-transparent text-[13px] font-semibold text-foreground outline-none"
-                type={showPassword ? "text" : "password"}
+                type={showPassword ? 'text' : 'password'}
               />
             </div>
             <button
-              onClick={() => setShowPassword((prev) => !prev)}
+              onClick={() => setShowPassword(prev => !prev)}
               aria-label="Show password"
               type="button"
             >
@@ -231,7 +231,7 @@ export function LoginScreen() {
           onClick={handleForgotPassword}
           className="mt-3 self-end text-[11px] font-semibold text-[var(--primary)]"
         >
-          {resetSent ? "Reset link sent" : "Forgot password?"}
+          {resetSent ? 'Reset link sent' : 'Forgot password?'}
         </button>
 
         <button
@@ -239,7 +239,7 @@ export function LoginScreen() {
           disabled={!email || !password || loading}
           className="mt-5 w-full rounded-full bg-[var(--primary)] py-4 text-[15px] font-semibold text-white disabled:opacity-50"
         >
-          {loading ? "Signing in..." : "Sign in"}
+          {loading ? 'Signing in...' : 'Sign in'}
         </button>
 
         <div className="my-5 flex items-center gap-3 text-[10px] uppercase tracking-widest text-muted-foreground">
@@ -253,12 +253,12 @@ export function LoginScreen() {
         </div>
 
         <p className="mt-auto text-center text-[12px] text-muted-foreground">
-          New here?{" "}
-          <button onClick={() => navigate("signup")} className="font-bold text-foreground">
+          New here?{' '}
+          <button onClick={() => navigate('signup')} className="font-bold text-foreground">
             Create an account
           </button>
         </p>
       </div>
     </PhoneFrame>
-  );
+  )
 }

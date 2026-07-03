@@ -1,14 +1,14 @@
-import { prisma } from "../../lib/db";
+import { prisma } from '../../lib/db'
 export async function handleSaveReceiptScan(
   payload: any,
   user: any,
   member: any,
-  householdId: string | undefined,
+  householdId: string | undefined
 ) {
-  if (!householdId) throw new Error("No household linked");
-  const receipt = payload.receipt;
-  const products = Array.isArray(payload.products) ? payload.products : [];
-  const transaction = payload.transaction;
+  if (!householdId) throw new Error('No household linked')
+  const receipt = payload.receipt
+  const products = Array.isArray(payload.products) ? payload.products : []
+  const transaction = payload.transaction
 
   await prisma.receiptScan.upsert({
     where: { id: receipt.id },
@@ -18,7 +18,7 @@ export async function handleSaveReceiptScan(
       currency: receipt.currency,
       totalUsd: Number(receipt.totalUsd) || 0,
       items: receipt.items || [],
-      rawText: receipt.rawText || null,
+      rawText: receipt.rawText || null
     },
     create: {
       id: receipt.id,
@@ -28,9 +28,9 @@ export async function handleSaveReceiptScan(
       currency: receipt.currency,
       totalUsd: Number(receipt.totalUsd) || 0,
       items: receipt.items || [],
-      rawText: receipt.rawText || null,
-    },
-  });
+      rawText: receipt.rawText || null
+    }
+  })
 
   if (products.length > 0) {
     await prisma.trackedProduct.createMany({
@@ -44,16 +44,16 @@ export async function handleSaveReceiptScan(
         quantity: Number(product.quantity) || 1,
         unitPriceUsd: product.unitPriceUsd == null ? null : Number(product.unitPriceUsd),
         purchasedAt: product.purchasedAt,
-        source: product.source === "receipt" ? "receipt" : "manual",
+        source: product.source === 'receipt' ? 'receipt' : 'manual'
       })),
-      skipDuplicates: true,
-    });
+      skipDuplicates: true
+    })
   }
 
   if (transaction) {
     const wallet = await prisma.walletAccount.findFirst({
-      where: { householdId, label: transaction.wallet },
-    });
+      where: { householdId, label: transaction.wallet }
+    })
     if (wallet) {
       await prisma.transaction.createMany({
         data: [
@@ -65,11 +65,11 @@ export async function handleSaveReceiptScan(
             usd: Number(transaction.usd) || 0,
             category: transaction.category,
             wallet: transaction.wallet,
-            date: transaction.date,
-          },
+            date: transaction.date
+          }
         ],
-        skipDuplicates: true,
-      });
+        skipDuplicates: true
+      })
     }
   }
 }

@@ -1,15 +1,15 @@
-import { ArrowLeft, ArrowDownLeft, Repeat, Edit3 } from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { Money } from "./Money";
-import { useAppNavigation } from "@/lib/navigation";
-import { getRelativeDateString } from "@/context/helpers";
+import { ArrowDownLeft, ArrowLeft, Edit3, Repeat } from 'lucide-react'
+import { getRelativeDateString } from '@/context/helpers'
+import { useAppNavigation } from '@/lib/navigation'
+import { Money } from './Money'
+import { PhoneFrame } from './PhoneFrame'
 
 export function IncomeDetailScreen() {
-  const { goBack, navigate, selectedTransactionId, transactions } = useAppNavigation();
+  const { goBack, navigate, selectedTransactionId, transactions } = useAppNavigation()
 
   // Find dynamic transaction
   const txn =
-    transactions.find((t) => t.id === selectedTransactionId) || transactions.find((t) => t.usd > 0);
+    transactions.find(t => t.id === selectedTransactionId) || transactions.find(t => t.usd > 0)
 
   if (!txn) {
     return (
@@ -27,7 +27,7 @@ export function IncomeDetailScreen() {
             <span className="h-9 w-9" />
           </header>
           <button
-            onClick={() => navigate("add_income")}
+            onClick={() => navigate('add_income')}
             className="m-auto rounded-3xl bg-white px-5 py-6 text-center shadow-[var(--shadow-soft)]"
           >
             <p className="text-[14px] font-bold text-foreground">No income selected</p>
@@ -35,25 +35,23 @@ export function IncomeDetailScreen() {
           </button>
         </div>
       </PhoneFrame>
-    );
+    )
   }
 
   const rows = [
-    ["Status", "Deposited"],
-    ["Wallet", txn.wallet],
-    ["Received by", txn.who.split(" · ")[0] || "You"],
-    ["Source", txn.name],
-    ["Recurrence", txn.who.toLowerCase().includes("recurring") ? "Recurring" : "One-time"],
+    ['Status', 'Deposited'],
+    ['Wallet', txn.wallet],
+    ['Received by', txn.who.split(' · ')[0] || 'You'],
+    ['Source', txn.name],
+    ['Recurrence', txn.who.toLowerCase().includes('recurring') ? 'Recurring' : 'One-time'],
     [
-      "Date",
+      'Date',
       (() => {
-        const rel = getRelativeDateString(txn.date, new Date());
-        return rel === "today" || rel === "yesterday"
-          ? `${rel} 09:00`
-          : `${rel}, 09:00`;
-      })(),
-    ],
-  ];
+        const rel = getRelativeDateString(txn.date, new Date())
+        return rel === 'today' || rel === 'yesterday' ? `${rel} 09:00` : `${rel}, 09:00`
+      })()
+    ]
+  ]
 
   return (
     <PhoneFrame>
@@ -68,7 +66,7 @@ export function IncomeDetailScreen() {
           </button>
           <h2 className="text-[17px] font-bold tracking-tight">Income</h2>
           <button
-            onClick={() => navigate("edit_expense")}
+            onClick={() => navigate('edit_expense')}
             className="grid h-9 w-9 place-items-center rounded-full text-foreground hover:bg-slate-50 transition-colors cursor-pointer"
             aria-label="Edit"
           >
@@ -95,7 +93,7 @@ export function IncomeDetailScreen() {
           {rows.map(([k, v], i) => (
             <div
               key={k}
-              className={`flex items-center justify-between py-2.5 ${i < rows.length - 1 ? "border-b border-[oklch(0.94_0.01_265)]" : ""}`}
+              className={`flex items-center justify-between py-2.5 ${i < rows.length - 1 ? 'border-b border-[oklch(0.94_0.01_265)]' : ''}`}
             >
               <span className="text-[11px] text-muted-foreground">{k}</span>
               <span className="text-[12px] font-semibold text-foreground">{v}</span>
@@ -108,12 +106,12 @@ export function IncomeDetailScreen() {
         </p>
 
         <button
-          onClick={() => navigate("recurring_income")}
+          onClick={() => navigate('recurring_income')}
           className="mt-auto w-full rounded-full bg-[oklch(0.18_0.04_265)] py-4 text-[15px] font-semibold text-white active:scale-95 transition-transform cursor-pointer"
         >
           Manage recurring
         </button>
       </div>
     </PhoneFrame>
-  );
+  )
 }

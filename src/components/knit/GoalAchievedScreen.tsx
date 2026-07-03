@@ -1,26 +1,26 @@
-import { Trophy, Share2, Sparkles } from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { useAppNavigation } from "@/lib/navigation";
-import { formatUsdAsCurrency } from "@/lib/currency";
+import { Share2, Sparkles, Trophy } from 'lucide-react'
+import { formatUsdAsCurrency } from '@/lib/currency'
+import { useAppNavigation } from '@/lib/navigation'
+import { PhoneFrame } from './PhoneFrame'
 
 export function GoalAchievedScreen() {
-  const { navigate, currency, goals, selectedGoalId } = useAppNavigation();
-  const goal = goals.find((g) => g.id === selectedGoalId) ?? goals[0];
-  const confetti = Array.from({ length: 14 });
+  const { navigate, currency, goals, selectedGoalId } = useAppNavigation()
+  const goal = goals.find(g => g.id === selectedGoalId) ?? goals[0]
+  const confetti = Array.from({ length: 14 })
   const palette = [
-    "oklch(0.75 0.18 85)",
-    "oklch(0.65 0.22 265)",
-    "oklch(0.7 0.2 150)",
-    "oklch(0.7 0.22 25)",
-    "oklch(0.75 0.18 320)",
-  ];
+    'oklch(0.75 0.18 85)',
+    'oklch(0.65 0.22 265)',
+    'oklch(0.7 0.2 150)',
+    'oklch(0.7 0.22 25)',
+    'oklch(0.75 0.18 320)'
+  ]
 
   if (!goal) {
     return (
       <PhoneFrame>
         <div className="flex h-full flex-col px-7 pt-12 pb-7">
           <button
-            onClick={() => navigate("new_goal")}
+            onClick={() => navigate('new_goal')}
             className="m-auto rounded-3xl bg-white px-5 py-6 text-center shadow-[var(--shadow-soft)]"
           >
             <p className="text-[14px] font-bold text-foreground">No completed goal yet</p>
@@ -30,7 +30,7 @@ export function GoalAchievedScreen() {
           </button>
         </div>
       </PhoneFrame>
-    );
+    )
   }
 
   return (
@@ -38,7 +38,7 @@ export function GoalAchievedScreen() {
       <div
         className="relative flex h-full flex-col items-center px-7 pt-12 pb-7 text-white overflow-hidden"
         style={{
-          background: "linear-gradient(160deg, oklch(0.35 0.18 265) 0%, oklch(0.22 0.1 265) 100%)",
+          background: 'linear-gradient(160deg, oklch(0.35 0.18 265) 0%, oklch(0.22 0.1 265) 100%)'
         }}
       >
         {confetti.map((_, i) => (
@@ -52,7 +52,7 @@ export function GoalAchievedScreen() {
               left: `${(i * 53) % 90}%`,
               background: palette[i % palette.length],
               transform: `rotate(${(i * 47) % 360}deg)`,
-              opacity: 0.85,
+              opacity: 0.85
             }}
           />
         ))}
@@ -74,7 +74,7 @@ export function GoalAchievedScreen() {
           fully funded!
         </h2>
         <p className="relative mt-2 text-center text-[12px] text-white/75 max-w-[240px]">
-          You saved{" "}
+          You saved{' '}
           <span className="font-bold text-white">
             {formatUsdAsCurrency(goal.targetUsd, currency)}
           </span>
@@ -101,13 +101,13 @@ export function GoalAchievedScreen() {
 
         <div className="relative mt-auto w-full space-y-2">
           <button
-            onClick={() => navigate("goal_withdraw")}
+            onClick={() => navigate('goal_withdraw')}
             className="w-full rounded-full bg-white py-4 text-[15px] font-semibold text-[oklch(0.22_0.1_265)]"
           >
             Withdraw funds
           </button>
           <button
-            onClick={() => navigate("family")}
+            onClick={() => navigate('family')}
             className="flex w-full items-center justify-center gap-2 rounded-full bg-white/10 py-3 text-[13px] font-semibold text-white"
           >
             <Share2 className="h-4 w-4" strokeWidth={2.25} />
@@ -116,5 +116,5 @@ export function GoalAchievedScreen() {
         </div>
       </div>
     </PhoneFrame>
-  );
+  )
 }

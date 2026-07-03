@@ -1,21 +1,21 @@
-import { ArrowLeft } from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { useState } from "react";
-import { useAppNavigation } from "@/lib/navigation";
-import { categoryColorOptions, categoryIconOptions } from "./categoryOptions";
-import { currencyAdornment, currencyValueToUsd } from "@/lib/currency";
+import { ArrowLeft } from 'lucide-react'
+import { useState } from 'react'
+import { currencyAdornment, currencyValueToUsd } from '@/lib/currency'
+import { useAppNavigation } from '@/lib/navigation'
+import { categoryColorOptions, categoryIconOptions } from './categoryOptions'
+import { PhoneFrame } from './PhoneFrame'
 
 export function AddCategoryScreen() {
-  const { navigate, goBack, currency, addCategory } = useAppNavigation();
-  const [title, setTitle] = useState("");
-  const [selectedIconIdx, setSelectedIconIdx] = useState(0);
-  const [selectedColorIdx, setSelectedColorIdx] = useState(0);
-  const [limit, setLimit] = useState("0");
+  const { navigate, goBack, currency, addCategory } = useAppNavigation()
+  const [title, setTitle] = useState('')
+  const [selectedIconIdx, setSelectedIconIdx] = useState(0)
+  const [selectedColorIdx, setSelectedColorIdx] = useState(0)
+  const [limit, setLimit] = useState('0')
 
-  const selectedIcon = categoryIconOptions[selectedIconIdx] ?? categoryIconOptions[0];
-  const ActiveIcon = selectedIcon.Icon;
-  const selectedColor = categoryColorOptions[selectedColorIdx] ?? categoryColorOptions[0];
-  const { prefix, suffix } = currencyAdornment(currency);
+  const selectedIcon = categoryIconOptions[selectedIconIdx] ?? categoryIconOptions[0]
+  const ActiveIcon = selectedIcon.Icon
+  const selectedColor = categoryColorOptions[selectedColorIdx] ?? categoryColorOptions[0]
+  const { prefix, suffix } = currencyAdornment(currency)
 
   return (
     <PhoneFrame>
@@ -42,7 +42,7 @@ export function AddCategoryScreen() {
           <input
             type="text"
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={e => setTitle(e.target.value)}
             className="mt-3 w-40 bg-transparent text-center text-[20px] font-extrabold tracking-tight text-foreground outline-none border-b border-transparent focus:border-[var(--primary)] transition-colors focus:ring-0"
             placeholder="Category Name"
           />
@@ -58,8 +58,8 @@ export function AddCategoryScreen() {
               onClick={() => setSelectedIconIdx(i)}
               className={`grid h-12 place-items-center rounded-2xl transition-all cursor-pointer ${
                 i === selectedIconIdx
-                  ? "bg-[var(--primary)] text-white shadow-md scale-105"
-                  : "bg-white text-foreground shadow-[var(--shadow-soft)] hover:bg-slate-50 active:scale-95"
+                  ? 'bg-[var(--primary)] text-white shadow-md scale-105'
+                  : 'bg-white text-foreground shadow-[var(--shadow-soft)] hover:bg-slate-50 active:scale-95'
               }`}
             >
               <Icon className="h-4 w-4" strokeWidth={2.25} />
@@ -77,8 +77,8 @@ export function AddCategoryScreen() {
               onClick={() => setSelectedColorIdx(i)}
               className={`grid h-9 w-9 place-items-center rounded-full transition-all cursor-pointer active:scale-90 ${
                 i === selectedColorIdx
-                  ? "ring-2 ring-foreground ring-offset-2 ring-offset-[var(--canvas)] scale-105 shadow-md"
-                  : "hover:scale-105"
+                  ? 'ring-2 ring-foreground ring-offset-2 ring-offset-[var(--canvas)] scale-105 shadow-md'
+                  : 'hover:scale-105'
               }`}
               style={{ background: c }}
             />
@@ -96,7 +96,7 @@ export function AddCategoryScreen() {
             <input
               type="text"
               value={limit}
-              onChange={(e) => setLimit(e.target.value.replace(/[^0-9.]/g, ""))}
+              onChange={e => setLimit(e.target.value.replace(/[^0-9.]/g, ''))}
               className="w-24 bg-transparent text-[28px] font-extrabold tracking-tight text-foreground outline-none p-0 border-none focus:ring-0"
               placeholder="0"
             />
@@ -112,12 +112,12 @@ export function AddCategoryScreen() {
         <button
           onClick={() => {
             addCategory({
-              label: title.trim() || "New category",
-              limitUsd: currencyValueToUsd(parseFloat(limit || "0"), currency),
+              label: title.trim() || 'New category',
+              limitUsd: currencyValueToUsd(parseFloat(limit || '0'), currency),
               color: selectedColor,
-              icon: selectedIcon.key,
-            });
-            navigate("categories");
+              icon: selectedIcon.key
+            })
+            navigate('categories')
           }}
           className="mt-auto w-full rounded-full bg-[oklch(0.18_0.04_265)] py-4 text-[15px] font-semibold text-white active:scale-95 transition-all cursor-pointer"
         >
@@ -125,5 +125,5 @@ export function AddCategoryScreen() {
         </button>
       </div>
     </PhoneFrame>
-  );
+  )
 }

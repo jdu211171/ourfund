@@ -1,85 +1,85 @@
-import { Lock, Eye, ArrowLeft } from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { useEffect, useState } from "react";
-import { useAppNavigation } from "@/lib/navigation";
-import { resetPasswordServerFn, requestPasswordResetServerFn } from "@/lib/server-fns";
+import { ArrowLeft, Eye, Lock } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { useAppNavigation } from '@/lib/navigation'
+import { requestPasswordResetServerFn, resetPasswordServerFn } from '@/lib/server-fns'
+import { PhoneFrame } from './PhoneFrame'
 
 function errorMessage(err: unknown, fallback: string) {
-  return err instanceof Error ? err.message : fallback;
+  return err instanceof Error ? err.message : fallback
 }
 
 export function ResetPasswordScreen() {
-  const { navigate, resetToken, pendingInvite } = useAppNavigation();
-  const [phase, setPhase] = useState<"request" | "reset">(resetToken ? "reset" : "request");
-  const invitedEmail = pendingInvite?.invitedEmail ?? "";
-  const [email, setEmail] = useState(invitedEmail);
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const { navigate, resetToken, pendingInvite } = useAppNavigation()
+  const [phase, setPhase] = useState<'request' | 'reset'>(resetToken ? 'reset' : 'request')
+  const invitedEmail = pendingInvite?.invitedEmail ?? ''
+  const [email, setEmail] = useState(invitedEmail)
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
 
   useEffect(() => {
-    if (invitedEmail) setEmail(invitedEmail);
-  }, [invitedEmail]);
+    if (invitedEmail) setEmail(invitedEmail)
+  }, [invitedEmail])
 
   const handleRequestReset = async () => {
-    if (!email) return;
-    setError("");
-    setLoading(true);
+    if (!email) return
+    setError('')
+    setLoading(true)
     try {
       await requestPasswordResetServerFn({
         data: {
           email,
           inviteCode: pendingInvite?.code,
-          invitedEmail: pendingInvite?.invitedEmail,
-        },
-      });
-      setSuccess(true);
-      setEmail("");
+          invitedEmail: pendingInvite?.invitedEmail
+        }
+      })
+      setSuccess(true)
+      setEmail('')
       setTimeout(() => {
-        setSuccess(false);
-        navigate("login");
-      }, 3000);
+        setSuccess(false)
+        navigate('login')
+      }, 3000)
     } catch (err: unknown) {
-      setError(errorMessage(err, "Failed to request password reset"));
+      setError(errorMessage(err, 'Failed to request password reset'))
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleResetPassword = async () => {
-    if (!password || !confirmPassword) return;
+    if (!password || !confirmPassword) return
     if (password !== confirmPassword) {
-      setError("Passwords don't match");
-      return;
+      setError("Passwords don't match")
+      return
     }
     if (password.length < 8) {
-      setError("Password must be at least 8 characters");
-      return;
+      setError('Password must be at least 8 characters')
+      return
     }
-    setError("");
-    setLoading(true);
+    setError('')
+    setLoading(true)
     try {
-      await resetPasswordServerFn({ data: { token: resetToken || "", password } });
-      setSuccess(true);
-      setPassword("");
-      setConfirmPassword("");
+      await resetPasswordServerFn({ data: { token: resetToken || '', password } })
+      setSuccess(true)
+      setPassword('')
+      setConfirmPassword('')
       setTimeout(() => {
-        setSuccess(false);
-        navigate("login");
-      }, 2000);
+        setSuccess(false)
+        navigate('login')
+      }, 2000)
     } catch (err: unknown) {
-      setError(errorMessage(err, "Failed to reset password"));
+      setError(errorMessage(err, 'Failed to reset password'))
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
-  const isRequestValid = email && !loading;
-  const isResetValid = password && confirmPassword && password.length >= 8 && !loading;
+  const isRequestValid = email && !loading
+  const isResetValid = password && confirmPassword && password.length >= 8 && !loading
 
   if (success) {
     return (
@@ -88,7 +88,7 @@ export function ResetPasswordScreen() {
           <div
             className="grid h-16 w-16 place-items-center rounded-full text-white"
             style={{
-              background: "linear-gradient(135deg, oklch(0.65 0.22 265), oklch(0.45 0.24 265))",
+              background: 'linear-gradient(135deg, oklch(0.65 0.22 265), oklch(0.45 0.24 265))'
             }}
           >
             <span className="text-2xl">✓</span>
@@ -97,21 +97,21 @@ export function ResetPasswordScreen() {
             Success!
           </h2>
           <p className="mt-2 text-center text-[13px] text-muted-foreground">
-            {phase === "request"
-              ? "Check your email for the reset link."
-              : "Your password has been reset."}
+            {phase === 'request'
+              ? 'Check your email for the reset link.'
+              : 'Your password has been reset.'}
           </p>
         </div>
       </PhoneFrame>
-    );
+    )
   }
 
-  if (phase === "request") {
+  if (phase === 'request') {
     return (
       <PhoneFrame>
         <div className="flex h-full flex-col px-7 pt-14 pb-7">
           <button
-            onClick={() => navigate("login")}
+            onClick={() => navigate('login')}
             className="mb-6 flex items-center gap-2 text-[13px] font-semibold text-[var(--primary)]"
           >
             <ArrowLeft className="h-4 w-4" strokeWidth={2.25} />
@@ -122,7 +122,7 @@ export function ResetPasswordScreen() {
             <div
               className="grid h-12 w-12 place-items-center rounded-2xl text-white shadow-[var(--shadow-tile)]"
               style={{
-                background: "linear-gradient(135deg, oklch(0.65 0.22 265), oklch(0.45 0.24 265))",
+                background: 'linear-gradient(135deg, oklch(0.65 0.22 265), oklch(0.45 0.24 265))'
               }}
             >
               <span className="font-display text-[18px] leading-none">N</span>
@@ -142,7 +142,7 @@ export function ResetPasswordScreen() {
                 <p className="text-[10px] text-muted-foreground">Email</p>
                 <input
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={e => setEmail(e.target.value)}
                   className="w-full bg-transparent text-[13px] font-semibold text-foreground outline-none"
                   type="email"
                   placeholder="your@email.com"
@@ -160,11 +160,11 @@ export function ResetPasswordScreen() {
             disabled={!isRequestValid}
             className="mt-6 w-full rounded-full bg-[var(--primary)] py-4 text-[15px] font-semibold text-white disabled:opacity-50"
           >
-            {loading ? "Sending..." : "Send reset link"}
+            {loading ? 'Sending...' : 'Send reset link'}
           </button>
         </div>
       </PhoneFrame>
-    );
+    )
   }
 
   return (
@@ -174,7 +174,7 @@ export function ResetPasswordScreen() {
           <div
             className="grid h-12 w-12 place-items-center rounded-2xl text-white shadow-[var(--shadow-tile)]"
             style={{
-              background: "linear-gradient(135deg, oklch(0.65 0.22 265), oklch(0.45 0.24 265))",
+              background: 'linear-gradient(135deg, oklch(0.65 0.22 265), oklch(0.45 0.24 265))'
             }}
           >
             <span className="font-display text-[18px] leading-none">N</span>
@@ -194,13 +194,13 @@ export function ResetPasswordScreen() {
               <p className="text-[10px] text-muted-foreground">New Password</p>
               <input
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={e => setPassword(e.target.value)}
                 className="w-full bg-transparent text-[13px] font-semibold text-foreground outline-none"
-                type={showPassword ? "text" : "password"}
+                type={showPassword ? 'text' : 'password'}
               />
             </div>
             <button
-              onClick={() => setShowPassword((prev) => !prev)}
+              onClick={() => setShowPassword(prev => !prev)}
               aria-label="Show password"
               type="button"
             >
@@ -214,13 +214,13 @@ export function ResetPasswordScreen() {
               <p className="text-[10px] text-muted-foreground">Confirm Password</p>
               <input
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={e => setConfirmPassword(e.target.value)}
                 className="w-full bg-transparent text-[13px] font-semibold text-foreground outline-none"
-                type={showConfirm ? "text" : "password"}
+                type={showConfirm ? 'text' : 'password'}
               />
             </div>
             <button
-              onClick={() => setShowConfirm((prev) => !prev)}
+              onClick={() => setShowConfirm(prev => !prev)}
               aria-label="Show password"
               type="button"
             >
@@ -238,16 +238,16 @@ export function ResetPasswordScreen() {
           disabled={!isResetValid}
           className="mt-6 w-full rounded-full bg-[var(--primary)] py-4 text-[15px] font-semibold text-white disabled:opacity-50"
         >
-          {loading ? "Resetting..." : "Reset password"}
+          {loading ? 'Resetting...' : 'Reset password'}
         </button>
 
         <button
-          onClick={() => navigate("login")}
+          onClick={() => navigate('login')}
           className="mt-3 text-center text-[12px] font-semibold text-[var(--primary)]"
         >
           Back to login
         </button>
       </div>
     </PhoneFrame>
-  );
+  )
 }

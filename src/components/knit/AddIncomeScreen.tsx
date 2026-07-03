@@ -1,46 +1,46 @@
-import { useState } from "react";
-import { ArrowLeft, Briefcase, Users, Delete } from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { Money } from "./Money";
-import { currencyValueToUsd } from "@/lib/currency";
-import { useAppNavigation } from "@/lib/navigation";
-import { formatISODate } from "@/context/helpers";
-import { OptionSelect } from "./OptionSelect";
+import { ArrowLeft, Briefcase, Delete, Users } from 'lucide-react'
+import { useState } from 'react'
+import { formatISODate } from '@/context/helpers'
+import { currencyValueToUsd } from '@/lib/currency'
+import { useAppNavigation } from '@/lib/navigation'
+import { Money } from './Money'
+import { OptionSelect } from './OptionSelect'
+import { PhoneFrame } from './PhoneFrame'
 
-const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "del"] as const;
+const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'del'] as const
 
 export function AddIncomeScreen() {
   const { navigate, goBack, currency, addTransaction, activeWallets, selectedWalletId } =
-    useAppNavigation();
-  const [amount, setAmount] = useState("0");
-  const amountUsd = currencyValueToUsd(parseFloat(amount || "0"), currency);
-  const sources = ["Monthly salary", "Freelance invoice", "Allowance", "Gift"];
-  const [source, setSource] = useState(sources[0]);
+    useAppNavigation()
+  const [amount, setAmount] = useState('0')
+  const amountUsd = currencyValueToUsd(parseFloat(amount || '0'), currency)
+  const sources = ['Monthly salary', 'Freelance invoice', 'Allowance', 'Gift']
+  const [source, setSource] = useState(sources[0])
   const defaultWalletId =
-    selectedWalletId && activeWallets.some((w) => w.id === selectedWalletId)
+    selectedWalletId && activeWallets.some(w => w.id === selectedWalletId)
       ? selectedWalletId
-      : (activeWallets[0]?.id ?? "");
-  const [walletId, setWalletId] = useState(defaultWalletId);
-  const wallet = activeWallets.find((item) => item.id === walletId) ?? activeWallets[0];
-  const hasWallet = Boolean(wallet);
+      : (activeWallets[0]?.id ?? '')
+  const [walletId, setWalletId] = useState(defaultWalletId)
+  const wallet = activeWallets.find(item => item.id === walletId) ?? activeWallets[0]
+  const hasWallet = Boolean(wallet)
 
   const handleKeyPress = (k: (typeof keys)[number]) => {
-    if (k === "del") {
-      setAmount((prev) => {
-        const next = prev.slice(0, -1);
-        return next === "" ? "0" : next;
-      });
-    } else if (k === ".") {
-      if (!amount.includes(".")) {
-        setAmount((prev) => prev + ".");
+    if (k === 'del') {
+      setAmount(prev => {
+        const next = prev.slice(0, -1)
+        return next === '' ? '0' : next
+      })
+    } else if (k === '.') {
+      if (!amount.includes('.')) {
+        setAmount(prev => prev + '.')
       }
     } else {
-      setAmount((prev) => {
-        if (prev === "0") return k;
-        return prev + k;
-      });
+      setAmount(prev => {
+        if (prev === '0') return k
+        return prev + k
+      })
     }
-  };
+  }
 
   return (
     <PhoneFrame>
@@ -68,18 +68,18 @@ export function AddIncomeScreen() {
           <OptionSelect
             label="Source"
             value={source}
-            options={sources.map((item) => ({ value: item, label: item }))}
+            options={sources.map(item => ({ value: item, label: item }))}
             onChange={setSource}
             icon={<Briefcase className="h-5 w-5" strokeWidth={2.25} />}
           />
 
           <OptionSelect
             label="Deposit to"
-            value={wallet?.id ?? ""}
-            options={activeWallets.map((item) => ({
+            value={wallet?.id ?? ''}
+            options={activeWallets.map(item => ({
               value: item.id,
               label: item.label,
-              description: item.sub,
+              description: item.sub
             }))}
             onChange={setWalletId}
             emptyLabel="Create a wallet first"
@@ -88,14 +88,14 @@ export function AddIncomeScreen() {
         </div>
 
         <div className="mt-6 grid flex-1 grid-cols-3 place-items-center gap-y-1">
-          {keys.map((k) => (
+          {keys.map(k => (
             <button
               key={k}
               onClick={() => handleKeyPress(k)}
               className="grid h-12 w-12 place-items-center text-[26px] font-semibold text-foreground transition-colors active:bg-[var(--muted)] rounded-full hover:bg-slate-50 cursor-pointer"
-              aria-label={k === "del" ? "Delete" : k}
+              aria-label={k === 'del' ? 'Delete' : k}
             >
-              {k === "del" ? (
+              {k === 'del' ? (
                 <span className="grid h-9 w-10 place-items-center rounded-lg bg-[var(--muted)] text-muted-foreground">
                   <Delete className="h-4 w-4" strokeWidth={2.25} />
                 </span>
@@ -109,26 +109,26 @@ export function AddIncomeScreen() {
         <button
           onClick={() => {
             if (!hasWallet) {
-              navigate("new_wallet");
-              return;
+              navigate('new_wallet')
+              return
             }
             if (amountUsd > 0) {
               addTransaction({
                 name: source,
-                who: "Income",
+                who: 'Income',
                 usd: amountUsd,
-                category: "Salary",
+                category: 'Salary',
                 wallet: wallet.label,
-                date: formatISODate(new Date()),
-              });
+                date: formatISODate(new Date())
+              })
             }
-            goBack();
+            goBack()
           }}
           className="mt-4 w-full rounded-full bg-[var(--primary)] py-4 text-[15px] font-semibold text-white active:scale-95 transition-transform cursor-pointer"
         >
-          {hasWallet ? "Add income" : "Create a wallet first"}
+          {hasWallet ? 'Add income' : 'Create a wallet first'}
         </button>
       </div>
     </PhoneFrame>
-  );
+  )
 }

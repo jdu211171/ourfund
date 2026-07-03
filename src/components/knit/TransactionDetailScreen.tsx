@@ -1,17 +1,17 @@
-import { ArrowLeft, Share2, Download, Edit3, ArrowDownLeft } from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { Money } from "./Money";
-import { useAppNavigation } from "@/lib/navigation";
-import { getRelativeDateString } from "@/context/helpers";
-import { useState } from "react";
+import { ArrowDownLeft, ArrowLeft, Download, Edit3, Share2 } from 'lucide-react'
+import { useState } from 'react'
+import { getRelativeDateString } from '@/context/helpers'
+import { useAppNavigation } from '@/lib/navigation'
+import { Money } from './Money'
+import { PhoneFrame } from './PhoneFrame'
 
 export function TransactionDetailScreen() {
-  const { goBack, navigate, selectedTransactionId, transactions } = useAppNavigation();
-  const [shared, setShared] = useState(false);
+  const { goBack, navigate, selectedTransactionId, transactions } = useAppNavigation()
+  const [shared, setShared] = useState(false)
 
   // Find dynamic transaction
   const txn =
-    transactions.find((t) => t.id === selectedTransactionId) || transactions.find((t) => t.usd < 0);
+    transactions.find(t => t.id === selectedTransactionId) || transactions.find(t => t.usd < 0)
 
   if (!txn) {
     return (
@@ -29,7 +29,7 @@ export function TransactionDetailScreen() {
             <span className="h-9 w-9" />
           </header>
           <button
-            onClick={() => navigate("add_expense")}
+            onClick={() => navigate('add_expense')}
             className="m-auto rounded-3xl bg-white px-5 py-6 text-center shadow-[var(--shadow-soft)]"
           >
             <p className="text-[14px] font-bold text-foreground">No expense selected</p>
@@ -39,25 +39,23 @@ export function TransactionDetailScreen() {
           </button>
         </div>
       </PhoneFrame>
-    );
+    )
   }
 
   const rows = [
-    ["Status", "Posted"],
-    ["Wallet", txn.wallet],
-    ["Paid by", txn.who.split(" · ")[0] || "You"],
-    ["Category", txn.category],
-    ["Merchant", txn.name],
+    ['Status', 'Posted'],
+    ['Wallet', txn.wallet],
+    ['Paid by', txn.who.split(' · ')[0] || 'You'],
+    ['Category', txn.category],
+    ['Merchant', txn.name],
     [
-      "Date",
+      'Date',
       (() => {
-        const rel = getRelativeDateString(txn.date, new Date());
-        return rel === "today" || rel === "yesterday"
-          ? `${rel} 18:24`
-          : `${rel}, 18:24`;
-      })(),
-    ],
-  ];
+        const rel = getRelativeDateString(txn.date, new Date())
+        return rel === 'today' || rel === 'yesterday' ? `${rel} 18:24` : `${rel}, 18:24`
+      })()
+    ]
+  ]
 
   return (
     <PhoneFrame>
@@ -91,7 +89,7 @@ export function TransactionDetailScreen() {
             <Money usd={txn.usd} size="xl" tone="danger" signed />
           </div>
           <span className="mt-2 rounded-full bg-[oklch(0.95_0.08_150)] px-3 py-0.5 text-[10px] font-semibold text-[var(--success)]">
-            {shared ? "Shared with family" : "Within budget"}
+            {shared ? 'Shared with family' : 'Within budget'}
           </span>
         </div>
 
@@ -100,7 +98,7 @@ export function TransactionDetailScreen() {
             <div
               key={k}
               className={`flex items-center justify-between py-2.5 ${
-                i < rows.length - 1 ? "border-b border-[oklch(0.94_0.01_265)]" : ""
+                i < rows.length - 1 ? 'border-b border-[oklch(0.94_0.01_265)]' : ''
               }`}
             >
               <span className="text-[11px] text-muted-foreground">{k}</span>
@@ -111,14 +109,14 @@ export function TransactionDetailScreen() {
 
         <div className="mt-auto flex gap-3">
           <button
-            onClick={() => navigate("receipt")}
+            onClick={() => navigate('receipt')}
             className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[var(--muted)] py-3 text-[13px] font-semibold text-foreground cursor-pointer"
           >
             <Download className="h-4 w-4" strokeWidth={2.25} />
             Receipt
           </button>
           <button
-            onClick={() => navigate("edit_expense")}
+            onClick={() => navigate('edit_expense')}
             className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[oklch(0.18_0.04_265)] py-3 text-[13px] font-semibold text-white cursor-pointer"
           >
             <Edit3 className="h-4 w-4" strokeWidth={2.25} />
@@ -127,5 +125,5 @@ export function TransactionDetailScreen() {
         </div>
       </div>
     </PhoneFrame>
-  );
+  )
 }

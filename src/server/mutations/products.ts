@@ -1,12 +1,12 @@
-import { prisma } from "../../lib/db";
-import { normalizeProductName } from "../helpers/product";
+import { prisma } from '../../lib/db'
+import { normalizeProductName } from '../helpers/product'
 export async function handleAddTrackedProduct(
   payload: any,
   user: any,
   member: any,
-  householdId: string | undefined,
+  householdId: string | undefined
 ) {
-  if (!householdId) throw new Error("No household linked");
+  if (!householdId) throw new Error('No household linked')
   await prisma.trackedProduct.create({
     data: {
       id: payload.id,
@@ -18,7 +18,7 @@ export async function handleAddTrackedProduct(
       quantity: Number(payload.quantity) || 1,
       unitPriceUsd: payload.unitPriceUsd == null ? null : Number(payload.unitPriceUsd),
       purchasedAt: payload.purchasedAt,
-      source: payload.source === "receipt" ? "receipt" : "manual",
-    },
-  });
+      source: payload.source === 'receipt' ? 'receipt' : 'manual'
+    }
+  })
 }

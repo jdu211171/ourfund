@@ -1,153 +1,153 @@
-import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
-  Plus,
-  ChevronDown,
   Check,
+  ChevronDown,
   Pencil,
-  Trash2,
+  Plus,
   ShoppingCart,
   Sparkles,
-} from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { useAppNavigation } from "@/lib/navigation";
-import { searchProductsServerFn, resolveCanonicalServerFn } from "@/fns/buy-list";
-import { resolveCanonical } from "@/lib/buy-list-history";
+  Trash2
+} from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { resolveCanonicalServerFn, searchProductsServerFn } from '@/fns/buy-list'
 import {
-  findCheapest,
-  recentPrice,
-  suggestNames,
-  fmtYen,
-  categorize,
   type Category,
-} from "@/lib/buy-list-history";
+  categorize,
+  findCheapest,
+  fmtYen,
+  recentPrice,
+  resolveCanonical,
+  suggestNames
+} from '@/lib/buy-list-history'
+import { useAppNavigation } from '@/lib/navigation'
+import { PhoneFrame } from './PhoneFrame'
 
-type Unit = "pcs" | "kg" | "g" | "L" | "ml" | "pack";
-const UNITS: Unit[] = ["pcs", "kg", "g", "L", "ml", "pack"];
+type Unit = 'pcs' | 'kg' | 'g' | 'L' | 'ml' | 'pack'
+const UNITS: Unit[] = ['pcs', 'kg', 'g', 'L', 'ml', 'pack']
 
 type Item = {
-  id: string;
-  name: string;
-  qty: number;
-  unit: Unit;
-  done?: boolean;
-};
+  id: string
+  name: string
+  qty: number
+  unit: Unit
+  done?: boolean
+}
 
 type BuyList = {
-  id: string;
-  name: string;
-  items: Item[];
-};
+  id: string
+  name: string
+  items: Item[]
+}
 
-const STORAGE_KEY = "nest.buylists.v1";
+const STORAGE_KEY = 'nest.buylists.v1'
 
 function loadLists(): BuyList[] {
-  if (typeof window === "undefined") return [];
+  if (typeof window === 'undefined') return []
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as BuyList[];
-    return Array.isArray(parsed) ? parsed : [];
+    const raw = window.localStorage.getItem(STORAGE_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw) as BuyList[]
+    return Array.isArray(parsed) ? parsed : []
   } catch {
-    return [];
+    return []
   }
 }
 
 function saveLists(lists: BuyList[]) {
-  if (typeof window === "undefined") return;
+  if (typeof window === 'undefined') return
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(lists));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(lists))
   } catch {
     /* ignore */
   }
 }
 
 const uid = () =>
-  (typeof crypto !== "undefined" && "randomUUID" in crypto
+  (typeof crypto !== 'undefined' && 'randomUUID' in crypto
     ? crypto.randomUUID()
-    : Math.random().toString(36).slice(2)) as string;
+    : Math.random().toString(36).slice(2)) as string
 
-const CATEGORY_ORDER: Category[] = ["Produce", "Dairy", "Meat", "Bakery", "Pantry", "Other"];
+const CATEGORY_ORDER: Category[] = ['Produce', 'Dairy', 'Meat', 'Bakery', 'Pantry', 'Other']
 
 export function BuyListScreen() {
-  const { goBack, trackedProducts } = useAppNavigation();
-  const [lists, setLists] = useState<BuyList[]>([]);
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const [hydrated, setHydrated] = useState(false);
-  const [listPickerOpen, setListPickerOpen] = useState(false);
-  const [renaming, setRenaming] = useState(false);
-  const [renameValue, setRenameValue] = useState("");
+  const { goBack, trackedProducts } = useAppNavigation()
+  const [lists, setLists] = useState<BuyList[]>([])
+  const [activeId, setActiveId] = useState<string | null>(null)
+  const [hydrated, setHydrated] = useState(false)
+  const [listPickerOpen, setListPickerOpen] = useState(false)
+  const [renaming, setRenaming] = useState(false)
+  const [renameValue, setRenameValue] = useState('')
 
-  const [draftName, setDraftName] = useState("");
-  const [draftQty, setDraftQty] = useState<number>(1);
-  const [draftUnit, setDraftUnit] = useState<Unit>("pcs");
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const nameInputRef = useRef<HTMLInputElement>(null);
+  const [draftName, setDraftName] = useState('')
+  const [draftQty, setDraftQty] = useState<number>(1)
+  const [draftUnit, setDraftUnit] = useState<Unit>('pcs')
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const nameInputRef = useRef<HTMLInputElement>(null)
 
-  const [dbSuggestions, setDbSuggestions] = useState<any[]>([]);
+  const [dbSuggestions, setDbSuggestions] = useState<any[]>([])
   // resolvedQuery is the canonical name we actually use for history lookups.
   // It starts as the raw draft name and may be upgraded to a Gemini-resolved
   // canonical when the local synonym table has no match.
-  const [resolvedQuery, setResolvedQuery] = useState("");
+  const [resolvedQuery, setResolvedQuery] = useState('')
   // Simple in-memory cache so we never call Gemini twice for the same term.
-  const canonicalCache = useRef<Map<string, string>>(new Map());
+  const canonicalCache = useRef<Map<string, string>>(new Map())
 
   useEffect(() => {
-    const loaded = loadLists();
+    const loaded = loadLists()
     if (loaded.length) {
-      setLists(loaded);
-      setActiveId(loaded[0].id);
+      setLists(loaded)
+      setActiveId(loaded[0].id)
     } else {
       const starter: BuyList = {
         id: uid(),
-        name: "Weekly groceries",
+        name: 'Weekly groceries',
         items: [
-          { id: uid(), name: "Milk 1L", qty: 2, unit: "pcs" },
-          { id: uid(), name: "Rice 5kg", qty: 1, unit: "pcs" },
-          { id: uid(), name: "Bananas", qty: 1, unit: "kg" },
-        ],
-      };
-      setLists([starter]);
-      setActiveId(starter.id);
+          { id: uid(), name: 'Milk 1L', qty: 2, unit: 'pcs' },
+          { id: uid(), name: 'Rice 5kg', qty: 1, unit: 'pcs' },
+          { id: uid(), name: 'Bananas', qty: 1, unit: 'kg' }
+        ]
+      }
+      setLists([starter])
+      setActiveId(starter.id)
     }
-    setHydrated(true);
-  }, []);
+    setHydrated(true)
+  }, [])
 
   useEffect(() => {
-    if (hydrated) saveLists(lists);
-  }, [lists, hydrated]);
+    if (hydrated) saveLists(lists)
+  }, [lists, hydrated])
 
-  const active = useMemo(() => lists.find((l) => l.id === activeId) ?? null, [lists, activeId]);
+  const active = useMemo(() => lists.find(l => l.id === activeId) ?? null, [lists, activeId])
 
   // Debounced search + canonical resolution
   useEffect(() => {
-    const raw = draftName.trim();
+    const raw = draftName.trim()
     if (!raw) {
-      setDbSuggestions([]);
-      setResolvedQuery("");
-      return;
+      setDbSuggestions([])
+      setResolvedQuery('')
+      return
     }
 
     const timer = setTimeout(async () => {
       try {
         // Step 1: Try to resolve the canonical name locally first
-        const localCanon = resolveCanonical(raw);
-        const isLocallyResolved = localCanon !== raw.toLowerCase();
+        const localCanon = resolveCanonical(raw)
+        const isLocallyResolved = localCanon !== raw.toLowerCase()
 
         // Step 2: Determine effective query for DB search and price lookups
-        let effectiveQuery = isLocallyResolved ? localCanon : raw;
+        let effectiveQuery = isLocallyResolved ? localCanon : raw
 
         // Step 3: If not locally resolved, check cache then call Gemini
         if (!isLocallyResolved) {
-          const cached = canonicalCache.current.get(raw.toLowerCase());
+          const cached = canonicalCache.current.get(raw.toLowerCase())
           if (cached) {
-            effectiveQuery = cached;
+            effectiveQuery = cached
           } else {
             try {
-              const geminiResult = await resolveCanonicalServerFn({ data: { name: raw } });
+              const geminiResult = await resolveCanonicalServerFn({ data: { name: raw } })
               if (geminiResult?.canonical) {
-                canonicalCache.current.set(raw.toLowerCase(), geminiResult.canonical);
-                effectiveQuery = geminiResult.canonical;
+                canonicalCache.current.set(raw.toLowerCase(), geminiResult.canonical)
+                effectiveQuery = geminiResult.canonical
               }
             } catch {
               // Gemini unavailable — stick with raw query
@@ -155,128 +155,128 @@ export function BuyListScreen() {
           }
         }
 
-        setResolvedQuery(effectiveQuery);
+        setResolvedQuery(effectiveQuery)
 
         // Step 4: Search DB using synonym-expanded query
-        const results = await searchProductsServerFn({ data: { query: effectiveQuery } });
-        setDbSuggestions(results || []);
+        const results = await searchProductsServerFn({ data: { query: effectiveQuery } })
+        setDbSuggestions(results || [])
       } catch (e) {
-        console.error("Error searching products:", e);
+        console.error('Error searching products:', e)
       }
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [draftName]);
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [draftName])
 
   // Use resolvedQuery (which may be a Gemini canonical) for suggestion generation
   const suggestions = useMemo(() => {
-    const dbNames = dbSuggestions.map((p) => p.name);
-    const lookupTerm = resolvedQuery || draftName;
-    const staticNames = suggestNames(lookupTerm);
-    return Array.from(new Set([...dbNames, ...staticNames])).slice(0, 5);
-  }, [dbSuggestions, resolvedQuery, draftName]);
+    const dbNames = dbSuggestions.map(p => p.name)
+    const lookupTerm = resolvedQuery || draftName
+    const staticNames = suggestNames(lookupTerm)
+    return Array.from(new Set([...dbNames, ...staticNames])).slice(0, 5)
+  }, [dbSuggestions, resolvedQuery, draftName])
 
   const createList = () => {
     const l: BuyList = {
       id: uid(),
       name: `List ${lists.length + 1}`,
-      items: [],
-    };
-    setLists((s) => [l, ...s]);
-    setActiveId(l.id);
-    setListPickerOpen(false);
-    setRenaming(true);
-    setRenameValue(l.name);
-  };
+      items: []
+    }
+    setLists(s => [l, ...s])
+    setActiveId(l.id)
+    setListPickerOpen(false)
+    setRenaming(true)
+    setRenameValue(l.name)
+  }
 
   const deleteActive = () => {
-    if (!active) return;
-    const remaining = lists.filter((l) => l.id !== active.id);
-    setLists(remaining);
-    setActiveId(remaining[0]?.id ?? null);
-  };
+    if (!active) return
+    const remaining = lists.filter(l => l.id !== active.id)
+    setLists(remaining)
+    setActiveId(remaining[0]?.id ?? null)
+  }
 
   const commitRename = () => {
-    if (!active) return;
-    const next = renameValue.trim() || active.name;
-    setLists((s) => s.map((l) => (l.id === active.id ? { ...l, name: next } : l)));
-    setRenaming(false);
-  };
+    if (!active) return
+    const next = renameValue.trim() || active.name
+    setLists(s => s.map(l => (l.id === active.id ? { ...l, name: next } : l)))
+    setRenaming(false)
+  }
 
   const mutateActive = (fn: (items: Item[]) => Item[]) => {
-    if (!active) return;
-    setLists((s) => s.map((l) => (l.id === active.id ? { ...l, items: fn(l.items) } : l)));
-  };
+    if (!active) return
+    setLists(s => s.map(l => (l.id === active.id ? { ...l, items: fn(l.items) } : l)))
+  }
 
   const addItem = () => {
-    const name = draftName.trim();
+    const name = draftName.trim()
     if (!name) {
-      nameInputRef.current?.focus();
-      return;
+      nameInputRef.current?.focus()
+      return
     }
     const item: Item = {
       id: uid(),
       name,
       qty: Math.max(0.01, Number(draftQty) || 1),
-      unit: draftUnit,
-    };
-    mutateActive((items) => [...items, item]);
-    setDraftName("");
-    setDraftQty(1);
-    setDraftUnit("pcs");
-    setShowSuggestions(false);
-    nameInputRef.current?.focus();
-  };
+      unit: draftUnit
+    }
+    mutateActive(items => [...items, item])
+    setDraftName('')
+    setDraftQty(1)
+    setDraftUnit('pcs')
+    setShowSuggestions(false)
+    nameInputRef.current?.focus()
+  }
 
   const updateQty = (id: string, qty: number) =>
-    mutateActive((items) =>
-      items.map((it) => (it.id === id ? { ...it, qty: Math.max(0.01, qty) } : it)),
-    );
+    mutateActive(items =>
+      items.map(it => (it.id === id ? { ...it, qty: Math.max(0.01, qty) } : it))
+    )
 
   const toggleDone = (id: string) =>
-    mutateActive((items) => items.map((it) => (it.id === id ? { ...it, done: !it.done } : it)));
+    mutateActive(items => items.map(it => (it.id === id ? { ...it, done: !it.done } : it)))
 
-  const removeItem = (id: string) => mutateActive((items) => items.filter((it) => it.id !== id));
+  const removeItem = (id: string) => mutateActive(items => items.filter(it => it.id !== id))
 
   // ----- Totals & savings -----
   const totals = useMemo(() => {
-    if (!active) return { estTotal: 0, recentTotal: 0, remaining: 0, savings: 0, doneCount: 0 };
-    let estTotal = 0; // cheapest-based
-    let recentTotal = 0; // most recent price
-    let remaining = 0; // cheapest of un-checked items
-    let doneCount = 0;
+    if (!active) return { estTotal: 0, recentTotal: 0, remaining: 0, savings: 0, doneCount: 0 }
+    let estTotal = 0 // cheapest-based
+    let recentTotal = 0 // most recent price
+    let remaining = 0 // cheapest of un-checked items
+    let doneCount = 0
     for (const it of active.items) {
-      const cheap = findCheapest(it.name, trackedProducts);
-      const recent = recentPrice(it.name, trackedProducts);
-      if (cheap) estTotal += cheap.price * it.qty;
-      if (recent) recentTotal += recent.price * it.qty;
-      if (it.done) doneCount++;
-      else if (cheap) remaining += cheap.price * it.qty;
+      const cheap = findCheapest(it.name, trackedProducts)
+      const recent = recentPrice(it.name, trackedProducts)
+      if (cheap) estTotal += cheap.price * it.qty
+      if (recent) recentTotal += recent.price * it.qty
+      if (it.done) doneCount++
+      else if (cheap) remaining += cheap.price * it.qty
     }
     return {
       estTotal,
       recentTotal,
       remaining,
       savings: Math.max(0, recentTotal - estTotal),
-      doneCount,
-    };
-  }, [active, trackedProducts]);
+      doneCount
+    }
+  }, [active, trackedProducts])
 
   // Group items by category, preserving insertion order within a group
   const grouped = useMemo(() => {
-    if (!active) return [] as { category: Category; items: Item[] }[];
-    const buckets = new Map<Category, Item[]>();
+    if (!active) return [] as { category: Category; items: Item[] }[]
+    const buckets = new Map<Category, Item[]>()
     for (const it of active.items) {
-      const c = categorize(it.name);
-      if (!buckets.has(c)) buckets.set(c, []);
-      buckets.get(c)!.push(it);
+      const c = categorize(it.name)
+      if (!buckets.has(c)) buckets.set(c, [])
+      buckets.get(c)!.push(it)
     }
-    return CATEGORY_ORDER.filter((c) => buckets.has(c)).map((c) => ({
+    return CATEGORY_ORDER.filter(c => buckets.has(c)).map(c => ({
       category: c,
-      items: buckets.get(c)!,
-    }));
-  }, [active]);
+      items: buckets.get(c)!
+    }))
+  }, [active])
 
-  const totalCount = active?.items.length ?? 0;
+  const totalCount = active?.items.length ?? 0
 
   return (
     <PhoneFrame>
@@ -303,7 +303,7 @@ export function BuyListScreen() {
         {/* List switcher */}
         <div className="relative mt-4">
           <button
-            onClick={() => setListPickerOpen((v) => !v)}
+            onClick={() => setListPickerOpen(v => !v)}
             className="flex w-full items-center gap-3 rounded-2xl bg-white px-3 py-3 text-left shadow-[var(--shadow-soft)]"
           >
             <div className="grid h-10 w-10 place-items-center rounded-xl bg-[oklch(0.95_0.05_265)] text-[var(--primary)]">
@@ -317,36 +317,36 @@ export function BuyListScreen() {
                 <input
                   autoFocus
                   value={renameValue}
-                  onChange={(e) => setRenameValue(e.target.value)}
+                  onChange={e => setRenameValue(e.target.value)}
                   onBlur={commitRename}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") commitRename();
-                    if (e.key === "Escape") setRenaming(false);
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') commitRename()
+                    if (e.key === 'Escape') setRenaming(false)
                   }}
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={e => e.stopPropagation()}
                   className="w-full bg-transparent text-[14px] font-bold text-foreground outline-none"
                 />
               ) : (
                 <p className="text-[14px] font-bold text-foreground">
-                  {active?.name ?? "No list yet"}
+                  {active?.name ?? 'No list yet'}
                 </p>
               )}
             </div>
             <ChevronDown
-              className={`h-4 w-4 text-muted-foreground transition ${listPickerOpen ? "rotate-180" : ""}`}
+              className={`h-4 w-4 text-muted-foreground transition ${listPickerOpen ? 'rotate-180' : ''}`}
               strokeWidth={2.5}
             />
           </button>
 
           {listPickerOpen && (
             <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-2xl bg-white shadow-[var(--shadow-phone)]">
-              {lists.map((l) => (
+              {lists.map(l => (
                 <button
                   key={l.id}
                   onClick={() => {
-                    setActiveId(l.id);
-                    setListPickerOpen(false);
-                    setRenaming(false);
+                    setActiveId(l.id)
+                    setListPickerOpen(false)
+                    setRenaming(false)
                   }}
                   className="flex w-full items-center justify-between px-4 py-2.5 text-left text-[13px] font-semibold text-foreground hover:bg-[var(--muted)]"
                 >
@@ -405,8 +405,8 @@ export function BuyListScreen() {
             <div className="flex items-center gap-1">
               <button
                 onClick={() => {
-                  setRenameValue(active.name);
-                  setRenaming(true);
+                  setRenameValue(active.name)
+                  setRenaming(true)
                 }}
                 className="grid h-7 w-7 place-items-center rounded-full text-muted-foreground hover:bg-[var(--muted)]"
                 aria-label="Rename list"
@@ -438,13 +438,13 @@ export function BuyListScreen() {
             </div>
           )}
 
-          {grouped.map((g) => (
+          {grouped.map(g => (
             <section key={g.category} className="space-y-1.5">
               <p className="px-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                 {g.category}
               </p>
-              {g.items.map((it) => {
-                const cheapest = findCheapest(it.name, trackedProducts);
+              {g.items.map(it => {
+                const cheapest = findCheapest(it.name, trackedProducts)
                 return (
                   <div
                     key={it.id}
@@ -454,17 +454,17 @@ export function BuyListScreen() {
                       onClick={() => toggleDone(it.id)}
                       className={`mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full transition ${
                         it.done
-                          ? "bg-[var(--primary)] text-white"
-                          : "bg-[var(--muted)] text-transparent hover:text-muted-foreground"
+                          ? 'bg-[var(--primary)] text-white'
+                          : 'bg-[var(--muted)] text-transparent hover:text-muted-foreground'
                       }`}
-                      aria-label={it.done ? "Mark as not picked" : "Mark as picked"}
+                      aria-label={it.done ? 'Mark as not picked' : 'Mark as picked'}
                     >
                       <Check className="h-3.5 w-3.5" strokeWidth={3} />
                     </button>
                     <div className="flex-1 leading-tight">
                       <p
                         className={`text-[12px] font-bold transition ${
-                          it.done ? "text-muted-foreground line-through" : "text-foreground"
+                          it.done ? 'text-muted-foreground line-through' : 'text-foreground'
                         }`}
                       >
                         {it.name}
@@ -472,7 +472,7 @@ export function BuyListScreen() {
                       <p className="mt-0.5 text-[10px] text-muted-foreground">
                         {cheapest
                           ? `Cheapest: ${fmtYen(cheapest.price)} at ${cheapest.shop}`
-                          : "No price history yet"}
+                          : 'No price history yet'}
                       </p>
                       {!it.done && (
                         <div className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-[var(--muted)] px-1 py-0.5">
@@ -487,7 +487,7 @@ export function BuyListScreen() {
                             type="number"
                             inputMode="decimal"
                             value={it.qty}
-                            onChange={(e) => updateQty(it.id, Number(e.target.value) || 0)}
+                            onChange={e => updateQty(it.id, Number(e.target.value) || 0)}
                             className="w-10 bg-transparent text-center text-[11px] font-bold tabular-nums text-foreground outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
                           />
                           <span className="pr-1 text-[10px] font-semibold text-muted-foreground">
@@ -511,7 +511,7 @@ export function BuyListScreen() {
                       <Trash2 className="h-3.5 w-3.5" strokeWidth={2.25} />
                     </button>
                   </div>
-                );
+                )
               })}
             </section>
           ))}
@@ -525,29 +525,29 @@ export function BuyListScreen() {
                 <input
                   ref={nameInputRef}
                   value={draftName}
-                  onChange={(e) => {
-                    setDraftName(e.target.value);
-                    setShowSuggestions(true);
+                  onChange={e => {
+                    setDraftName(e.target.value)
+                    setShowSuggestions(true)
                   }}
                   onFocus={() => setShowSuggestions(true)}
                   onBlur={() => setTimeout(() => setShowSuggestions(false), 120)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") addItem();
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') addItem()
                   }}
                   placeholder="Add a product…"
                   className="w-full rounded-xl bg-[var(--muted)] px-3 py-2 text-[12px] font-semibold text-foreground placeholder:text-muted-foreground outline-none"
                 />
                 {showSuggestions && suggestions.length > 0 && (
                   <div className="absolute bottom-full left-0 right-0 mb-1 overflow-hidden rounded-xl bg-white shadow-[var(--shadow-phone)]">
-                    {suggestions.map((s) => {
-                      const c = findCheapest(s, trackedProducts);
+                    {suggestions.map(s => {
+                      const c = findCheapest(s, trackedProducts)
                       return (
                         <button
                           key={s}
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            setDraftName(s);
-                            setShowSuggestions(false);
+                          onMouseDown={e => {
+                            e.preventDefault()
+                            setDraftName(s)
+                            setShowSuggestions(false)
                           }}
                           className="flex w-full items-center justify-between px-3 py-2 text-left hover:bg-[var(--muted)]"
                         >
@@ -558,7 +558,7 @@ export function BuyListScreen() {
                             </span>
                           )}
                         </button>
-                      );
+                      )
                     })}
                   </div>
                 )}
@@ -566,7 +566,7 @@ export function BuyListScreen() {
               <div className="mt-2 flex items-center gap-2">
                 <div className="flex items-center gap-1 rounded-xl bg-[var(--muted)] px-2 py-1.5">
                   <button
-                    onClick={() => setDraftQty((q) => Math.max(0.01, +(q - 1).toFixed(2)))}
+                    onClick={() => setDraftQty(q => Math.max(0.01, +(q - 1).toFixed(2)))}
                     className="grid h-5 w-5 place-items-center rounded-full bg-white text-foreground"
                     aria-label="Qty down"
                   >
@@ -576,11 +576,11 @@ export function BuyListScreen() {
                     type="number"
                     inputMode="decimal"
                     value={draftQty}
-                    onChange={(e) => setDraftQty(Math.max(0.01, Number(e.target.value) || 0))}
+                    onChange={e => setDraftQty(Math.max(0.01, Number(e.target.value) || 0))}
                     className="w-10 bg-transparent text-center text-[11px] font-bold tabular-nums text-foreground outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
                   />
                   <button
-                    onClick={() => setDraftQty((q) => +(q + 1).toFixed(2))}
+                    onClick={() => setDraftQty(q => +(q + 1).toFixed(2))}
                     className="grid h-5 w-5 place-items-center rounded-full bg-white text-foreground"
                     aria-label="Qty up"
                   >
@@ -589,10 +589,10 @@ export function BuyListScreen() {
                 </div>
                 <select
                   value={draftUnit}
-                  onChange={(e) => setDraftUnit(e.target.value as Unit)}
+                  onChange={e => setDraftUnit(e.target.value as Unit)}
                   className="rounded-xl bg-[var(--muted)] px-2 py-2 text-[11px] font-bold text-foreground outline-none"
                 >
-                  {UNITS.map((u) => (
+                  {UNITS.map(u => (
                     <option key={u} value={u}>
                       {u}
                     </option>
@@ -611,5 +611,5 @@ export function BuyListScreen() {
         )}
       </div>
     </PhoneFrame>
-  );
+  )
 }

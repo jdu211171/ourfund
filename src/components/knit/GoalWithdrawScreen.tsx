@@ -1,21 +1,21 @@
-import { ArrowLeft, Plane, ArrowDownLeft } from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { useState } from "react";
-import { useAppNavigation } from "@/lib/navigation";
-import { OptionSelect } from "./OptionSelect";
-import { currencyAdornment, currencyValueToUsd, formatUsdAsCurrency } from "@/lib/currency";
-import { GoalIcon, normalizeGoalIconName } from "./goalIconOptions";
+import { ArrowDownLeft, ArrowLeft, Plane } from 'lucide-react'
+import { useState } from 'react'
+import { currencyAdornment, currencyValueToUsd, formatUsdAsCurrency } from '@/lib/currency'
+import { useAppNavigation } from '@/lib/navigation'
+import { GoalIcon, normalizeGoalIconName } from './goalIconOptions'
+import { OptionSelect } from './OptionSelect'
+import { PhoneFrame } from './PhoneFrame'
 
 export function GoalWithdrawScreen() {
   const { navigate, goBack, currency, goals, selectedGoalId, activeWallets, withdrawFromGoal } =
-    useAppNavigation();
-  const goal = goals.find((g) => g.id === selectedGoalId) ?? goals[0];
-  const [amount, setAmount] = useState("0");
-  const [selectedWalletId, setSelectedWalletId] = useState(activeWallets[0]?.id ?? "");
-  const wallet = activeWallets.find((item) => item.id === selectedWalletId) ?? activeWallets[0];
-  const amountUsd = currencyValueToUsd(parseFloat(amount || "0"), currency);
-  const { prefix, suffix } = currencyAdornment(currency);
-  const goalIconName = normalizeGoalIconName(goal?.icon ?? "plane");
+    useAppNavigation()
+  const goal = goals.find(g => g.id === selectedGoalId) ?? goals[0]
+  const [amount, setAmount] = useState('0')
+  const [selectedWalletId, setSelectedWalletId] = useState(activeWallets[0]?.id ?? '')
+  const wallet = activeWallets.find(item => item.id === selectedWalletId) ?? activeWallets[0]
+  const amountUsd = currencyValueToUsd(parseFloat(amount || '0'), currency)
+  const { prefix, suffix } = currencyAdornment(currency)
+  const goalIconName = normalizeGoalIconName(goal?.icon ?? 'plane')
 
   if (!goal) {
     return (
@@ -33,7 +33,7 @@ export function GoalWithdrawScreen() {
             <span className="h-9 w-9" />
           </header>
           <button
-            onClick={() => navigate("new_goal")}
+            onClick={() => navigate('new_goal')}
             className="m-auto rounded-3xl bg-white px-5 py-6 text-center shadow-[var(--shadow-soft)]"
           >
             <p className="text-[14px] font-bold text-foreground">No goal selected</p>
@@ -43,7 +43,7 @@ export function GoalWithdrawScreen() {
           </button>
         </div>
       </PhoneFrame>
-    );
+    )
   }
 
   return (
@@ -65,7 +65,7 @@ export function GoalWithdrawScreen() {
           <div
             className="grid h-12 w-12 place-items-center rounded-2xl text-white"
             style={{
-              background: "linear-gradient(135deg, oklch(0.65 0.22 200), oklch(0.45 0.24 200))",
+              background: 'linear-gradient(135deg, oklch(0.65 0.22 200), oklch(0.45 0.24 200))'
             }}
           >
             <GoalIcon name={goalIconName} className="h-6 w-6" />
@@ -73,7 +73,7 @@ export function GoalWithdrawScreen() {
           <div className="flex-1 leading-tight">
             <p className="text-[12px] font-bold text-foreground">{goal.title}</p>
             <p className="text-[10px] text-muted-foreground">
-              Saved {formatUsdAsCurrency(goal.savedUsd, currency)} of{" "}
+              Saved {formatUsdAsCurrency(goal.savedUsd, currency)} of{' '}
               {formatUsdAsCurrency(goal.targetUsd, currency)}
             </p>
           </div>
@@ -90,7 +90,7 @@ export function GoalWithdrawScreen() {
             <input
               type="text"
               value={amount}
-              onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))}
+              onChange={e => setAmount(e.target.value.replace(/[^0-9.]/g, ''))}
               className="w-40 bg-transparent text-center text-[44px] font-extrabold tracking-tight text-foreground outline-none border-b border-transparent focus:border-[var(--primary)] transition-colors focus:ring-0"
               placeholder="0"
             />
@@ -109,11 +109,11 @@ export function GoalWithdrawScreen() {
         <div className="mt-2">
           <OptionSelect
             label="Wallet"
-            value={wallet?.id ?? ""}
-            options={activeWallets.map((item) => ({
+            value={wallet?.id ?? ''}
+            options={activeWallets.map(item => ({
               value: item.id,
               label: item.label,
-              description: item.sub,
+              description: item.sub
             }))}
             onChange={setSelectedWalletId}
             emptyLabel="No wallet available"
@@ -128,17 +128,17 @@ export function GoalWithdrawScreen() {
         <button
           onClick={() => {
             if (!wallet) {
-              navigate("new_wallet");
-              return;
+              navigate('new_wallet')
+              return
             }
-            withdrawFromGoal(goal.id, amountUsd, wallet.label);
-            navigate("goal_detail");
+            withdrawFromGoal(goal.id, amountUsd, wallet.label)
+            navigate('goal_detail')
           }}
           className="mt-auto w-full rounded-full bg-[oklch(0.18_0.04_265)] py-4 text-[15px] font-semibold text-white active:scale-95 transition-all cursor-pointer"
         >
-          {wallet ? "Confirm withdrawal" : "Create wallet"}
+          {wallet ? 'Confirm withdrawal' : 'Create wallet'}
         </button>
       </div>
     </PhoneFrame>
-  );
+  )
 }

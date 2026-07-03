@@ -1,105 +1,104 @@
-import { useMemo, useState } from "react";
-import { ArrowLeft, ChevronDown, Check, Globe2 } from "lucide-react";
-import { PhoneFrame } from "./PhoneFrame";
-import { useAppNavigation } from "@/lib/navigation";
+import { ArrowLeft, Check, ChevronDown, Globe2 } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { useAppNavigation } from '@/lib/navigation'
 import {
-  ENGINES,
   calculate,
-  defaultInsurance,
-  getEngine,
   type DeductionCategory,
+  defaultInsurance,
+  ENGINES,
+  getEngine,
   type InsuranceKey,
-  type Period,
-} from "@/lib/salary/tax-engines";
+  type Period
+} from '@/lib/salary/tax-engines'
+import { PhoneFrame } from './PhoneFrame'
 
-type InsuranceSelection = ReturnType<typeof defaultInsurance>;
+type InsuranceSelection = ReturnType<typeof defaultInsurance>
 
 export function SalaryCalculatorScreen() {
-  const { goBack, salaryCalculatorSettings, setSalaryCalculatorSettings } = useAppNavigation();
-  const requestedCountry = salaryCalculatorSettings.country || "JP";
-  const engine = getEngine(requestedCountry);
-  const country = engine.code;
-  const period = salaryCalculatorSettings.period as Period;
+  const { goBack, salaryCalculatorSettings, setSalaryCalculatorSettings } = useAppNavigation()
+  const requestedCountry = salaryCalculatorSettings.country || 'JP'
+  const engine = getEngine(requestedCountry)
+  const country = engine.code
+  const period = salaryCalculatorSettings.period as Period
   const defaultAmount = Math.round(
-    period === "monthly" ? engine.defaultGrossAnnual / 12 : engine.defaultGrossAnnual,
-  );
-  const amount = salaryCalculatorSettings.amount ?? defaultAmount;
+    period === 'monthly' ? engine.defaultGrossAnnual / 12 : engine.defaultGrossAnnual
+  )
+  const amount = salaryCalculatorSettings.amount ?? defaultAmount
   const insurance = useMemo<InsuranceSelection>(
     () =>
       ({
         ...defaultInsurance(engine),
-        ...salaryCalculatorSettings.insurance,
+        ...salaryCalculatorSettings.insurance
       }) as InsuranceSelection,
-    [engine, salaryCalculatorSettings.insurance],
-  );
-  const [amountInput, setAmountInput] = useState<string>(() => String(amount));
-  const [pickerOpen, setPickerOpen] = useState(false);
+    [engine, salaryCalculatorSettings.insurance]
+  )
+  const [amountInput, setAmountInput] = useState<string>(() => String(amount))
+  const [pickerOpen, setPickerOpen] = useState(false)
 
   const result = useMemo(
     () => calculate(country, amount, period, insurance),
-    [country, amount, period, insurance],
-  );
+    [country, amount, period, insurance]
+  )
 
   const fmt = (n: number) =>
     new Intl.NumberFormat(engine.locale, {
-      style: "currency",
+      style: 'currency',
       currency: engine.currency,
-      maximumFractionDigits: 0,
-    }).format(Math.round(n));
+      maximumFractionDigits: 0
+    }).format(Math.round(n))
 
   const handleCountry = (code: string) => {
-    const e = getEngine(code);
-    const next =
-      period === "monthly" ? Math.round(e.defaultGrossAnnual / 12) : e.defaultGrossAnnual;
+    const e = getEngine(code)
+    const next = period === 'monthly' ? Math.round(e.defaultGrossAnnual / 12) : e.defaultGrossAnnual
     setSalaryCalculatorSettings({
       country: e.code,
       amount: next,
-      insurance: defaultInsurance(e),
-    });
-    setAmountInput(String(next));
-    setPickerOpen(false);
-  };
+      insurance: defaultInsurance(e)
+    })
+    setAmountInput(String(next))
+    setPickerOpen(false)
+  }
 
   const toggleIns = (k: InsuranceKey) => {
     setSalaryCalculatorSettings({
-      insurance: { ...insurance, [k]: !insurance[k] },
-    });
-  };
+      insurance: { ...insurance, [k]: !insurance[k] }
+    })
+  }
 
   const handlePeriod = (nextPeriod: Period) => {
-    setSalaryCalculatorSettings({ period: nextPeriod });
-  };
+    setSalaryCalculatorSettings({ period: nextPeriod })
+  }
 
   const handleAmountChange = (raw: string) => {
-    const cleaned = raw.replace(/[^0-9]/g, "");
-    setAmountInput(cleaned);
-    setSalaryCalculatorSettings({ amount: cleaned === "" ? 0 : Math.max(0, Number(cleaned)) });
-  };
+    const cleaned = raw.replace(/[^0-9]/g, '')
+    setAmountInput(cleaned)
+    setSalaryCalculatorSettings({ amount: cleaned === '' ? 0 : Math.max(0, Number(cleaned)) })
+  }
 
   const handleAmountBlur = () => {
-    setAmountInput(String(amount));
-  };
+    setAmountInput(String(amount))
+  }
 
-  const gross = period === "monthly" ? amount : amount;
-  const net = period === "monthly" ? result.netMonthly : result.netAnnual;
-  const totalDed = period === "monthly" ? result.totalDeductions / 12 : result.totalDeductions;
-  const factor = period === "monthly" ? 12 : 1;
-  const social = result.deductions.socialInsurance / factor;
-  const tax = result.deductions.incomeTax / factor;
-  const resident = result.deductions.residentTax / factor;
-  const other = (result.deductions.other ?? 0) / factor;
-  const itemizedDeductions = result.deductions.items.map((item) => ({
+  const gross = period === 'monthly' ? amount : amount
+  const net = period === 'monthly' ? result.netMonthly : result.netAnnual
+  const totalDed = period === 'monthly' ? result.totalDeductions / 12 : result.totalDeductions
+  const factor = period === 'monthly' ? 12 : 1
+  const social = result.deductions.socialInsurance / factor
+  const tax = result.deductions.incomeTax / factor
+  const resident = result.deductions.residentTax / factor
+  const other = (result.deductions.other ?? 0) / factor
+  const itemizedDeductions = result.deductions.items.map(item => ({
     ...item,
-    amount: item.amount / factor,
-  }));
+    amount: item.amount / factor
+  }))
 
-  const pct = (v: number) => (gross > 0 ? (v / gross) * 100 : 0);
+  const pct = (v: number) => (gross > 0 ? (v / gross) * 100 : 0)
   const toneFor = (category: DeductionCategory) => {
-    if (category === "social") return "warn";
-    if (category === "tax") return "danger";
-    if (category === "local") return "success";
-    return "muted";
-  };
+    if (category === 'social') return 'warn'
+    if (category === 'tax') return 'danger'
+    if (category === 'local') return 'success'
+    return 'muted'
+  }
 
   return (
     <PhoneFrame>
@@ -119,7 +118,7 @@ export function SalaryCalculatorScreen() {
         {/* Country */}
         <div className="relative mt-5">
           <button
-            onClick={() => setPickerOpen((v) => !v)}
+            onClick={() => setPickerOpen(v => !v)}
             className="flex w-full items-center gap-3 rounded-2xl bg-white px-3 py-3 text-left shadow-[var(--shadow-soft)]"
           >
             <div className="grid h-11 w-11 place-items-center rounded-xl bg-[oklch(0.95_0.05_265)] text-[var(--primary)]">
@@ -130,13 +129,13 @@ export function SalaryCalculatorScreen() {
               <p className="text-[14px] font-bold text-foreground">{engine.label}</p>
             </div>
             <ChevronDown
-              className={`h-4 w-4 text-muted-foreground transition ${pickerOpen ? "rotate-180" : ""}`}
+              className={`h-4 w-4 text-muted-foreground transition ${pickerOpen ? 'rotate-180' : ''}`}
               strokeWidth={2.5}
             />
           </button>
           {pickerOpen && (
             <div className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-2xl bg-white shadow-[var(--shadow-phone)]">
-              {Object.values(ENGINES).map((e) => (
+              {Object.values(ENGINES).map(e => (
                 <button
                   key={e.code}
                   onClick={() => handleCountry(e.code)}
@@ -157,12 +156,12 @@ export function SalaryCalculatorScreen() {
               Gross salary
             </p>
             <div className="flex rounded-full bg-[var(--muted)] p-0.5">
-              {(["monthly", "annual"] as Period[]).map((p) => (
+              {(['monthly', 'annual'] as Period[]).map(p => (
                 <button
                   key={p}
                   onClick={() => handlePeriod(p)}
                   className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider transition ${
-                    period === p ? "bg-[var(--primary)] text-white" : "text-muted-foreground"
+                    period === p ? 'bg-[var(--primary)] text-white' : 'text-muted-foreground'
                   }`}
                 >
                   {p}
@@ -179,7 +178,7 @@ export function SalaryCalculatorScreen() {
               inputMode="numeric"
               pattern="[0-9]*"
               value={amountInput}
-              onChange={(e) => handleAmountChange(e.target.value)}
+              onChange={e => handleAmountChange(e.target.value)}
               onBlur={handleAmountBlur}
               className="w-full bg-transparent text-[28px] font-bold text-foreground outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
             />
@@ -190,11 +189,11 @@ export function SalaryCalculatorScreen() {
         <div
           className="mt-4 rounded-2xl p-4 text-white shadow-[var(--shadow-tile)]"
           style={{
-            background: "linear-gradient(135deg, oklch(0.55 0.24 265), oklch(0.4 0.22 270))",
+            background: 'linear-gradient(135deg, oklch(0.55 0.24 265), oklch(0.4 0.22 270))'
           }}
         >
           <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">
-            Net take-home · {period === "monthly" ? "per month" : "per year"}
+            Net take-home · {period === 'monthly' ? 'per month' : 'per year'}
           </p>
           <p className="mt-1 font-display text-[30px] leading-tight tracking-tight">{fmt(net)}</p>
           <div className="mt-2 flex items-center justify-between text-[11px] opacity-90">
@@ -219,8 +218,8 @@ export function SalaryCalculatorScreen() {
           Included deductions
         </p>
         <div className="mt-2 space-y-2">
-          {engine.insuranceOptions.map((opt) => {
-            const on = insurance[opt.key] ?? false;
+          {engine.insuranceOptions.map(opt => {
+            const on = insurance[opt.key] ?? false
             return (
               <button
                 key={opt.key}
@@ -229,7 +228,7 @@ export function SalaryCalculatorScreen() {
               >
                 <div
                   className={`grid h-6 w-6 place-items-center rounded-md transition ${
-                    on ? "bg-[var(--primary)] text-white" : "bg-[var(--muted)] text-transparent"
+                    on ? 'bg-[var(--primary)] text-white' : 'bg-[var(--muted)] text-transparent'
                   }`}
                 >
                   <Check className="h-3.5 w-3.5" strokeWidth={3} />
@@ -239,7 +238,7 @@ export function SalaryCalculatorScreen() {
                   <p className="text-[10px] text-muted-foreground">{opt.hint}</p>
                 </div>
               </button>
-            );
+            )
           })}
         </div>
 
@@ -249,7 +248,7 @@ export function SalaryCalculatorScreen() {
         </p>
         <div className="mt-2 space-y-1.5 rounded-2xl bg-white p-3 shadow-[var(--shadow-soft)]">
           <Row label="Gross" value={fmt(gross)} bold />
-          {itemizedDeductions.map((item) => (
+          {itemizedDeductions.map(item => (
             <Row
               key={item.key}
               label={item.label}
@@ -267,42 +266,42 @@ export function SalaryCalculatorScreen() {
         </p>
       </div>
     </PhoneFrame>
-  );
+  )
 }
 
 function Row({
   label,
   value,
   bold,
-  tone,
+  tone
 }: {
-  label: string;
-  value: string;
-  bold?: boolean;
-  tone?: "warn" | "danger" | "success" | "primary" | "muted";
+  label: string
+  value: string
+  bold?: boolean
+  tone?: 'warn' | 'danger' | 'success' | 'primary' | 'muted'
 }) {
   const color =
-    tone === "warn"
-      ? "text-[oklch(0.65_0.18_85)]"
-      : tone === "danger"
-        ? "text-[var(--danger)]"
-        : tone === "success"
-          ? "text-[var(--success)]"
-          : tone === "primary"
-            ? "text-[var(--primary)]"
-            : tone === "muted"
-              ? "text-muted-foreground"
-              : "text-foreground";
+    tone === 'warn'
+      ? 'text-[oklch(0.65_0.18_85)]'
+      : tone === 'danger'
+        ? 'text-[var(--danger)]'
+        : tone === 'success'
+          ? 'text-[var(--success)]'
+          : tone === 'primary'
+            ? 'text-[var(--primary)]'
+            : tone === 'muted'
+              ? 'text-muted-foreground'
+              : 'text-foreground'
   return (
     <div className="flex items-center justify-between px-1 py-1">
       <span
-        className={`text-[12px] ${bold ? "font-bold text-foreground" : "text-muted-foreground"}`}
+        className={`text-[12px] ${bold ? 'font-bold text-foreground' : 'text-muted-foreground'}`}
       >
         {label}
       </span>
-      <span className={`text-[13px] tabular-nums ${bold ? "font-bold" : "font-semibold"} ${color}`}>
+      <span className={`text-[13px] tabular-nums ${bold ? 'font-bold' : 'font-semibold'} ${color}`}>
         {value}
       </span>
     </div>
-  );
+  )
 }
