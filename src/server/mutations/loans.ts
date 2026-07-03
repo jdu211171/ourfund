@@ -1,10 +1,5 @@
 import { prisma } from '../../lib/db'
-import {
-  getAppBaseUrl,
-  sendInviteEmail,
-  sendLoanCreatedEmail,
-  sendLoanPaidEmail
-} from '../../lib/mailer'
+import { getAppBaseUrl, sendLoanCreatedEmail, sendLoanPaidEmail } from '../../lib/mailer'
 import {
   createNotificationsForUsers,
   getHouseholdUsers,
@@ -15,7 +10,7 @@ import {
 export async function handleAddLoanEntry(
   payload: any,
   user: any,
-  member: any,
+  _member: any,
   householdId: string | undefined
 ) {
   if (!householdId) throw new Error('No household linked')
@@ -72,7 +67,7 @@ export async function handleAddLoanEntry(
 export async function handleUpdateLoanEntry(
   payload: any,
   user: any,
-  member: any,
+  _member: any,
   householdId: string | undefined
 ) {
   if (!householdId) throw new Error('No household linked')

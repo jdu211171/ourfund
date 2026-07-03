@@ -3,8 +3,8 @@ import { createNotificationsForUsers, getHouseholdUsers } from '../helpers/notif
 export async function handleCreateHousehold(
   payload: any,
   user: any,
-  member: any,
-  householdId: string | undefined
+  _member: any,
+  _householdId: string | undefined
 ) {
   const inviteCode = `NEST-${Math.random().toString(36).slice(2, 6).toUpperCase()}`
   const personalCurrency = payload.personalCurrency || user.personalCurrency || 'USD'
@@ -76,8 +76,8 @@ export async function handleCreateHousehold(
 export async function handleAcceptInvite(
   payload: any,
   user: any,
-  member: any,
-  householdId: string | undefined
+  _member: any,
+  _householdId: string | undefined
 ) {
   // Make sure this user isn't already in the household
   const found = await prisma.household.findUnique({
@@ -165,9 +165,9 @@ export async function handleAcceptInvite(
 
 export async function handleValidateInviteCode(
   payload: any,
-  user: any,
-  member: any,
-  householdId: string | undefined
+  _user: any,
+  _member: any,
+  _householdId: string | undefined
 ) {
   const found = await prisma.household.findUnique({
     where: { inviteCode: payload.code.toUpperCase() },

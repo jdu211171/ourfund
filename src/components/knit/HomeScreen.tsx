@@ -136,7 +136,7 @@ export function HomeScreen() {
 
     activeTransactions.forEach(t => {
       const tDate = new Date(t.date)
-      if (isNaN(tDate.getTime())) return
+      if (Number.isNaN(tDate.getTime())) return
       weeks.forEach(w => {
         if (tDate >= w.start && tDate <= w.end) {
           if (t.usd > 0) {

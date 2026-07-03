@@ -135,10 +135,14 @@ export function EditTransactionScreen() {
         </div>
 
         <div className="mt-5 space-y-2">
-          <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+          <label
+            htmlFor="transaction-description"
+            className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground"
+          >
             Description
           </label>
           <input
+            id="transaction-description"
             value={description}
             onChange={e => setDescription(e.target.value)}
             className="w-full rounded-2xl bg-white px-4 py-3 text-[13px] font-semibold text-foreground shadow-[var(--shadow-soft)] outline-none border border-transparent focus:border-[var(--primary)]"

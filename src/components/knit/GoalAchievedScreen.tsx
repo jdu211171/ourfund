@@ -6,7 +6,7 @@ import { PhoneFrame } from './PhoneFrame'
 export function GoalAchievedScreen() {
   const { navigate, currency, goals, selectedGoalId } = useAppNavigation()
   const goal = goals.find(g => g.id === selectedGoalId) ?? goals[0]
-  const confetti = Array.from({ length: 14 })
+  const confetti = 'abcdefghijklmn'.split('')
   const palette = [
     'oklch(0.75 0.18 85)',
     'oklch(0.65 0.22 265)',
@@ -41,9 +41,9 @@ export function GoalAchievedScreen() {
           background: 'linear-gradient(160deg, oklch(0.35 0.18 265) 0%, oklch(0.22 0.1 265) 100%)'
         }}
       >
-        {confetti.map((_, i) => (
+        {confetti.map((piece, i) => (
           <span
-            key={i}
+            key={piece}
             className="absolute rounded-[2px]"
             style={{
               width: 6 + (i % 3) * 2,

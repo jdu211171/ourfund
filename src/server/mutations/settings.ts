@@ -8,7 +8,7 @@ import {
 export async function handleSetBudgetMode(
   payload: any,
   user: any,
-  member: any,
+  _member: any,
   householdId: string | undefined
 ) {
   const budgetMode = payload.budgetMode === 'family' && householdId ? 'family' : 'personal'
@@ -21,8 +21,8 @@ export async function handleSetBudgetMode(
 export async function handleSetReportPeriod(
   payload: any,
   user: any,
-  member: any,
-  householdId: string | undefined
+  _member: any,
+  _householdId: string | undefined
 ) {
   await prisma.user.update({
     where: { id: user.id },
@@ -33,8 +33,8 @@ export async function handleSetReportPeriod(
 export async function handleSetNotificationPrefs(
   payload: any,
   user: any,
-  member: any,
-  householdId: string | undefined
+  _member: any,
+  _householdId: string | undefined
 ) {
   await prisma.user.update({
     where: { id: user.id },
@@ -50,8 +50,8 @@ export async function handleSetNotificationPrefs(
 export async function handleSetHistoryFilters(
   payload: any,
   user: any,
-  member: any,
-  householdId: string | undefined
+  _member: any,
+  _householdId: string | undefined
 ) {
   await prisma.user.update({
     where: { id: user.id },
@@ -62,8 +62,8 @@ export async function handleSetHistoryFilters(
 export async function handleSetCompactMoneyMode(
   payload: any,
   user: any,
-  member: any,
-  householdId: string | undefined
+  _member: any,
+  _householdId: string | undefined
 ) {
   await prisma.user.update({
     where: { id: user.id },
@@ -74,7 +74,7 @@ export async function handleSetCompactMoneyMode(
 export async function handleSetCurrencyForMode(
   payload: any,
   user: any,
-  member: any,
+  _member: any,
   householdId: string | undefined
 ) {
   const currency = payload.currency
@@ -100,8 +100,8 @@ export async function handleSetCurrencyForMode(
 export async function handleSetPasscode(
   payload: any,
   user: any,
-  member: any,
-  householdId: string | undefined
+  _member: any,
+  _householdId: string | undefined
 ) {
   await prisma.user.update({
     where: { id: user.id },

@@ -110,7 +110,7 @@ export const scanReceiptServerFn = createServerFn({ method: 'POST' })
       try {
         parsed = parseGeminiJson(resBody)
         break
-      } catch (err) {
+      } catch {
         sawModelResponseFailure = true
         continue
       }
@@ -252,7 +252,7 @@ function normalizeReceiptDate(dateStr: string | undefined | null, localDate?: st
 
   // Try standard JS Date parsing as last resort
   const parsed = new Date(parseable)
-  if (!isNaN(parsed.getTime())) {
+  if (!Number.isNaN(parsed.getTime())) {
     return parsed.toISOString().slice(0, 10)
   }
 

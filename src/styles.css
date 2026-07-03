@@ -286,7 +286,7 @@ button:not(:disabled):not([aria-disabled="true"]):active::before {
 
 /* Light surfaces → card */
 html.dark .bg-white {
-  background-color: var(--card) !important;
+  background-color: var(--card);
 }
 
 /* Light accent tints (soft blue chips, pale borders) → muted */
@@ -295,20 +295,20 @@ html.dark [class*="bg-[oklch(0.96_0.04_265)]"],
 html.dark [class*="bg-[oklch(0.95_0.04_265)]"],
 html.dark [class*="bg-[oklch(0.95_0.05_265)]"],
 html.dark [class*="bg-[oklch(0.94_0.01_265)]"] {
-  background-color: var(--muted) !important;
+  background-color: var(--muted);
 }
 
 /* Pale danger tint */
 html.dark [class*="bg-[oklch(0.96_0.04_30)]"] {
-  background-color: color-mix(in oklab, var(--danger) 22%, var(--card)) !important;
+  background-color: color-mix(in oklab, var(--danger) 22%, var(--card));
 }
 
 /* Near-black surfaces (CTA pills painted dark navy) → primary brand */
 html.dark [class*="bg-[oklch(0.18_0.04_265)]"],
 html.dark [class*="bg-[oklch(0.22_"],
 html.dark .bg-black {
-  background-color: var(--primary) !important;
-  color: var(--primary-foreground) !important;
+  background-color: var(--primary);
+  color: var(--primary-foreground);
 }
 
 /* Text colours hard-coded as near-black blue → foreground */
@@ -316,17 +316,17 @@ html.dark .text-black,
 html.dark [class*="text-[oklch(0.18_"],
 html.dark [class*="text-[oklch(0.2_0.08_265)]"],
 html.dark [class*="text-[oklch(0.22_0.1_265)]"] {
-  color: var(--foreground) !important;
+  color: var(--foreground);
 }
 html.dark .text-white {
-  color: var(--primary-foreground) !important;
+  color: var(--primary-foreground);
 }
 
 /* Pale borders */
 html.dark [class*="border-[oklch(0.94_"],
 html.dark [class*="border-[oklch(0.95_"],
 html.dark [class*="border-[oklch(0.96_"] {
-  border-color: var(--border) !important;
+  border-color: var(--border);
 }
 
 /* Beautiful custom scrollbar styling */

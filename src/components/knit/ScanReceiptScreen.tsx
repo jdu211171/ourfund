@@ -321,10 +321,11 @@ export function ScanReceiptScreen() {
               {scan.items.map((item, index) => {
                 const currencySymbol = scan.currency === 'JPY' ? '¥' : '$'
                 const localValue = Math.round(usdToCurrencyValue(item.totalUsd, scan.currency))
+                const itemKey = `${item.name}-${item.totalUsd}-${item.quantity}-${item.unitPriceUsd ?? ''}`
 
                 return (
                   <div
-                    key={index}
+                    key={itemKey}
                     className="flex items-start gap-2.5 rounded-xl bg-white px-3 py-2 shadow-[var(--shadow-soft)]"
                   >
                     <button
@@ -385,7 +386,7 @@ export function ScanReceiptScreen() {
                             value={item.quantity}
                             min={1}
                             onChange={e => {
-                              const qty = Math.max(1, parseInt(e.target.value) || 1)
+                              const qty = Math.max(1, parseInt(e.target.value, 10) || 1)
                               const newItems = [...scan.items]
                               newItems[index] = {
                                 ...item,

@@ -1,6 +1,6 @@
 import { ArrowLeft, Sparkles, Store, TrendingDown, TrendingUp } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { allProducts, fmtYen, PURCHASE_HISTORY, priceHistoryFor } from '@/lib/buy-list-history'
+import { allProducts, fmtYen, priceHistoryFor } from '@/lib/buy-list-history'
 import { useAppNavigation } from '@/lib/navigation'
 import { PhoneFrame } from './PhoneFrame'
 

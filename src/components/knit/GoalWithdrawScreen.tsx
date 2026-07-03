@@ -1,4 +1,4 @@
-import { ArrowDownLeft, ArrowLeft, Plane } from 'lucide-react'
+import { ArrowDownLeft, ArrowLeft } from 'lucide-react'
 import { useState } from 'react'
 import { currencyAdornment, currencyValueToUsd, formatUsdAsCurrency } from '@/lib/currency'
 import { useAppNavigation } from '@/lib/navigation'

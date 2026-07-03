@@ -61,11 +61,11 @@ export function EditGoalScreen() {
     setContributors(goal.contributors ?? [])
     setAmount(String(Math.round(usdToCurrencyValue(goal.targetUsd, currency))))
     setSelectedIconName(normalizeGoalIconName(goal.icon))
-  }, [currency, goal?.id])
+  }, [currency, goal?.id, goal])
 
   useEffect(() => {
     setVisibleIcons(120)
-  }, [iconQuery])
+  }, [])
 
   if (!goal) {
     return (

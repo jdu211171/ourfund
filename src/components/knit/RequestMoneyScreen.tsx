@@ -43,7 +43,7 @@ export function RequestMoneyScreen() {
 
   useEffect(() => {
     setVisibleIcons(120)
-  }, [iconQuery])
+  }, [])
 
   const createGoal = () => {
     const goal = addGoal({

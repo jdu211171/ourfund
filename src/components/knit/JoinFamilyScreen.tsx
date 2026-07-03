@@ -55,10 +55,14 @@ export function JoinFamilyScreen() {
         </div>
 
         <div className="mt-8">
-          <label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+          <label
+            htmlFor="invitation-code"
+            className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground"
+          >
             Invitation code
           </label>
           <input
+            id="invitation-code"
             type="text"
             value={code}
             onChange={e => {

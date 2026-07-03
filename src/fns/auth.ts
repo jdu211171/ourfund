@@ -11,7 +11,7 @@ export const loginWithEmailServerFn = createServerFn({ method: 'POST' })
     const email = data.email.trim().toLowerCase()
     const { passwordHash: password } = data
     const user = await prisma.user.findUnique({ where: { email } })
-    if (!user || !user.passwordHash) {
+    if (!user?.passwordHash) {
       throw new Error('Invalid email or password')
     }
     const match = await bcrypt.compare(password, user.passwordHash)

@@ -8,7 +8,7 @@ const roles = ['Admin', 'Adult', 'Teen', 'Kid']
 
 export function InviteMemberScreen() {
   const { navigate, goBack, household, inviteMember } = useAppNavigation()
-  const [selectedRoleIdx, setSelectedRoleIdx] = useState(2)
+  const [selectedRoleIdx, _setSelectedRoleIdx] = useState(2)
   const [copied, setCopied] = useState(false)
   const [inviteMethod, setInviteMethod] = useState<'email' | 'sms' | 'link'>('email')
   const [email, setEmail] = useState('')

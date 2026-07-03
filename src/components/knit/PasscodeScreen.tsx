@@ -53,11 +53,11 @@ export function PasscodeScreen() {
 
         <div className="mt-8 grid grid-cols-3 gap-3">
           {keys.map((k, i) => {
-            if (k === '') return <div key={i} />
+            if (k === '') return <div key="blank" />
             if (k === 'del')
               return (
                 <button
-                  key={i}
+                  key="del"
                   onClick={() => press(k)}
                   className="grid h-14 place-items-center rounded-2xl text-foreground"
                 >
@@ -66,7 +66,7 @@ export function PasscodeScreen() {
               )
             return (
               <button
-                key={i}
+                key={k}
                 onClick={() => press(k)}
                 className="grid h-14 place-items-center rounded-2xl bg-white text-[22px] font-bold text-foreground shadow-[var(--shadow-soft)]"
               >

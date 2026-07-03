@@ -1,13 +1,9 @@
 import { prisma } from '../../lib/db'
-import {
-  canUseWalletAsTransferSource,
-  canUseWalletAsTransferTarget,
-  walletMembers
-} from '../helpers/wallet'
+import { canUseWalletAsTransferSource, canUseWalletAsTransferTarget } from '../helpers/wallet'
 export async function handleAddTransaction(
   payload: any,
-  user: any,
-  member: any,
+  _user: any,
+  _member: any,
   householdId: string | undefined
 ) {
   if (!householdId) throw new Error('No household linked')
@@ -27,8 +23,8 @@ export async function handleAddTransaction(
 
 export async function handleUpdateTransaction(
   payload: any,
-  user: any,
-  member: any,
+  _user: any,
+  _member: any,
   householdId: string | undefined
 ) {
   if (!householdId) throw new Error('No household linked')

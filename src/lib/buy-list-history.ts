@@ -267,7 +267,7 @@ function getDaysAgo(dateStr?: string | null): number {
   if (dateStr === 'yesterday') return 1
   try {
     const d = new Date(dateStr)
-    if (isNaN(d.getTime())) return 1
+    if (Number.isNaN(d.getTime())) return 1
     return Math.max(0, Math.round((Date.now() - d.getTime()) / 86_400_000))
   } catch {
     return 1

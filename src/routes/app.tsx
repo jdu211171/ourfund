@@ -72,15 +72,13 @@ function AppLayoutContent() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [allOpen, setAllOpen] = useState(false)
 
-  const { isAuthReady, profile, household, members, notifications, markAllNotificationsRead } =
-    useAppNavigation()
+  const { isAuthReady, profile, household, members, notifications } = useAppNavigation()
 
   const currentSlug = location.pathname.split('/').pop() ?? 'home'
 
   // Force dark mode or adapt settings if needed.
   useEffect(() => {
     const root = document.documentElement
-    const had = root.classList.contains('dark')
     // Default to dark mode for web shell if theme is not set, or let ThemeToggle handle it.
     if (!localStorage.getItem('theme')) {
       root.classList.add('dark')
@@ -98,7 +96,7 @@ function AppLayoutContent() {
     )
   }
 
-  const groups = Array.from(new Set(SCREENS.map(s => s.group)))
+  const _groups = Array.from(new Set(SCREENS.map(s => s.group)))
 
   // Auth screens render their own full-bleed layout without the app shell.
   const isAuthScreen = [
@@ -198,7 +196,7 @@ function AppLayoutContent() {
             </button>
             {allOpen && (
               <div className="mt-1 max-h-[280px] overflow-y-auto px-1">
-                {groups.map(g => (
+                {_groups.map(g => (
                   <div key={g} className="py-1">
                     <p className="px-2 pb-1 pt-1.5 text-[9px] font-bold uppercase tracking-widest text-muted-foreground/70">
                       {g}
@@ -323,7 +321,7 @@ function AppLayoutContent() {
               <p className="px-2 pb-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                 All screens
               </p>
-              {groups.map(g => (
+              {_groups.map(g => (
                 <div key={g} className="py-1">
                   <p className="px-2 pb-0.5 text-[9px] font-bold uppercase tracking-widest text-muted-foreground/70">
                     {g}

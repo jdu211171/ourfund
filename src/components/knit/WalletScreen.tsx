@@ -40,7 +40,7 @@ export function WalletScreen() {
   } = useAppNavigation()
   const viewedMember = members.find(member => member.id === selectedMemberId)
 
-  const sortedWallets = [...activeWallets].sort((a, b) => {
+  const sortedWallets = [...activeWallets].sort((a, _b) => {
     if (budgetMode === 'personal') {
       return a.type === 'private' ? -1 : 1
     }

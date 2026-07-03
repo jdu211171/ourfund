@@ -10,7 +10,7 @@ import {
   Trash2,
   Users
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { formatISODate } from '@/context/helpers'
 import {
   currencyFractionDigits,
@@ -45,8 +45,11 @@ export function WalletDetailScreen() {
 
   const wallet = activeWallets.find(w => w.id === selectedDetailWalletId)
   const walletCurrency = wallet?.currency ?? currency
-  const formatBalanceInput = (usd: number, code: CurrencyCode = walletCurrency) =>
-    usdToCurrencyValue(usd, code).toFixed(currencyFractionDigits(code))
+  const formatBalanceInput = useCallback(
+    (usd: number, code: CurrencyCode = walletCurrency) =>
+      usdToCurrencyValue(usd, code).toFixed(currencyFractionDigits(code)),
+    [walletCurrency]
+  )
 
   // Editing state
   const [isEditing, setIsEditing] = useState(false)
@@ -72,12 +75,12 @@ export function WalletDetailScreen() {
     setEditColor(wallet.color)
     setEditCurrency(wallet.currency)
     setEditStartingBalance(formatBalanceInput(wallet.startingBalanceUsd ?? 0, wallet.currency))
-  }, [wallet?.id])
+  }, [wallet, formatBalanceInput])
 
   useEffect(() => {
     if (!wallet) return
     setEditStartingBalance(formatBalanceInput(wallet.startingBalanceUsd ?? 0, editCurrency))
-  }, [editCurrency])
+  }, [editCurrency, wallet, formatBalanceInput])
 
   if (!wallet) {
     return (
@@ -224,10 +227,14 @@ export function WalletDetailScreen() {
 
             <div className="space-y-3 rounded-2xl bg-white p-4 shadow-[var(--shadow-soft)] border border-slate-100/50">
               <div>
-                <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold block mb-1">
+                <label
+                  htmlFor="wallet-name"
+                  className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold block mb-1"
+                >
                   Wallet Name
                 </label>
                 <input
+                  id="wallet-name"
                   type="text"
                   value={editName}
                   onChange={e => setEditName(e.target.value)}
@@ -237,10 +244,14 @@ export function WalletDetailScreen() {
               </div>
 
               <div>
-                <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold block mb-1">
+                <label
+                  htmlFor="wallet-starting-balance"
+                  className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold block mb-1"
+                >
                   Starting Balance ({editCurrency})
                 </label>
                 <input
+                  id="wallet-starting-balance"
                   type="number"
                   value={editStartingBalance}
                   onChange={e => setEditStartingBalance(e.target.value)}
@@ -251,9 +262,9 @@ export function WalletDetailScreen() {
               </div>
 
               <div>
-                <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold block mb-2">
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold block mb-2">
                   Currency
-                </label>
+                </p>
                 <div className="grid grid-cols-5 gap-2">
                   {['UZS', 'USD', 'JPY', 'EUR', 'GBP'].map(code => (
                     <button
@@ -273,9 +284,9 @@ export function WalletDetailScreen() {
               </div>
 
               <div>
-                <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold block mb-2">
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold block mb-2">
                   Theme Color
-                </label>
+                </p>
                 <div className="grid grid-cols-6 gap-2">
                   {COLOR_OPTIONS.map(c => (
                     <button
@@ -341,10 +352,14 @@ export function WalletDetailScreen() {
                 </h3>
                 <div className="space-y-3">
                   <div>
-                    <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold block mb-1">
+                    <label
+                      htmlFor="wallet-adjust-amount"
+                      className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold block mb-1"
+                    >
                       Amount ({wallet.currency})
                     </label>
                     <input
+                      id="wallet-adjust-amount"
                       type="number"
                       value={adjustAmount}
                       onChange={e => setAdjustAmount(e.target.value)}
@@ -354,10 +369,14 @@ export function WalletDetailScreen() {
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold block mb-1">
+                    <label
+                      htmlFor="wallet-adjust-note"
+                      className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold block mb-1"
+                    >
                       Note / Description
                     </label>
                     <input
+                      id="wallet-adjust-note"
                       type="text"
                       value={adjustNote}
                       onChange={e => setAdjustNote(e.target.value)}

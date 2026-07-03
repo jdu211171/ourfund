@@ -46,7 +46,7 @@ function errorMessage(err: unknown, fallback: string) {
 function loadGsi(): Promise<GoogleAccountsClient | null> {
   if (typeof window === 'undefined') return Promise.resolve(null)
   const win = window as GoogleWindow
-  if (win.google && win.google.accounts && win.google.accounts.id) {
+  if (win.google?.accounts?.id) {
     return Promise.resolve(win.google)
   }
   return new Promise((resolve, reject) => {

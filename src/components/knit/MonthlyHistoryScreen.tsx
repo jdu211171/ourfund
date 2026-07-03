@@ -334,7 +334,7 @@ export function MonthlyHistoryScreen() {
           </div>
         ) : (
           <div className="mt-2 flex-1 space-y-2 overflow-y-auto">
-            {monthRows.map((m, i) => {
+            {monthRows.map((m, _i) => {
               const net = m.incomeUsd - m.expenseUsd
               const positive = net >= 0
               const isCurrentMonth = m.year === now.getFullYear() && m.month === now.getMonth()

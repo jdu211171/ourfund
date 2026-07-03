@@ -155,8 +155,11 @@ export function TransferFundsScreen() {
         </div>
 
         <div className="mt-4 rounded-2xl bg-[var(--muted)] px-4 py-3 focus-within:ring-2 focus-within:ring-[var(--primary)] transition-all">
-          <label className="text-[11px] text-muted-foreground block">Note</label>
+          <label htmlFor="transfer-note" className="text-[11px] text-muted-foreground block">
+            Note
+          </label>
           <input
+            id="transfer-note"
             type="text"
             value={note}
             onChange={e => setNote(e.target.value)}

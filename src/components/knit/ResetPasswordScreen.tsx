@@ -10,7 +10,7 @@ function errorMessage(err: unknown, fallback: string) {
 
 export function ResetPasswordScreen() {
   const { navigate, resetToken, pendingInvite } = useAppNavigation()
-  const [phase, setPhase] = useState<'request' | 'reset'>(resetToken ? 'reset' : 'request')
+  const [phase, _setPhase] = useState<'request' | 'reset'>(resetToken ? 'reset' : 'request')
   const invitedEmail = pendingInvite?.invitedEmail ?? ''
   const [email, setEmail] = useState(invitedEmail)
   const [password, setPassword] = useState('')

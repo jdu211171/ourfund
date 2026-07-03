@@ -94,7 +94,7 @@ export function GoalDetailScreen() {
   const [contribution, setContribution] = useState('0')
   const contributionHistoryRef = useRef<HTMLDivElement>(null)
   const contributionInputRef = useRef<HTMLInputElement>(null)
-  const [selectedContributionId, setSelectedContributionId] = useState<string | null>(null)
+  const [selectedContributionId, _setSelectedContributionId] = useState<string | null>(null)
   const [selectedWalletId, setSelectedWalletId] = useState(activeWallets[0]?.id ?? '')
   const contributionAmount = Number.parseFloat(contribution || '0')
   const contributionUsd = currencyValueToUsd(
@@ -133,7 +133,7 @@ export function GoalDetailScreen() {
     return entry.who.trim().toLowerCase() === currentMemberFirstName
   }
   const selectedContribution = goal?.history?.find(entry => entry.id === selectedContributionId)
-  const canDeleteSelectedContribution =
+  const _canDeleteSelectedContribution =
     selectedContribution && canDeleteContribution(selectedContribution)
 
   useEffect(() => {
@@ -143,7 +143,7 @@ export function GoalDetailScreen() {
       contributionInputRef.current?.select()
     })
     return () => window.cancelAnimationFrame(frame)
-  }, [goal?.id])
+  }, [goal?.id, goal])
 
   if (!goal) {
     return (

@@ -83,7 +83,7 @@ function parseMeta(every: string): ParsedSchedule {
   const json = parts.slice(1).join(META_SEPARATOR).trim()
   try {
     const meta = JSON.parse(json) as ScheduleMeta
-    if (!meta || !meta.frequency || !meta.nextDate) {
+    if (!meta?.frequency || !meta.nextDate) {
       return { display, meta: null }
     }
     return { display, meta }

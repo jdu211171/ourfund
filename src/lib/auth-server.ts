@@ -59,7 +59,7 @@ export async function verifyGoogleToken(idToken: string) {
     audience: GOOGLE_CLIENT_ID
   })
   const payload = ticket.getPayload()
-  if (!payload || !payload.email || payload.email_verified === false) {
+  if (!payload?.email || payload.email_verified === false) {
     throw new Error('Invalid Google token payload')
   }
   return {
@@ -86,7 +86,7 @@ export async function getSessionUser() {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as SessionData
-    if (!decoded || !decoded.userId) return null
+    if (!decoded?.userId) return null
 
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },

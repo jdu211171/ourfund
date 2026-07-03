@@ -1,4 +1,3 @@
-import { useMemo } from 'react'
 import { useOptionalAppNavigation } from '../navigation'
 import { en } from './en'
 import { ja } from './ja'

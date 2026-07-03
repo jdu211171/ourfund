@@ -3,7 +3,7 @@ export async function handleUpdateProfile(
   payload: any,
   user: any,
   member: any,
-  householdId: string | undefined
+  _householdId: string | undefined
 ) {
   await prisma.user.update({
     where: { id: user.id },

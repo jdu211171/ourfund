@@ -1,9 +1,8 @@
 import { prisma } from '../../lib/db'
-import { normalizeProductName } from '../helpers/product'
 export async function handleAddTrackedProduct(
   payload: any,
-  user: any,
-  member: any,
+  _user: any,
+  _member: any,
   householdId: string | undefined
 ) {
   if (!householdId) throw new Error('No household linked')

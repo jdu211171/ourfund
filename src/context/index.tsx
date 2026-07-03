@@ -19,7 +19,6 @@ import { formatISODate, makeScheduleMeta, nextDateFromWeekday } from '../lib/sch
 import {
   clearPersistedAppSeed,
   defaultHistoryFilters,
-  defaultPermissions,
   getEmptySeed,
   getInitialSeed,
   knownInvites,
@@ -27,37 +26,33 @@ import {
 } from '../lib/seed'
 
 // Import types
-import {
-  type AppNotification,
-  type AppSeed,
-  type BudgetCategory,
-  type BudgetMode,
-  type CurrencyCode,
-  type CurrencySettings,
-  type FamilyMember,
-  type Goal,
-  type HistoryFilters,
-  type Household,
-  type HouseholdInvite,
-  type LinkedBank,
-  type LoanDirection,
-  type LoanEntry,
-  type LoanStatus,
-  type MemberRole,
-  NotificationTone,
-  type ProductEntry,
-  type Profile,
-  type ReceiptScan,
-  ReceiptScanItem,
-  type ReportPeriod,
-  SalaryCalculationPeriod,
-  type SalaryCalculatorSettings,
-  type ScheduleItem,
-  type ScreenName,
-  type Transaction,
-  TxnKind,
-  type WalletAccount,
-  type WalletType
+import type {
+  AppNotification,
+  AppSeed,
+  BudgetCategory,
+  BudgetMode,
+  CurrencyCode,
+  CurrencySettings,
+  FamilyMember,
+  Goal,
+  HistoryFilters,
+  Household,
+  HouseholdInvite,
+  LinkedBank,
+  LoanDirection,
+  LoanEntry,
+  LoanStatus,
+  MemberRole,
+  ProductEntry,
+  Profile,
+  ReceiptScan,
+  ReportPeriod,
+  SalaryCalculatorSettings,
+  ScheduleItem,
+  ScreenName,
+  Transaction,
+  WalletAccount,
+  WalletType
 } from '../types'
 
 // Import helpers
@@ -75,8 +70,7 @@ import {
   normalizeHistoryFiltersInput,
   normalizeReportPeriodInput,
   permissionsForRole,
-  plusDays,
-  transactionDate
+  plusDays
 } from './helpers'
 
 export interface NavigationContextType {
@@ -1699,7 +1693,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   const syncDataAfterLogin = useCallback(async () => {
     try {
       const data = await getAppDataServerFn()
-      if (!data || !data.isAuthenticated) {
+      if (!data?.isAuthenticated) {
         setIsAuthenticated(false)
         return false
       }
@@ -1839,7 +1833,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsAuthReady(true)
     }
-  }, [])
+  }, [routerNavigate, isWebMode])
 
   setCompactMoneyFormatterMode(compactMoneyMode)
 
