@@ -280,6 +280,13 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   const [compactMoneyMode, setCompactMoneyModeState] = useState(initialSeed.compactMoneyMode)
   const didMountRef = useRef(false)
   const handledQueryRef = useRef<string | null>(null)
+  const routerNavigateRef = useRef(routerNavigate)
+  const isWebModeRef = useRef(isWebMode)
+
+  useEffect(() => {
+    routerNavigateRef.current = routerNavigate
+    isWebModeRef.current = isWebMode
+  }, [routerNavigate, isWebMode])
 
   const applySeed = useCallback((seed: AppSeed) => {
     setBudgetModeState(seed.budgetMode)
@@ -1707,7 +1714,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         setPendingInvite(null)
       }
 
-      if (isWebMode) {
+      if (isWebModeRef.current) {
         const currentSlug = window.location.pathname.split('/').pop() ?? 'home'
         if (
           currentSlug === 'login' ||
@@ -1715,10 +1722,12 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
           currentSlug === 'onboarding' ||
           currentSlug === 'reset_password'
         ) {
-          routerNavigate({
-            to: '/app/$screen',
-            params: { screen: restoredPendingInvite ? 'confirm_invite' : 'home' }
-          }).catch(console.error)
+          routerNavigateRef
+            .current({
+              to: '/app/$screen',
+              params: { screen: restoredPendingInvite ? 'confirm_invite' : 'home' }
+            })
+            .catch(console.error)
         }
       } else {
         setCurrentScreen(screen =>
@@ -1833,7 +1842,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsAuthReady(true)
     }
-  }, [routerNavigate, isWebMode])
+  }, [])
 
   setCompactMoneyFormatterMode(compactMoneyMode)
 

@@ -98,8 +98,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
         }
       })
 
-      let node: Node | null = walk.nextNode()
-      while (node) {
+      for (let node: Node | null = walk.nextNode(); node; node = walk.nextNode()) {
         const text = node.nodeValue
         if (text === null) continue
 
@@ -127,8 +126,6 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
         if (translated !== text) {
           node.nodeValue = translated
         }
-
-        node = walk.nextNode()
       }
 
       // Translate placeholders

@@ -1,4 +1,3 @@
-import { registerSW } from 'virtual:pwa-register'
 import { type QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import {
   createRootRouteWithContext,
@@ -8,9 +7,50 @@ import {
   Scripts,
   useRouter
 } from '@tanstack/react-router'
-import { useEffect } from 'react'
 
 import appCss from '../styles.css?url'
+
+const CLIENT_BOOTSTRAP_FALLBACK = `
+(() => {
+  const start = () => {
+    if (self.__ourfundClientBootstrapStarted || self.$_TSR?.hydrated) return
+
+    const rootRoute = self.$_TSR?.router?.manifest?.routes?.__root__
+    const scripts = rootRoute?.scripts ?? rootRoute?.assets ?? []
+    const asset = scripts.find(item => item?.attrs?.src || item?.children)
+    if (!asset) return
+
+    const existing = Array.from(document.scripts).some(script => {
+      if (script.dataset.ourfundBootstrap === 'true') return true
+      if (script.type !== 'module') return false
+      if (asset.attrs?.src && script.src.endsWith(asset.attrs.src)) return true
+      return Boolean(asset.children && script.textContent?.includes(asset.children))
+    })
+    if (existing) return
+
+    self.__ourfundClientBootstrapStarted = true
+    const script = document.createElement('script')
+    script.dataset.ourfundBootstrap = 'true'
+
+    const attrs = asset.attrs ?? {}
+    for (const [name, value] of Object.entries(attrs)) {
+      if (name === 'src' && value) {
+        script.src = String(value)
+      } else if (value === true) {
+        script.setAttribute(name, '')
+      } else if (value !== false && value != null) {
+        script.setAttribute(name, String(value))
+      }
+    }
+
+    if (!script.type) script.type = 'module'
+    if (asset.children) script.textContent = asset.children
+    document.head.appendChild(script)
+  }
+
+  queueMicrotask(start)
+})()
+`
 
 function NotFoundComponent() {
   return (
@@ -140,6 +180,8 @@ function RootShell({ children }: { children: React.ReactNode }) {
       <body>
         {children}
         <Scripts />
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: static bootstrap fallback for TanStack's serialized client module asset */}
+        <script dangerouslySetInnerHTML={{ __html: CLIENT_BOOTSTRAP_FALLBACK }} />
       </body>
     </html>
   )
@@ -147,12 +189,6 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext()
-
-  useEffect(() => {
-    if (import.meta.env.PROD) {
-      registerSW({ immediate: true })
-    }
-  }, [])
 
   return (
     <QueryClientProvider client={queryClient}>
