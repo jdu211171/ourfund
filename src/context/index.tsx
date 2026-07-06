@@ -141,6 +141,7 @@ export interface NavigationContextType {
   language: 'en' | 'ja'
   setLanguage: (lang: 'en' | 'ja') => void
   walletBalanceUsd: (walletLabel: string) => number
+  walletIncomeSpentUsd: (walletLabel: string) => { incomeUsd: number; spentUsd: number }
   categories: BudgetCategory[]
   addCategory: (category: Omit<BudgetCategory, 'id'>) => BudgetCategory
   updateCategory: (categoryId: string, updates: Partial<Omit<BudgetCategory, 'id'>>) => void
@@ -596,6 +597,32 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
   const spentUsd = nonGoalSpentUsd + goalSpentUsd
 
   const balanceUsd = activeWallets.reduce((sum, wallet) => sum + walletBalanceUsd(wallet.label), 0)
+
+  // Per-wallet equivalent of incomeUsd/spentUsd above — same current-month, goal-ledger-aware
+  // logic, scoped to a single wallet's own transactions instead of every active wallet summed.
+  const walletIncomeSpentUsd = (walletLabel: string) => {
+    const now = new Date()
+    const walletMonthTransactions = transactions.filter(
+      t => t.wallet === walletLabel && isCurrentMonthTransaction(t, now)
+    )
+
+    const walletIncomeUsd = walletMonthTransactions
+      .filter(t => t.usd > 0 && !isGoalLedgerTransaction(t))
+      .reduce((sum, t) => sum + t.usd, 0)
+
+    const walletNonGoalSpentUsd = Math.abs(
+      walletMonthTransactions
+        .filter(t => t.usd < 0 && !isGoalLedgerTransaction(t))
+        .reduce((sum, t) => sum + t.usd, 0)
+    )
+
+    const walletGoalSpentUsd = Math.max(
+      0,
+      -walletMonthTransactions.filter(isGoalLedgerTransaction).reduce((sum, t) => sum + t.usd, 0)
+    )
+
+    return { incomeUsd: walletIncomeUsd, spentUsd: walletNonGoalSpentUsd + walletGoalSpentUsd }
+  }
 
   const createBaseWallets = (
     memberId: string,
@@ -1913,6 +1940,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
         language,
         setLanguage,
         walletBalanceUsd,
+        walletIncomeSpentUsd,
         categories,
         addCategory,
         updateCategory,

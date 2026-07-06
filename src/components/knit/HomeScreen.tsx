@@ -62,7 +62,8 @@ export function HomeScreen() {
     notifications,
     activeWallets,
     selectedWalletId,
-    walletBalanceUsd
+    walletBalanceUsd,
+    walletIncomeSpentUsd
   } = useAppNavigation()
 
   const mode = useFrameMode()
@@ -119,6 +120,10 @@ export function HomeScreen() {
 
   const recentTransactions = activeTransactions.slice(0, 3)
   const activeWallet = activeWallets.find(w => w.id === selectedWalletId) ?? activeWallets[0]
+  const activeWalletBalanceUsd = activeWallet ? walletBalanceUsd(activeWallet.label) : 0
+  const activeWalletIncomeSpent = activeWallet
+    ? walletIncomeSpentUsd(activeWallet.label)
+    : { incomeUsd: 0, spentUsd: 0 }
 
   // Dynamic cashflow calculation for charts
   const cashflow = useMemo(() => {
@@ -712,9 +717,10 @@ export function HomeScreen() {
 
         <div className="mt-4">
           <BalanceHeader
-            balanceUsd={balanceUsd}
-            incomeUsd={incomeUsd}
-            spentUsd={spentUsd}
+            label={activeWallet ? `${activeWallet.label} balance` : 'Current balance'}
+            balanceUsd={activeWalletBalanceUsd}
+            incomeUsd={activeWalletIncomeSpent.incomeUsd}
+            spentUsd={activeWalletIncomeSpent.spentUsd}
             interactive
           />
         </div>
