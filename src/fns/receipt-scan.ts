@@ -80,7 +80,7 @@ export const scanReceiptServerFn = createServerFn({ method: 'POST' })
                 }
               ],
               generationConfig: {
-                response_mime_type: 'application/json'
+                responseMimeType: 'application/json'
               }
             })
           }
@@ -128,7 +128,7 @@ export const scanReceiptServerFn = createServerFn({ method: 'POST' })
       throw new Error('Could not read receipt content. Please make sure the image is clear.')
     }
 
-    const receiptCurrency = normalizeCurrencyCode(parsed.currency || currency)
+    const receiptCurrency = normalizeCurrencyCode(parsed.currency, currency)
     const dbProducts = await prisma.trackedProduct.findMany({
       where: { householdId: householdId || '' },
       orderBy: { createdAt: 'desc' }

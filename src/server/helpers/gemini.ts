@@ -64,7 +64,41 @@ export function receiptScanFailureMessage(status: number) {
   return 'Receipt scanning failed. Please try again.'
 }
 
-export function parseGeminiJson(text: string) {
+function extractGeminiText(payload: unknown) {
+  if (typeof payload === 'string') return payload
+
+  if (!payload || typeof payload !== 'object') {
+    throw new Error('Gemini returned an unreadable receipt response')
+  }
+
+  const response = payload as {
+    candidates?: Array<{
+      content?: {
+        parts?: Array<{
+          text?: unknown
+        }>
+      }
+    }>
+    text?: unknown
+  }
+
+  if (typeof response.text === 'string') return response.text
+
+  const text = response.candidates
+    ?.flatMap(candidate => candidate.content?.parts ?? [])
+    .map(part => part.text)
+    .filter((part): part is string => typeof part === 'string')
+    .join('')
+
+  if (!text) {
+    throw new Error('Gemini returned an unreadable receipt response')
+  }
+
+  return text
+}
+
+export function parseGeminiJson(payload: unknown) {
+  const text = extractGeminiText(payload)
   const cleaned = text
     .replace(/^```(?:json)?/i, '')
     .replace(/```$/i, '')
