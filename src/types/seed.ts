@@ -32,6 +32,7 @@ export interface AppSeed {
   goals: Goal[]
   members: FamilyMember[]
   selectedGoalId: string | null
+  selectedWalletId: string | null
   selectedMemberId: string | null
   selectedBankName: string
   linkedBanks: LinkedBank[]

@@ -240,7 +240,9 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     month: number
   } | null>(null)
   const [selectedGoalId, setSelectedGoalId] = useState<string | null>(initialSeed.selectedGoalId)
-  const [selectedWalletId, setSelectedWalletId] = useState<string | null>(null)
+  const [selectedWalletId, setSelectedWalletId] = useState<string | null>(
+    initialSeed.selectedWalletId
+  )
   const [selectedDetailWalletId, setSelectedDetailWalletId] = useState<string | null>(null)
   const [theme, setThemeState] = useState<'light' | 'dark' | 'system'>(() => {
     if (typeof window !== 'undefined') {
@@ -304,6 +306,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     setMembers(seed.members)
     setSelectedTransactionId(null)
     setSelectedGoalId(seed.selectedGoalId)
+    setSelectedWalletId(seed.selectedWalletId)
     setSelectedMemberId(seed.selectedMemberId)
     setSelectedMemberIds([])
     setSelectedBankName(seed.selectedBankName)
@@ -360,6 +363,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
       goals,
       members,
       selectedGoalId,
+      selectedWalletId,
       selectedMemberId,
       selectedBankName,
       linkedBanks,
@@ -389,6 +393,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     members,
     selectedGoalId,
     selectedMemberId,
+    selectedWalletId,
     selectedBankName,
     linkedBanks,
     notifications,

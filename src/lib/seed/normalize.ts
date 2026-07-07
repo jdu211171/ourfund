@@ -37,6 +37,7 @@ export function normalizeSeed(seed: Partial<AppSeed>): AppSeed {
     ...cloneSeed(emptySeed),
     ...seed,
     reportPeriod: seed.reportPeriod ?? emptySeed.reportPeriod,
+    selectedWalletId: typeof seed.selectedWalletId === 'string' ? seed.selectedWalletId : null,
     salaryCalculatorSettings: normalizeSalaryCalculatorSettings(seed.salaryCalculatorSettings),
     profile: { ...emptySeed.profile, ...seed.profile },
     currencies: { ...emptySeed.currencies, ...seed.currencies },
