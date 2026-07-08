@@ -1,3 +1,6 @@
+// Server function that gathers all app data for the current user.
+// Fetches household-related rows and serializes them for the client.
+
 import { createServerFn } from '@tanstack/react-start'
 import { setResponseHeaders } from '@tanstack/react-start/server'
 import { getSessionUser } from '@/lib/auth-server'
@@ -24,7 +27,9 @@ import {
 } from '@/server/helpers'
 import { loanEntrySelect } from '@/server/helpers/notification'
 
+// Main handler: collect data and return a single object the client uses
 export const getAppDataServerFn = createServerFn({ method: 'GET' }).handler(async () => {
+  // Prevent caching of per-user app data
   setResponseHeaders({
     'Cache-Control': 'no-store',
     Vary: 'Cookie'
@@ -33,8 +38,10 @@ export const getAppDataServerFn = createServerFn({ method: 'GET' }).handler(asyn
   const user = await getSessionUser()
   if (!user) return null
 
+  // Get primary household info for the user
   const { member, householdId } = getPrimaryHouseholdContext(user)
 
+  // Prepare variables to fill from the DB
   let household = null
   let members: any[] = []
   let wallets: any[] = []
@@ -49,6 +56,7 @@ export const getAppDataServerFn = createServerFn({ method: 'GET' }).handler(asyn
   let receiptScans: any[] = []
   let pendingInvite = null
 
+  // If user has a household, load household data
   if (householdId) {
     household = member.household
     members = await prisma.familyMember.findMany({ where: { householdId } })
@@ -58,6 +66,7 @@ export const getAppDataServerFn = createServerFn({ method: 'GET' }).handler(asyn
       where: { householdId },
       orderBy: { createdAt: 'desc' }
     })
+    // Only include goals the member can see
     goals = (await prisma.goal.findMany({ where: { householdId } })).filter(goal =>
       canMemberSeeGoal(goal.contributors, member.id)
     )
@@ -80,6 +89,7 @@ export const getAppDataServerFn = createServerFn({ method: 'GET' }).handler(asyn
     })
   }
 
+  // If no household, check for pending invite using the user's email
   if (!householdId) {
     const pendingMember = await prisma.familyMember.findFirst({
       where: {
@@ -108,11 +118,13 @@ export const getAppDataServerFn = createServerFn({ method: 'GET' }).handler(asyn
     }
   }
 
+  // Load notifications for the user
   const notifications = await prisma.appNotification.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: 'desc' }
   })
 
+  // Return a compact shape the client expects (using serializers)
   return {
     isAuthenticated: true,
     user: {

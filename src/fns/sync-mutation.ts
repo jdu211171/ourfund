@@ -1,3 +1,6 @@
+// Server entrypoint for all client mutations.
+// Simple dispatch: validate input, find handler by type, and run it.
+
 import { createServerFn } from '@tanstack/react-start'
 import { getSessionUser } from '@/lib/auth-server'
 import * as mutations from '@/server/mutations'
@@ -5,11 +8,13 @@ import { getPrimaryHouseholdContext } from '@/server/helpers'
 import type { SessionUser } from '@/server/helpers'
 import { z } from 'zod'
 
+// Basic shape of the incoming mutation request
 const syncMutationInputSchema = z.object({
   type: z.string().min(1),
   data: z.unknown()
 })
 
+// Signature expected for mutation handler functions
 type MutationHandler = (
   payload: unknown,
   user: SessionUser,
@@ -17,6 +22,7 @@ type MutationHandler = (
   householdId: string | undefined
 ) => Promise<unknown> | unknown
 
+// Map mutation "type" strings to handler functions
 const mutationHandlers: Record<string, MutationHandler> = {
   // Profile
   updateProfile: mutations.handleUpdateProfile,
@@ -89,16 +95,19 @@ const mutationHandlers: Record<string, MutationHandler> = {
   connectSelectedBank: mutations.handleConnectSelectedBank
 }
 
+// Create the server function: validate input and dispatch to handler
 export const syncMutationServerFn = createServerFn({ method: 'POST' })
   .inputValidator(d => syncMutationInputSchema.parse(d))
   .handler(async ({ data }) => {
     const user = await getSessionUser()
     if (!user) throw new Error('Unauthorized')
 
+    // Get primary member and household id for authorization checks
     const { member, householdId } = getPrimaryHouseholdContext(user)
     const { type, data: payload } = data
     const handler = mutationHandlers[type]
     if (!handler) throw new Error('Unknown mutation type: ' + type)
 
+    // Run the handler and return its result
     return await handler(payload, user, member, householdId)
   })

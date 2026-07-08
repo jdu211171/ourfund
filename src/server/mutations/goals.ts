@@ -2,6 +2,7 @@ import { prisma } from '../../lib/db'
 import { assertHouseholdOwnership, requireHouseholdId } from '../helpers/context'
 import { addGoalSchema, updateGoalSchema, updateGoalSavingsSchema } from '../validation/mutations'
 
+// Create a new saving goal (validates payload first)
 export async function handleAddGoal(
   payload: any,
   user: any,
@@ -26,6 +27,7 @@ export async function handleAddGoal(
   })
 }
 
+// Update properties of an existing goal (only fields present are updated)
 export async function handleUpdateGoal(
   payload: any,
   user: any,
@@ -51,6 +53,7 @@ export async function handleUpdateGoal(
   })
 }
 
+// Update goal saved amount and history (used when recording contributions)
 export async function handleUpdateGoalSavings(
   payload: any,
   user: any,
@@ -72,6 +75,7 @@ export async function handleUpdateGoalSavings(
   })
 }
 
+// Delete a goal after checking ownership
 export async function handleDeleteGoal(
   payload: any,
   user: any,

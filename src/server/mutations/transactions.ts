@@ -13,6 +13,7 @@ import {
   recordTransferSchema
 } from '../validation/mutations'
 
+// Add a single transaction row. Validates payload then creates.
 export async function handleAddTransaction(
   payload: any,
   _user: any,
@@ -35,6 +36,7 @@ export async function handleAddTransaction(
   })
 }
 
+// Update an existing transaction. Checks ownership before updating.
 export async function handleUpdateTransaction(
   payload: any,
   _user: any,
@@ -60,6 +62,7 @@ export async function handleUpdateTransaction(
   })
 }
 
+// Delete a transaction and remove references from goals' histories.
 export async function handleDeleteTransaction(
   payload: any,
   _user: any,
@@ -99,6 +102,7 @@ export async function handleDeleteTransaction(
   }
 }
 
+// Delete contributions from a goal's history and adjust saved amount.
 export async function handleDeleteContributions(
   payload: any,
   _user: any,
@@ -159,6 +163,7 @@ export async function handleDeleteContributions(
   })
 }
 
+// Record a two-leg transfer between wallets. Validates balancing and permissions.
 export async function handleRecordTransfer(
   payload: any,
   _user: any,

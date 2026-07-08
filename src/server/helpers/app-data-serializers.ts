@@ -1,3 +1,6 @@
+// Simple serializer helpers: convert DB rows into the shape the client expects.
+
+// Convert family member rows to a small public shape
 export function serializeMembers(members: any[]) {
   return members.map(m => ({
     id: m.id,
@@ -13,6 +16,7 @@ export function serializeMembers(members: any[]) {
   }))
 }
 
+// Convert wallet rows to client shape
 export function serializeWallets(wallets: any[]) {
   return wallets.map(w => ({
     id: w.id,
@@ -26,6 +30,7 @@ export function serializeWallets(wallets: any[]) {
   }))
 }
 
+// Convert budget categories to client shape
 export function serializeCategories(categories: any[]) {
   return categories.map(c => ({
     id: c.id,
@@ -36,6 +41,7 @@ export function serializeCategories(categories: any[]) {
   }))
 }
 
+// Convert transactions to simple fields the UI needs
 export function serializeTransactions(transactions: any[]) {
   return transactions.map(t => ({
     id: t.id,
@@ -48,6 +54,7 @@ export function serializeTransactions(transactions: any[]) {
   }))
 }
 
+// Convert goals to client shape (includes history and contributors)
 export function serializeGoals(goals: any[]) {
   return goals.map(g => ({
     id: g.id,
@@ -62,6 +69,7 @@ export function serializeGoals(goals: any[]) {
   }))
 }
 
+// Convert linked bank info
 export function serializeLinkedBanks(linkedBanks: any[]) {
   return linkedBanks.map(b => ({
     id: b.id,
@@ -71,6 +79,7 @@ export function serializeLinkedBanks(linkedBanks: any[]) {
   }))
 }
 
+// Convert scheduled items (income/subscriptions)
 export function serializeScheduleItems(scheduleItems: any[]) {
   return scheduleItems.map(item => ({
     id: item.id,
@@ -82,6 +91,7 @@ export function serializeScheduleItems(scheduleItems: any[]) {
   }))
 }
 
+// Convert loan entries for the client
 export function serializeLoanEntries(loanEntries: any[]) {
   return loanEntries.map(entry => ({
     id: entry.id,
@@ -98,6 +108,7 @@ export function serializeLoanEntries(loanEntries: any[]) {
   }))
 }
 
+// Convert tracked products data
 export function serializeTrackedProducts(trackedProducts: any[]) {
   return trackedProducts.map(product => ({
     id: product.id,
@@ -113,6 +124,7 @@ export function serializeTrackedProducts(trackedProducts: any[]) {
   }))
 }
 
+// Convert receipt scans
 export function serializeReceiptScans(receiptScans: any[]) {
   return receiptScans.map(receipt => ({
     id: receipt.id,
@@ -126,6 +138,7 @@ export function serializeReceiptScans(receiptScans: any[]) {
   }))
 }
 
+// Convert app notifications for the client
 export function serializeNotifications(notifications: any[]) {
   return notifications.map(n => ({
     id: n.id,
