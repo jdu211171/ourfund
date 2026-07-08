@@ -1,13 +1,14 @@
 import { prisma } from '../../lib/db'
+import { assertHouseholdOwnership, requireHouseholdId } from '../helpers/context'
 export async function handleAddScheduleItem(
   payload: any,
   user: any,
   member: any,
   householdId: string | undefined
 ) {
-  if (!householdId) throw new Error('No household linked')
+  const resolvedHouseholdId = requireHouseholdId(householdId)
   const item = await prisma.scheduleItem.findUnique({ where: { id: payload.id } })
-  if (item && item.householdId !== householdId) throw new Error('Forbidden')
+  if (item) assertHouseholdOwnership(item.householdId, resolvedHouseholdId)
   await prisma.scheduleItem.upsert({
     where: { id: payload.id },
     update: {
@@ -19,7 +20,7 @@ export async function handleAddScheduleItem(
     },
     create: {
       id: payload.id,
-      householdId,
+      householdId: resolvedHouseholdId,
       label: payload.label,
       every: payload.every,
       amountUsd: payload.amountUsd,
@@ -35,9 +36,10 @@ export async function handleUpdateScheduleItem(
   member: any,
   householdId: string | undefined
 ) {
-  if (!householdId) throw new Error('No household linked')
+  const resolvedHouseholdId = requireHouseholdId(householdId)
   const item = await prisma.scheduleItem.findUnique({ where: { id: payload.id } })
-  if (!item || item.householdId !== householdId) throw new Error('Forbidden')
+  if (!item) throw new Error('Forbidden')
+  assertHouseholdOwnership(item.householdId, resolvedHouseholdId)
   await prisma.scheduleItem.update({
     where: { id: payload.id },
     data: {
@@ -56,10 +58,11 @@ export async function handleRemoveScheduleItem(
   member: any,
   householdId: string | undefined
 ) {
-  if (!householdId) throw new Error('No household linked')
+  const resolvedHouseholdId = requireHouseholdId(householdId)
   // Authorization: verify this schedule item belongs to the user's household
   const item = await prisma.scheduleItem.findUnique({ where: { id: payload.id } })
-  if (!item || item.householdId !== householdId) throw new Error('Forbidden')
+  if (!item) throw new Error('Forbidden')
+  assertHouseholdOwnership(item.householdId, resolvedHouseholdId)
   await prisma.scheduleItem.delete({ where: { id: payload.id } })
 }
 
@@ -69,10 +72,10 @@ export async function handleRemoveScheduleItems(
   member: any,
   householdId: string | undefined
 ) {
-  if (!householdId) throw new Error('No household linked')
+  const resolvedHouseholdId = requireHouseholdId(householdId)
   const ids = payload.ids as string[]
   const items = await prisma.scheduleItem.findMany({
-    where: { id: { in: ids }, householdId }
+    where: { id: { in: ids }, householdId: resolvedHouseholdId }
   })
   if (items.length !== ids.length) throw new Error('Forbidden')
   await prisma.scheduleItem.deleteMany({

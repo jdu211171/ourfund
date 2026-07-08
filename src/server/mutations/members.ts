@@ -1,5 +1,6 @@
 import { prisma } from '../../lib/db'
 import { sendInviteEmail } from '../../lib/mailer'
+import { assertHouseholdOwnership, requireHouseholdId } from '../helpers/context'
 import { isDeliverableEmail } from '../helpers/email'
 export async function handleInviteMember(
   payload: any,
@@ -7,11 +8,11 @@ export async function handleInviteMember(
   member: any,
   householdId: string | undefined
 ) {
-  if (!householdId) throw new Error('No household linked')
+  const resolvedHouseholdId = requireHouseholdId(householdId)
   const newMember = await prisma.familyMember.create({
     data: {
       id: payload.id,
-      householdId,
+      householdId: resolvedHouseholdId,
       name: payload.name,
       email: payload.email,
       role: payload.role,
@@ -32,7 +33,7 @@ export async function handleInviteMember(
     }
   })
   if (isDeliverableEmail(newMember.email)) {
-    const household = await prisma.household.findUnique({ where: { id: householdId } })
+    const household = await prisma.household.findUnique({ where: { id: resolvedHouseholdId } })
     if (household) {
       await sendInviteEmail({
         to: newMember.email!,
@@ -50,10 +51,11 @@ export async function handleUpdateMember(
   member: any,
   householdId: string | undefined
 ) {
-  if (!householdId) throw new Error('No household linked')
+  const resolvedHouseholdId = requireHouseholdId(householdId)
   // Authorization: verify this member belongs to the user's household
   const m = await prisma.familyMember.findUnique({ where: { id: payload.id } })
-  if (!m || m.householdId !== householdId) throw new Error('Forbidden')
+  if (!m) throw new Error('Forbidden')
+  assertHouseholdOwnership(m.householdId, resolvedHouseholdId)
   await prisma.familyMember.update({
     where: { id: payload.id },
     data: {
@@ -76,10 +78,11 @@ export async function handleRemoveMember(
   member: any,
   householdId: string | undefined
 ) {
-  if (!householdId) throw new Error('No household linked')
+  const resolvedHouseholdId = requireHouseholdId(householdId)
   // Authorization: verify this member belongs to the user's household
   const m = await prisma.familyMember.findUnique({ where: { id: payload.id } })
-  if (!m || m.householdId !== householdId) throw new Error('Forbidden')
+  if (!m) throw new Error('Forbidden')
+  assertHouseholdOwnership(m.householdId, resolvedHouseholdId)
   // Prevent removing yourself if you are the only admin
   if (m.userId === user.id) throw new Error('Cannot remove yourself')
   await prisma.familyMember.delete({ where: { id: payload.id } })

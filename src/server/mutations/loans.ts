@@ -1,10 +1,12 @@
 import { prisma } from '../../lib/db'
 import { getAppBaseUrl, sendLoanCreatedEmail, sendLoanPaidEmail } from '../../lib/mailer'
 import {
+  assertHouseholdOwnership,
   createNotificationsForUsers,
   getHouseholdUsers,
   isDeliverableEmail,
   loanEntrySelect,
+  requireHouseholdId,
   uniqueEmails
 } from '../helpers'
 export async function handleAddLoanEntry(
@@ -13,12 +15,12 @@ export async function handleAddLoanEntry(
   _member: any,
   householdId: string | undefined
 ) {
-  if (!householdId) throw new Error('No household linked')
+  const resolvedHouseholdId = requireHouseholdId(householdId)
   const created = await prisma.loanEntry.create({
     select: loanEntrySelect,
     data: {
       id: payload.id,
-      householdId,
+      householdId: resolvedHouseholdId,
       ownerMemberId: payload.ownerMemberId || '',
       counterpartyMemberId: payload.counterpartyMemberId || null,
       counterpartyName: payload.counterpartyName,
@@ -30,8 +32,8 @@ export async function handleAddLoanEntry(
       status: ['paid', 'overdue', 'pending'].includes(payload.status) ? payload.status : 'pending'
     }
   })
-  const household = await prisma.household.findUnique({ where: { id: householdId } })
-  const householdUsers = await getHouseholdUsers(householdId)
+  const household = await prisma.household.findUnique({ where: { id: resolvedHouseholdId } })
+  const householdUsers = await getHouseholdUsers(resolvedHouseholdId)
   const summary = `${
     created.direction === 'borrowed' ? 'Borrowed from' : 'Lent to'
   } ${created.counterpartyName} · $${created.amountUsd.toFixed(2)}`
@@ -70,12 +72,13 @@ export async function handleUpdateLoanEntry(
   _member: any,
   householdId: string | undefined
 ) {
-  if (!householdId) throw new Error('No household linked')
+  const resolvedHouseholdId = requireHouseholdId(householdId)
   const entry = await prisma.loanEntry.findUnique({
     where: { id: payload.id },
     select: loanEntrySelect
   })
-  if (!entry || entry.householdId !== householdId) throw new Error('Forbidden')
+  if (!entry) throw new Error('Forbidden')
+  assertHouseholdOwnership(entry.householdId, resolvedHouseholdId)
   const nextStatus = ['paid', 'overdue', 'pending'].includes(payload.status)
     ? payload.status
     : 'pending'
@@ -96,8 +99,8 @@ export async function handleUpdateLoanEntry(
     }
   })
   if (entry.status !== 'paid' && updated.status === 'paid') {
-    const household = await prisma.household.findUnique({ where: { id: householdId } })
-    const householdUsers = await getHouseholdUsers(householdId)
+    const household = await prisma.household.findUnique({ where: { id: resolvedHouseholdId } })
+    const householdUsers = await getHouseholdUsers(resolvedHouseholdId)
     const summary = `${
       updated.direction === 'borrowed' ? 'Borrowed from' : 'Lent to'
     } ${updated.counterpartyName} · $${updated.amountUsd.toFixed(2)}`
@@ -137,11 +140,12 @@ export async function handleDeleteLoanEntry(
   member: any,
   householdId: string | undefined
 ) {
-  if (!householdId) throw new Error('No household linked')
+  const resolvedHouseholdId = requireHouseholdId(householdId)
   const loanToDelete = await prisma.loanEntry.findUnique({
     where: { id: payload.id },
     select: loanEntrySelect
   })
-  if (!loanToDelete || loanToDelete.householdId !== householdId) throw new Error('Forbidden')
+  if (!loanToDelete) throw new Error('Forbidden')
+  assertHouseholdOwnership(loanToDelete.householdId, resolvedHouseholdId)
   await prisma.loanEntry.delete({ where: { id: payload.id }, select: { id: true } })
 }

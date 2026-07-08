@@ -1,15 +1,16 @@
 import { prisma } from '../../lib/db'
+import { requireHouseholdId } from '../helpers/context'
 export async function handleAddWallet(
   payload: any,
   user: any,
   member: any,
   householdId: string | undefined
 ) {
-  if (!householdId) throw new Error('No household linked')
+  const resolvedHouseholdId = requireHouseholdId(householdId)
   await prisma.walletAccount.create({
     data: {
       id: payload.id,
-      householdId,
+      householdId: resolvedHouseholdId,
       label: payload.label,
       sub: payload.sub,
       type: payload.type,
@@ -27,9 +28,9 @@ export async function handleUpdateWallet(
   member: any,
   householdId: string | undefined
 ) {
-  if (!householdId) throw new Error('No household linked')
+  const resolvedHouseholdId = requireHouseholdId(householdId)
   const existingWallet = await prisma.walletAccount.findFirst({
-    where: { id: payload.id, householdId }
+    where: { id: payload.id, householdId: resolvedHouseholdId }
   })
   await prisma.walletAccount.update({
     where: { id: payload.id },
@@ -45,7 +46,7 @@ export async function handleUpdateWallet(
   })
   if (existingWallet && payload.label && existingWallet.label !== payload.label) {
     await prisma.transaction.updateMany({
-      where: { householdId, wallet: existingWallet.label },
+      where: { householdId: resolvedHouseholdId, wallet: existingWallet.label },
       data: { wallet: payload.label }
     })
   }
@@ -57,16 +58,16 @@ export async function handleDeleteWallet(
   member: any,
   householdId: string | undefined
 ) {
-  if (!householdId) throw new Error('No household linked')
+  const resolvedHouseholdId = requireHouseholdId(householdId)
   const existingWallet = await prisma.walletAccount.findFirst({
-    where: { id: payload.id, householdId }
+    where: { id: payload.id, householdId: resolvedHouseholdId }
   })
   await prisma.walletAccount.delete({
     where: { id: payload.id }
   })
   if (existingWallet) {
     await prisma.transaction.deleteMany({
-      where: { householdId, wallet: existingWallet.label }
+      where: { householdId: resolvedHouseholdId, wallet: existingWallet.label }
     })
   }
 }

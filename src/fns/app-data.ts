@@ -6,9 +6,21 @@ import {
   asRecord,
   canMemberSeeGoal,
   defaultNotificationPrefs,
+  getPrimaryHouseholdContext,
   normalizeBudgetMode,
+  serializeCategories,
+  serializeGoals,
   normalizeHistoryFilters,
-  normalizeReportPeriod
+  normalizeReportPeriod,
+  serializeLinkedBanks,
+  serializeLoanEntries,
+  serializeMembers,
+  serializeNotifications,
+  serializeReceiptScans,
+  serializeScheduleItems,
+  serializeTrackedProducts,
+  serializeTransactions,
+  serializeWallets
 } from '@/server/helpers'
 import { loanEntrySelect } from '@/server/helpers/notification'
 
@@ -21,8 +33,7 @@ export const getAppDataServerFn = createServerFn({ method: 'GET' }).handler(asyn
   const user = await getSessionUser()
   if (!user) return null
 
-  const member = user.householdMembers[0]
-  const householdId = member?.householdId || null
+  const { member, householdId } = getPrimaryHouseholdContext(user)
 
   let household = null
   let members: any[] = []
@@ -137,121 +148,17 @@ export const getAppDataServerFn = createServerFn({ method: 'GET' }).handler(asyn
         }
       : null,
     pendingInvite,
-    members: members.map(m => ({
-      id: m.id,
-      name: m.name,
-      email: m.email || '',
-      role: m.role,
-      initials: m.initials,
-      age: m.age || undefined,
-      allowanceUsd: m.allowanceUsd || undefined,
-      allowanceDay: m.allowanceDay || undefined,
-      allowanceOn: m.allowanceOn,
-      permissions: m.permissions as Record<string, boolean>
-    })),
-    wallets: wallets.map(w => ({
-      id: w.id,
-      label: w.label,
-      sub: w.sub,
-      type: w.type,
-      currency: w.currency,
-      members: w.members as string[],
-      color: w.color,
-      startingBalanceUsd: w.startingBalanceUsd
-    })),
-    categories: categories.map(c => ({
-      id: c.id,
-      label: c.label,
-      limitUsd: c.limitUsd,
-      color: c.color,
-      icon: c.icon
-    })),
-    transactions: transactions.map(t => ({
-      id: t.id,
-      name: t.name,
-      who: t.who,
-      usd: t.usd,
-      category: t.category,
-      wallet: t.wallet,
-      date: t.date
-    })),
-    goals: goals.map(g => ({
-      id: g.id,
-      title: g.title,
-      targetUsd: g.targetUsd,
-      savedUsd: g.savedUsd,
-      targetDate: g.targetDate,
-      icon: g.icon,
-      color: g.color,
-      contributors: g.contributors as string[],
-      history: g.history as any[]
-    })),
-    linkedBanks: linkedBanks.map(b => ({
-      id: b.id,
-      name: b.name,
-      connectedAt: b.connectedAt,
-      accounts: b.accounts as any[]
-    })),
-    recurringIncome: recurringIncome.map(r => ({
-      id: r.id,
-      label: r.label,
-      every: r.every,
-      amountUsd: r.amountUsd,
-      color: r.color,
-      type: r.type
-    })),
-    subscriptions: subscriptions.map(s => ({
-      id: s.id,
-      label: s.label,
-      every: s.every,
-      amountUsd: s.amountUsd,
-      color: s.color,
-      type: s.type
-    })),
-    loanEntries: loanEntries.map(entry => ({
-      id: entry.id,
-      ownerMemberId: entry.ownerMemberId ?? '',
-      counterpartyMemberId: entry.counterpartyMemberId,
-      counterpartyName: entry.counterpartyName,
-      note: entry.note,
-      due: entry.due,
-      amountUsd: entry.amountUsd,
-      paidAmountUsd: entry.paidAmountUsd,
-      direction: entry.direction,
-      status: entry.status,
-      createdAt: entry.createdAt.toLocaleDateString()
-    })),
-    trackedProducts: trackedProducts.map(product => ({
-      id: product.id,
-      name: product.name,
-      store: product.store,
-      category: product.category,
-      amountUsd: product.amountUsd,
-      quantity: product.quantity,
-      unitPriceUsd: product.unitPriceUsd,
-      purchasedAt: product.purchasedAt,
-      source: product.source,
-      createdAt: product.createdAt.toLocaleDateString()
-    })),
-    receiptScans: receiptScans.map(receipt => ({
-      id: receipt.id,
-      storeName: receipt.storeName,
-      purchasedAt: receipt.purchasedAt,
-      currency: receipt.currency,
-      totalUsd: receipt.totalUsd,
-      items: receipt.items,
-      rawText: receipt.rawText || undefined,
-      createdAt: receipt.createdAt.toLocaleDateString()
-    })),
-    notifications: notifications.map(n => ({
-      id: n.id,
-      title: n.title,
-      desc: n.desc,
-      time: n.time,
-      group: n.group,
-      tone: n.tone,
-      read: n.read,
-      screen: n.screen
-    }))
+    members: serializeMembers(members),
+    wallets: serializeWallets(wallets),
+    categories: serializeCategories(categories),
+    transactions: serializeTransactions(transactions),
+    goals: serializeGoals(goals),
+    linkedBanks: serializeLinkedBanks(linkedBanks),
+    recurringIncome: serializeScheduleItems(recurringIncome),
+    subscriptions: serializeScheduleItems(subscriptions),
+    loanEntries: serializeLoanEntries(loanEntries),
+    trackedProducts: serializeTrackedProducts(trackedProducts),
+    receiptScans: serializeReceiptScans(receiptScans),
+    notifications: serializeNotifications(notifications)
   }
 })

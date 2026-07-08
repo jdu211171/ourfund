@@ -1,22 +1,36 @@
 import { prisma } from '../../lib/db'
+import {
+  assertHouseholdOwnership,
+  requireHouseholdId,
+  requireHouseholdMember
+} from '../helpers/context'
 import { canUseWalletAsTransferSource, canUseWalletAsTransferTarget } from '../helpers/wallet'
+import {
+  addTransactionSchema,
+  updateTransactionSchema,
+  deleteTransactionSchema,
+  deleteContributionsSchema,
+  recordTransferSchema
+} from '../validation/mutations'
+
 export async function handleAddTransaction(
   payload: any,
   _user: any,
   _member: any,
   householdId: string | undefined
 ) {
-  if (!householdId) throw new Error('No household linked')
+  const parsed = addTransactionSchema.parse(payload)
+  const resolvedHouseholdId = requireHouseholdId(householdId)
   await prisma.transaction.create({
     data: {
-      id: payload.id,
-      householdId,
-      name: payload.name,
-      who: payload.who,
-      usd: payload.usd,
-      category: payload.category,
-      wallet: payload.wallet,
-      date: payload.date
+      id: parsed.id,
+      householdId: resolvedHouseholdId,
+      name: parsed.name,
+      who: parsed.who,
+      usd: parsed.usd,
+      category: parsed.category,
+      wallet: parsed.wallet,
+      date: parsed.date
     }
   })
 }
@@ -27,47 +41,51 @@ export async function handleUpdateTransaction(
   _member: any,
   householdId: string | undefined
 ) {
-  if (!householdId) throw new Error('No household linked')
+  const parsed = updateTransactionSchema.parse(payload)
+  const resolvedHouseholdId = requireHouseholdId(householdId)
   // Authorization: verify this transaction belongs to the user's household
-  const txn = await prisma.transaction.findUnique({ where: { id: payload.id } })
-  if (!txn || txn.householdId !== householdId) throw new Error('Forbidden')
+  const txn = await prisma.transaction.findUnique({ where: { id: parsed.id } })
+  if (!txn) throw new Error('Forbidden')
+  assertHouseholdOwnership(txn.householdId, resolvedHouseholdId)
   await prisma.transaction.update({
-    where: { id: payload.id },
+    where: { id: parsed.id },
     data: {
-      name: payload.name,
-      who: payload.who,
-      usd: payload.usd,
-      category: payload.category,
-      wallet: payload.wallet,
-      date: payload.date
+      name: parsed.name,
+      who: parsed.who,
+      usd: parsed.usd,
+      category: parsed.category,
+      wallet: parsed.wallet,
+      date: parsed.date
     }
   })
 }
 
 export async function handleDeleteTransaction(
   payload: any,
-  user: any,
-  member: any,
+  _user: any,
+  _member: any,
   householdId: string | undefined
 ) {
-  if (!householdId) throw new Error('No household linked')
+  const parsed = deleteTransactionSchema.parse(payload)
+  const resolvedHouseholdId = requireHouseholdId(householdId)
   // Authorization: verify this transaction belongs to the user's household
-  const txn = await prisma.transaction.findUnique({ where: { id: payload.id } })
-  if (!txn || txn.householdId !== householdId) throw new Error('Forbidden')
+  const txn = await prisma.transaction.findUnique({ where: { id: parsed.id } })
+  if (!txn) throw new Error('Forbidden')
+  assertHouseholdOwnership(txn.householdId, resolvedHouseholdId)
 
-  await prisma.transaction.delete({ where: { id: payload.id } })
+  await prisma.transaction.delete({ where: { id: parsed.id } })
 
   // Clean up goal history entries referring to this transaction
   const goals = await prisma.goal.findMany({
-    where: { householdId }
+    where: { householdId: resolvedHouseholdId }
   })
 
   for (const goal of goals) {
     const history = Array.isArray(goal.history) ? (goal.history as any[]) : []
-    const matches = history.filter(entry => entry && entry.transactionId === payload.id)
+    const matches = history.filter(entry => entry && entry.transactionId === parsed.id)
     if (matches.length > 0) {
       const amountUsd = matches.reduce((sum, entry) => sum + (Number(entry.amountUsd) || 0), 0)
-      const updatedHistory = history.filter(entry => !entry || entry.transactionId !== payload.id)
+      const updatedHistory = history.filter(entry => !entry || entry.transactionId !== parsed.id)
       const updatedSavedUsd = Math.max(0, goal.savedUsd - amountUsd)
 
       await prisma.goal.update({
@@ -83,18 +101,19 @@ export async function handleDeleteTransaction(
 
 export async function handleDeleteContributions(
   payload: any,
-  user: any,
-  member: any,
+  _user: any,
+  _member: any,
   householdId: string | undefined
 ) {
-  if (!householdId) throw new Error('No household linked')
-  const { goalId, contributionIds, transactionIds } = payload
+  const parsed = deleteContributionsSchema.parse(payload)
+  const resolvedHouseholdId = requireHouseholdId(householdId)
+  const { goalId, contributionIds = [], transactionIds = [] } = parsed
 
   if (Array.isArray(transactionIds) && transactionIds.length > 0) {
     const txns = await prisma.transaction.findMany({
       where: { id: { in: transactionIds } }
     })
-    const hasUnauthorizedTxn = txns.some(t => t.householdId !== householdId)
+    const hasUnauthorizedTxn = txns.some(t => t.householdId !== resolvedHouseholdId)
     if (hasUnauthorizedTxn) throw new Error('Forbidden')
 
     const existingIds = txns.map(t => t.id)
@@ -106,7 +125,8 @@ export async function handleDeleteContributions(
   }
 
   const goal = await prisma.goal.findUnique({ where: { id: goalId } })
-  if (!goal || goal.householdId !== householdId) throw new Error('Forbidden')
+  if (!goal) throw new Error('Forbidden')
+  assertHouseholdOwnership(goal.householdId, resolvedHouseholdId)
 
   const history = Array.isArray(goal.history) ? (goal.history as any[]) : []
   const remainingHistory = history.filter(entry => {
@@ -141,12 +161,14 @@ export async function handleDeleteContributions(
 
 export async function handleRecordTransfer(
   payload: any,
-  user: any,
+  _user: any,
   member: any,
   householdId: string | undefined
 ) {
-  if (!householdId) throw new Error('No household linked')
-  const transferTransactions = Array.isArray(payload.transactions) ? payload.transactions : []
+  const parsed = recordTransferSchema.parse(payload)
+  const resolvedHouseholdId = requireHouseholdId(householdId)
+  const resolvedMember = requireHouseholdMember(member)
+  const transferTransactions = Array.isArray(parsed.transactions) ? parsed.transactions : []
   if (transferTransactions.length !== 2) {
     throw new Error('Transfer requires two transaction legs')
   }
@@ -165,7 +187,7 @@ export async function handleRecordTransfer(
   ).filter(Boolean)
   if (walletLabels.length !== 2) throw new Error('Transfer requires two wallets')
   const transferWallets = await prisma.walletAccount.findMany({
-    where: { householdId, label: { in: walletLabels as string[] } }
+    where: { householdId: resolvedHouseholdId, label: { in: walletLabels as string[] } }
   })
   if (transferWallets.length !== walletLabels.length) throw new Error('Forbidden')
 
@@ -179,8 +201,8 @@ export async function handleRecordTransfer(
   const toWallet = transferWallets.find(wallet => wallet.label === toWalletLabel)
   if (!fromWallet || !toWallet || fromWallet.id === toWallet.id) throw new Error('Forbidden')
   if (
-    !canUseWalletAsTransferSource(fromWallet, member.id, member.role) ||
-    !canUseWalletAsTransferTarget(toWallet, member.role)
+    !canUseWalletAsTransferSource(fromWallet, resolvedMember.id, resolvedMember.role) ||
+    !canUseWalletAsTransferTarget(toWallet, resolvedMember.role)
   ) {
     throw new Error('Forbidden')
   }
@@ -188,7 +210,7 @@ export async function handleRecordTransfer(
   await prisma.transaction.createMany({
     data: transferTransactions.map((txn: any) => ({
       id: txn.id,
-      householdId,
+      householdId: resolvedHouseholdId,
       name: txn.name,
       who: txn.who,
       usd: txn.usd,
