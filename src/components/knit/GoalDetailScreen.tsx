@@ -206,6 +206,12 @@ export function GoalDetailScreen() {
 
   const goalIconName = normalizeGoalIconName(goal.icon)
 
+  if (goal.savedUsd >= goal.targetUsd) {
+    navigate('goal_achieved')
+    return
+  }
+
+
   return (
     <PhoneFrame>
       <div className="flex-1 overflow-y-auto flex flex-col px-7 pt-10 pb-7 min-h-0">
