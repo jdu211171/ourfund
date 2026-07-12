@@ -1,77 +1,91 @@
 import { prisma } from '../../lib/db'
+import { assertHouseholdOwnership, requireHouseholdId } from '../helpers/context'
+import { addGoalSchema, updateGoalSchema, updateGoalSavingsSchema } from '../validation/mutations'
+
+// Create a new saving goal (validates payload first)
 export async function handleAddGoal(
   payload: any,
   user: any,
   member: any,
   householdId: string | undefined
 ) {
-  if (!householdId) throw new Error('No household linked')
+  const parsed = addGoalSchema.parse(payload)
+  const resolvedHouseholdId = requireHouseholdId(householdId)
   await prisma.goal.create({
     data: {
-      id: payload.id,
-      householdId,
-      title: payload.title,
-      targetUsd: payload.targetUsd,
-      savedUsd: payload.savedUsd || 0,
-      targetDate: payload.targetDate,
-      icon: payload.icon,
-      color: payload.color,
-      contributors: payload.contributors || [],
-      history: payload.history || []
+      id: parsed.id,
+      householdId: resolvedHouseholdId,
+      title: parsed.title,
+      targetUsd: parsed.targetUsd,
+      savedUsd: parsed.savedUsd || 0,
+      targetDate: parsed.targetDate,
+      icon: parsed.icon,
+      color: parsed.color,
+      contributors: parsed.contributors || [],
+      history: parsed.history || []
     }
   })
 }
 
+// Update properties of an existing goal (only fields present are updated)
 export async function handleUpdateGoal(
   payload: any,
   user: any,
   member: any,
   householdId: string | undefined
 ) {
-  if (!householdId) throw new Error('No household linked')
-  const goal = await prisma.goal.findUnique({ where: { id: payload.id } })
-  if (!goal || goal.householdId !== householdId) throw new Error('Forbidden')
+  const parsed = updateGoalSchema.parse(payload)
+  const resolvedHouseholdId = requireHouseholdId(householdId)
+  const goal = await prisma.goal.findUnique({ where: { id: parsed.id } })
+  if (!goal) throw new Error('Forbidden')
+  assertHouseholdOwnership(goal.householdId, resolvedHouseholdId)
   const updates: Record<string, unknown> = {}
-  if (typeof payload.title === 'string') updates.title = payload.title
-  if (typeof payload.targetUsd === 'number') updates.targetUsd = payload.targetUsd
-  if (typeof payload.targetDate === 'string') updates.targetDate = payload.targetDate
-  if (typeof payload.icon === 'string') updates.icon = payload.icon
-  if (typeof payload.color === 'string') updates.color = payload.color
-  if (Array.isArray(payload.contributors)) updates.contributors = payload.contributors
+  if (typeof parsed.title === 'string') updates.title = parsed.title
+  if (typeof parsed.targetUsd === 'number') updates.targetUsd = parsed.targetUsd
+  if (typeof parsed.targetDate === 'string') updates.targetDate = parsed.targetDate
+  if (typeof parsed.icon === 'string') updates.icon = parsed.icon
+  if (typeof parsed.color === 'string') updates.color = parsed.color
+  if (Array.isArray(parsed.contributors)) updates.contributors = parsed.contributors
   if (Object.keys(updates).length === 0) return
   await prisma.goal.update({
-    where: { id: payload.id },
+    where: { id: parsed.id },
     data: updates
   })
 }
 
+// Update goal saved amount and history (used when recording contributions)
 export async function handleUpdateGoalSavings(
   payload: any,
   user: any,
   member: any,
   householdId: string | undefined
 ) {
-  if (!householdId) throw new Error('No household linked')
+  const parsed = updateGoalSavingsSchema.parse(payload)
+  const resolvedHouseholdId = requireHouseholdId(householdId)
   // Authorization: verify this goal belongs to the user's household
-  const goal = await prisma.goal.findUnique({ where: { id: payload.id } })
-  if (!goal || goal.householdId !== householdId) throw new Error('Forbidden')
+  const goal = await prisma.goal.findUnique({ where: { id: parsed.id } })
+  if (!goal) throw new Error('Forbidden')
+  assertHouseholdOwnership(goal.householdId, resolvedHouseholdId)
   await prisma.goal.update({
-    where: { id: payload.id },
+    where: { id: parsed.id },
     data: {
-      savedUsd: payload.savedUsd,
-      history: payload.history
+      savedUsd: parsed.savedUsd,
+      history: parsed.history
     }
   })
 }
 
+// Delete a goal after checking ownership
 export async function handleDeleteGoal(
   payload: any,
   user: any,
   member: any,
   householdId: string | undefined
 ) {
-  if (!householdId) throw new Error('No household linked')
-  const goal = await prisma.goal.findUnique({ where: { id: payload.id } })
-  if (!goal || goal.householdId !== householdId) throw new Error('Forbidden')
-  await prisma.goal.delete({ where: { id: payload.id } })
+  const parsed = ((): { id: string } => ({ id: (payload && payload.id) || '' }))()
+  const resolvedHouseholdId = requireHouseholdId(householdId)
+  const goal = await prisma.goal.findUnique({ where: { id: parsed.id } })
+  if (!goal) throw new Error('Forbidden')
+  assertHouseholdOwnership(goal.householdId, resolvedHouseholdId)
+  await prisma.goal.delete({ where: { id: parsed.id } })
 }

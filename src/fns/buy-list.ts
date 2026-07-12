@@ -3,6 +3,7 @@ import { getSessionUser } from '@/lib/auth-server'
 import { normalizeText, resolveCanonical, SYNONYM_GROUPS } from '@/lib/buy-list-history'
 import { prisma } from '@/lib/db'
 import {
+  getPrimaryHouseholdContext,
   getReceiptScanModels,
   isGeminiModelUnavailable,
   isRetryableGeminiFailure
@@ -35,8 +36,7 @@ export const searchProductsServerFn = createServerFn({ method: 'POST' })
     const user = await getSessionUser()
     if (!user) throw new Error('Unauthorized')
 
-    const member = user.householdMembers[0]
-    const householdId = member?.householdId
+    const { householdId } = getPrimaryHouseholdContext(user)
     if (!householdId) return []
 
     const query = data.query.trim()

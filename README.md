@@ -250,6 +250,9 @@ npx prisma migrate dev
 - `src/routes/app.tsx`: desktop/web app shell and sidebar.
 - `src/routes/app.$screen.tsx`: renders registered screens from `screen-registry`.
 - `src/lib/server-fns.ts`: server actions, persistence, auth, email, receipt scanning.
+- `src/fns/sync-mutation.ts`: typed mutation dispatch registry for server mutation handlers.
+- `src/server/helpers/context.ts`: shared backend auth/household guard helpers.
+- `src/server/helpers/app-data-serializers.ts`: shared mappers used by `src/fns/app-data.ts`.
 - `prisma/schema.prisma`: database models.
 - `src/lib/seed.ts`: demo/empty seed data and local fallback data.
 - `src/styles.css`: global theme tokens and Tailwind CSS.
@@ -296,6 +299,11 @@ npm run build
 3. Add the matching `type` handling in `src/lib/server-fns.ts`.
 4. Keep local optimistic state and server persisted state in the same shape.
 5. Check permissions and household/member ownership before writing.
+
+Backend mutation pattern:
+
+- Use shared guard helpers from `src/server/helpers/context.ts` (`requireHouseholdId`, `requireHouseholdMember`, `assertHouseholdOwnership`) instead of inline repeated checks.
+- Keep `src/fns/sync-mutation.ts` as a registry map + dispatch pipeline (avoid re-introducing a large switch-case).
 
 ## Must-Do Checklist Before Finishing A Change
 

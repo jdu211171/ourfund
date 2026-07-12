@@ -1,11 +1,12 @@
 import { prisma } from '../../lib/db'
+import { requireHouseholdId } from '../helpers/context'
 export async function handleSaveReceiptScan(
   payload: any,
   user: any,
   member: any,
   householdId: string | undefined
 ) {
-  if (!householdId) throw new Error('No household linked')
+  const resolvedHouseholdId = requireHouseholdId(householdId)
   const receipt = payload.receipt
   const products = Array.isArray(payload.products) ? payload.products : []
   const transaction = payload.transaction
@@ -22,7 +23,7 @@ export async function handleSaveReceiptScan(
     },
     create: {
       id: receipt.id,
-      householdId,
+      householdId: resolvedHouseholdId,
       storeName: receipt.storeName,
       purchasedAt: receipt.purchasedAt,
       currency: receipt.currency,
@@ -36,7 +37,7 @@ export async function handleSaveReceiptScan(
     await prisma.trackedProduct.createMany({
       data: products.map((product: any) => ({
         id: product.id,
-        householdId,
+        householdId: resolvedHouseholdId,
         name: product.name,
         store: product.store,
         category: product.category,
@@ -52,14 +53,14 @@ export async function handleSaveReceiptScan(
 
   if (transaction) {
     const wallet = await prisma.walletAccount.findFirst({
-      where: { householdId, label: transaction.wallet }
+      where: { householdId: resolvedHouseholdId, label: transaction.wallet }
     })
     if (wallet) {
       await prisma.transaction.createMany({
         data: [
           {
             id: transaction.id,
-            householdId,
+            householdId: resolvedHouseholdId,
             name: transaction.name,
             who: transaction.who,
             usd: Number(transaction.usd) || 0,

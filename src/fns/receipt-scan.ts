@@ -3,6 +3,7 @@ import { getSessionUser } from '@/lib/auth-server'
 import { currencyValueToUsd } from '@/lib/currency'
 import { prisma } from '@/lib/db'
 import {
+  getPrimaryHouseholdContext,
   getReceiptScanModels,
   isGeminiModelUnavailable,
   isRetryableGeminiFailure,
@@ -30,8 +31,7 @@ export const scanReceiptServerFn = createServerFn({ method: 'POST' })
     }
 
     const user = await getSessionUser()
-    const member = user?.householdMembers[0]
-    const householdId = member?.householdId || null
+    const { householdId } = getPrimaryHouseholdContext(user)
     const currency = data.currency || 'JPY'
     const categoriesList =
       data.categories && data.categories.length > 0

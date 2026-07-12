@@ -1,0 +1,51 @@
+Backend Simplification Plan (Behavior-Preserving First)
+
+Problem
+- Backend works, but it is harder than necessary to read and safely modify.
+- Goal: make backend code easy/simple while preserving current behavior by default.
+
+Current State
+- Backend entry points are in src/fns/* (auth, app-data, sync-mutation).
+- Domain logic is split into src/server/mutations/* (good modular base).
+- src/fns/sync-mutation.ts uses a large switch(type) with any payloads.
+- Mutation handlers widely use payload: any, user: any, member: any.
+- Repeated auth/household ownership checks appear across domain files.
+- src/fns/app-data.ts is a large all-in-one fetch + mapping function.
+
+Approach
+1) Typed contracts
+- Add strict input validation/contracts for server functions (Zod or strict TS validators).
+
+2) Typed dispatch
+- Replace large switch-case mutation dispatcher with a typed registry map.
+
+3) Shared backend guards
+- Add reusable helpers: requireAuth, requireHouseholdMember, ownership checks.
+- Keep domain handlers thin and predictable.
+
+4) Service extraction
+- Move business rules into small domain services.
+- Keep mutation files as orchestration layers only.
+
+5) App-data simplification
+- Split app-data query/mapping into domain serializers (members/wallets/goals/etc.).
+
+6) Error contract
+- Standardize backend error shape/messages for UI and logs.
+
+7) Safety net
+- Add targeted tests around high-risk flows before/while refactoring:
+  auth, household membership, transaction-goal coupling, transfer validation.
+
+Execution Phases
+Phase 1: define simplicity rules and non-goals
+Phase 2: build typed foundation (validation/context/errors)
+Phase 3: convert mutation switch to typed registry
+Phase 4: pilot refactor of transactions + household
+Phase 5: split app-data serializers
+Phase 6: migrate remaining mutation domains in small batches
+Phase 7: finalize tests, cleanup, and backend conventions docs
+
+Confirmed Preference
+- Keep behavior as-is when possible.
+- If preserving behavior becomes too costly in some area, discuss feature compromise case-by-case.

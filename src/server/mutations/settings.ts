@@ -1,4 +1,5 @@
 import { prisma } from '../../lib/db'
+import { requireHouseholdId } from '../helpers/context'
 import {
   asRecord,
   defaultNotificationPrefs,
@@ -86,13 +87,13 @@ export async function handleSetCurrencyForMode(
     return
   }
 
-  if (!householdId) throw new Error('No household linked')
+  const resolvedHouseholdId = requireHouseholdId(householdId)
   await prisma.household.update({
-    where: { id: householdId },
+    where: { id: resolvedHouseholdId },
     data: { familyCurrency: currency }
   })
   await prisma.walletAccount.updateMany({
-    where: { householdId, type: { not: 'private' } },
+    where: { householdId: resolvedHouseholdId, type: { not: 'private' } },
     data: { currency }
   })
 }

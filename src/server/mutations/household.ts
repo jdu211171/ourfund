@@ -1,8 +1,23 @@
 import { prisma } from '../../lib/db'
 import { createNotificationsForUsers, getHouseholdUsers } from '../helpers/notification'
+import type { SessionUser } from '../helpers/context'
+
+function buildRolePermissions(role: string) {
+  return {
+    "Approve children's requests": role !== 'Kid',
+    'Edit budget limits': role !== 'Kid',
+    'Add or remove members': role === 'Admin',
+    'View private wallets': role === 'Admin' || role === 'Adult'
+  }
+}
+
+function normalizeInviteCode(code: string): string {
+  return code.trim().toUpperCase()
+}
+
 export async function handleCreateHousehold(
   payload: any,
-  user: any,
+  user: SessionUser,
   _member: any,
   _householdId: string | undefined
 ) {
@@ -75,13 +90,14 @@ export async function handleCreateHousehold(
 
 export async function handleAcceptInvite(
   payload: any,
-  user: any,
+  user: SessionUser,
   _member: any,
   _householdId: string | undefined
 ) {
   // Make sure this user isn't already in the household
+  const inviteCode = normalizeInviteCode(payload.code)
   const found = await prisma.household.findUnique({
-    where: { inviteCode: payload.code.toUpperCase() }
+    where: { inviteCode }
   })
   if (!found) throw new Error('Invite code not found')
 
@@ -101,12 +117,7 @@ export async function handleAcceptInvite(
   })
   const role = pendingMember?.role || payload.role || 'Adult'
   const initials = payload.initials || user.initials
-  const permissions = {
-    "Approve children's requests": role !== 'Kid',
-    'Edit budget limits': role !== 'Kid',
-    'Add or remove members': role === 'Admin',
-    'View private wallets': role === 'Admin' || role === 'Adult'
-  }
+  const permissions = buildRolePermissions(role)
 
   await prisma.user.update({
     where: { id: user.id },
@@ -169,8 +180,9 @@ export async function handleValidateInviteCode(
   _member: any,
   _householdId: string | undefined
 ) {
+  const inviteCode = normalizeInviteCode(payload.code)
   const found = await prisma.household.findUnique({
-    where: { inviteCode: payload.code.toUpperCase() },
+    where: { inviteCode },
     include: { members: true }
   })
   if (!found) return null

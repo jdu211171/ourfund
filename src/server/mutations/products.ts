@@ -1,15 +1,16 @@
 import { prisma } from '../../lib/db'
+import { requireHouseholdId } from '../helpers/context'
 export async function handleAddTrackedProduct(
   payload: any,
   _user: any,
   _member: any,
   householdId: string | undefined
 ) {
-  if (!householdId) throw new Error('No household linked')
+  const resolvedHouseholdId = requireHouseholdId(householdId)
   await prisma.trackedProduct.create({
     data: {
       id: payload.id,
-      householdId,
+      householdId: resolvedHouseholdId,
       name: payload.name,
       store: payload.store,
       category: payload.category,
