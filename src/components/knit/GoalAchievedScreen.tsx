@@ -1,6 +1,7 @@
 import { Share2, Sparkles, Trophy } from 'lucide-react'
 import { formatUsdAsCurrency } from '@/lib/currency'
 import { useAppNavigation } from '@/lib/navigation'
+import { GoalIcon, normalizeGoalIconName } from './goalIconOptions'
 import { PhoneFrame } from './PhoneFrame'
 
 export function GoalAchievedScreen() {
@@ -33,6 +34,8 @@ export function GoalAchievedScreen() {
     )
   }
 
+  const goalIconName = normalizeGoalIconName(goal.icon)
+
   return (
     <PhoneFrame>
       <div
@@ -41,28 +44,51 @@ export function GoalAchievedScreen() {
           background: 'linear-gradient(160deg, oklch(0.35 0.18 265) 0%, oklch(0.22 0.1 265) 100%)'
         }}
       >
-        {confetti.map((piece, i) => (
-          <span
-            key={piece}
-            className="absolute rounded-[2px]"
-            style={{
-              width: 6 + (i % 3) * 2,
-              height: 10 + (i % 4) * 2,
-              top: `${8 + ((i * 37) % 70)}%`,
-              left: `${(i * 53) % 90}%`,
-              background: palette[i % palette.length],
-              transform: `rotate(${(i * 47) % 360}deg)`,
-              opacity: 0.85
-            }}
-          />
-        ))}
+        <style>{`
+          @keyframes confetti-fall {
+            0% {
+              transform: translateY(-40px) translateX(0) rotate(var(--rot));
+              opacity: 0;
+            }
+            10% { opacity: 0.85; }
+            90% { opacity: 0.85; }
+            100% {
+              transform: translateY(480px) translateX(var(--drift)) rotate(calc(var(--rot) + 220deg));
+              opacity: 0;
+            }
+          }
+        `}</style>
+
+        {confetti.map((piece, i) => {
+          const rot = (i * 47) % 360
+          const drift = ((i * 29) % 60) - 30
+          const duration = 2.6 + (i % 5) * 0.5
+          const delay = (i % 7) * 0.25
+
+          return (
+            <span
+              key={piece}
+              className="absolute rounded-[2px]"
+              style={{
+                width: 6 + (i % 3) * 2,
+                height: 10 + (i % 4) * 2,
+                top: `${8 + ((i * 37) % 20)}%`,
+                left: `${(i * 53) % 90}%`,
+                background: palette[i % palette.length],
+                '--rot': `${rot}deg`,
+                '--drift': `${drift}px`,
+                animation: `confetti-fall ${duration}s linear ${delay}s infinite`,
+                opacity: 0
+              } as React.CSSProperties}
+            />
+          )
+        })}
 
         <div className="relative grid h-20 w-20 place-items-center rounded-3xl bg-white/10 backdrop-blur-sm shadow-[var(--shadow-tile)]">
-          <Trophy className="h-9 w-9 text-[oklch(0.85_0.18_85)]" strokeWidth={2} />
-          <Sparkles
-            className="absolute -right-2 -top-2 h-5 w-5 text-[oklch(0.85_0.18_85)]"
-            strokeWidth={2.25}
-          />
+          <GoalIcon name={goalIconName} className="h-9 w-9 text-[oklch(0.85_0.18_85)]" strokeWidth={2} />
+          <div className="absolute -right-2 -top-2 grid h-6 w-6 place-items-center rounded-full bg-[oklch(0.85_0.18_85)]">
+            <Trophy className="h-3.5 w-3.5 text-[oklch(0.22_0.1_265)]" strokeWidth={2.5} />
+          </div>
         </div>
 
         <p className="relative mt-6 text-[11px] font-bold uppercase tracking-widest text-white/70">
