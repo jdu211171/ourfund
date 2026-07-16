@@ -139,21 +139,21 @@ export function SendMoneyScreen() {
         </div>
 
         {expensePresets.length > 0 && (
-          <div className="mt-4 flex flex-col items-center shrink-0">
-            <p className="text-[9px] uppercase tracking-widest text-muted-foreground mb-1.5 font-bold">
+          <div className="mt-4 flex flex-col items-start shrink-0 w-full">
+            <p className="text-[9px] uppercase tracking-widest text-muted-foreground mb-1.5 font-bold px-1">
               Recent presets
             </p>
-            <div className="flex flex-wrap justify-center gap-1.5 max-h-[80px] overflow-y-auto px-2">
+            <div className="flex flex-wrap gap-1.5 w-full">
               {expensePresets.map(preset => (
                 <button
                   key={`${preset.name}-${preset.usd}-${preset.wallet}`}
                   type="button"
                   onClick={() => handleApplyPreset(preset)}
-                  className="bg-white text-foreground hover:bg-slate-50 shadow-[var(--shadow-soft)] rounded-full px-2.5 py-1 text-[10px] font-bold transition-all active:scale-95 cursor-pointer flex items-center gap-1 border border-transparent hover:border-slate-100"
+                  className="bg-white shadow-[var(--shadow-soft)] rounded-xl px-3 py-1.5 transition-all active:bg-[var(--accent)] active:scale-[0.97] cursor-pointer flex flex-col items-center justify-center leading-snug"
                 >
-                  <span className="truncate max-w-[80px]">{preset.name}</span>
-                  <span className="text-[9px] text-muted-foreground font-semibold">
-                    ({formatUsdAsCurrency(Math.abs(preset.usd), currency)})
+                  <span className="block text-[11px] text-foreground font-bold line-clamp-2 break-words text-center">{preset.name}</span>
+                  <span className="block text-[9px] text-muted-foreground font-semibold mt-0.5">
+                    {formatUsdAsCurrency(Math.abs(preset.usd), currency)}
                   </span>
                 </button>
               ))}
