@@ -6,13 +6,15 @@ import {
   RotateCcw,
   Sparkles,
   Store,
-  Tag
+  Tag,
+  Users
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { currencyValueToUsd, usdToCurrencyValue } from '@/lib/currency'
 import { compressImage } from '@/lib/image-compress'
 import { type ReceiptScan, useAppNavigation } from '@/lib/navigation'
 import { Money } from './Money'
+import { OptionSelect } from './OptionSelect'
 import { PhoneFrame } from './PhoneFrame'
 
 const PENDING_RECEIPT_IMAGE_KEY = 'ourfund:pending-receipt-image'
@@ -104,7 +106,8 @@ function clearPendingReceiptImage() {
 }
 
 export function ScanReceiptScreen() {
-  const { navigate, goBack, scanReceiptImage, saveReceiptScan, categories } = useAppNavigation()
+  const { navigate, goBack, scanReceiptImage, saveReceiptScan, categories, activeWallets } =
+    useAppNavigation()
   const inputRef = useRef<HTMLInputElement>(null)
   const [preview, setPreview] = useState('')
   const [scan, setScan] = useState<ReceiptScan | null>(null)
@@ -112,6 +115,10 @@ export function ScanReceiptScreen() {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [pendingReceipt, setPendingReceipt] = useState<PendingReceiptImage | null>(null)
+  const [walletId, setWalletId] = useState('')
+
+  const defaultWalletId = activeWallets[0]?.id ?? ''
+  const wallet = activeWallets.find(w => w.id === (walletId || defaultWalletId)) ?? activeWallets[0]
 
   useEffect(() => {
     const pending = loadPendingReceiptImage()
@@ -172,7 +179,7 @@ export function ScanReceiptScreen() {
       : 'Scan receipt'
   const handlePrimaryAction = () => {
     if (scan) {
-      saveReceiptScan(scan)
+      saveReceiptScan(scan, wallet?.label)
       navigate('product_tracker')
       return
     }
@@ -315,6 +322,21 @@ export function ScanReceiptScreen() {
                   <Tag className="h-3 w-3" strokeWidth={2.25} /> {scan.currency}
                 </span>
               </div>
+            </div>
+
+            <div className="mt-3">
+              <OptionSelect
+                label="Paid from"
+                value={wallet?.id ?? ''}
+                options={activeWallets.map(item => ({
+                  value: item.id,
+                  label: item.label,
+                  description: item.sub
+                }))}
+                onChange={setWalletId}
+                emptyLabel="Create a wallet first"
+                icon={<Users className="h-5 w-5" strokeWidth={2.25} />}
+              />
             </div>
 
             <div className="mt-3 space-y-1.5 pr-1">

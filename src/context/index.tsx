@@ -194,7 +194,7 @@ export interface NavigationContextType {
   addTrackedProduct: (product: Omit<ProductEntry, 'id' | 'createdAt'>) => ProductEntry
   receiptScans: ReceiptScan[]
   scanReceiptImage: (imageDataUrl: string) => Promise<ReceiptScan>
-  saveReceiptScan: (scan: ReceiptScan) => void
+  saveReceiptScan: (scan: ReceiptScan, walletLabel?: string) => void
   historyFilters: HistoryFilters
   setHistoryFilters: (filters: Partial<HistoryFilters>) => void
   resetHistoryFilters: () => void
@@ -1620,7 +1620,7 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const saveReceiptScan = (scan: ReceiptScan) => {
+  const saveReceiptScan = (scan: ReceiptScan, walletLabel?: string) => {
     const normalizedScan: ReceiptScan = {
       ...scan,
       id: scan.id || makeId('receipt'),
@@ -1670,16 +1670,16 @@ export function AppNavigationProvider({ children }: { children: ReactNode }) {
       source: 'receipt',
       createdAt: 'today'
     }))
-    const walletLabel = activeWallets[0]?.label ?? wallets[0]?.label
+    const finalWalletLabel = walletLabel ?? activeWallets[0]?.label ?? wallets[0]?.label
     const transaction: Transaction | null =
-      walletLabel && normalizedScan.totalUsd > 0
+      finalWalletLabel && normalizedScan.totalUsd > 0
         ? {
             id: makeId('txn'),
             name: normalizedScan.storeName || 'Receipt purchase',
             who: firstName(profile.name),
             usd: -normalizedScan.totalUsd,
             category: products[0]?.category ?? 'Groceries',
-            wallet: walletLabel,
+            wallet: finalWalletLabel,
             date: normalizedScan.purchasedAt || formatISODate(new Date())
           }
         : null
